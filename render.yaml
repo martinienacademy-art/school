@@ -1,0 +1,19 @@
+services:
+  - name: gestioschool
+    type: web
+    env: node
+    # ensure devDependencies (vite) are installed even in production environment
+    buildCommand: rm -rf node_modules && NPM_CONFIG_PRODUCTION=false npm install && npm run build
+    startCommand: npm run start
+    plan: free
+    envVars:
+      - key: SUPABASE_URL
+        value: https://xdlsyxxbwvveeozxjuip.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkbHN5eHhid3Z2ZWVvenhqdWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NTAxNzQsImV4cCI6MjA5NjUyNjE3NH0.OZ41dGxkUfIo6j9RpYUbe3S5PD-2LHgHCdgspPveAtw
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhkbHN5eHhid3Z2ZWVvenhqdWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NTAxNzQsImV4cCI6MjA5NjUyNjE3NH0.OZ41dGxkUfIo6j9RpYUbe3S5PD-2LHgHCdgspPveAtw
+      - key: JWT_SECRET
+        value: edufinance_secret_jwt_2025
+      - key: PORT
+        value: "10000"
