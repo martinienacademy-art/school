@@ -302,10 +302,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const stopImpersonating = useStore((s) => s.stopImpersonating);
   const schoolName = useStore((s) => s.schoolName);
   const schoolYear = useStore((s) => s.schoolYear);
-  const students = useStore((s) => s.students);
+  const students = useStore((s) => s.students) || [];
   const appName = useStore((s) => s.appName);
   const schoolLogo = useStore((s) => s.schoolLogo);
-  const parents = useStore((s) => s.parents);
+  const parents = useStore((s) => s.parents) || [];
   const connectedParentsCount = useStore((s) => s.connectedParentsCount);
   const setConnectedParentsCount = useStore((s) => s.setConnectedParentsCount);
   const unreadMessages = useStore((s) => s.unreadMessages);
@@ -366,7 +366,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, [user?.role, fetchUnreadMessages]);
 
   const isSyncing = useStore((s) => s.isSyncing);
-  const nonSoldes = students.filter((s) => s.status !== 'Soldé').length;
+  const nonSoldes = (students || []).filter((s) => s?.status !== 'Soldé').length;
   const isParent = user?.role === 'parent';
   const baseNavItems = isParent ? PARENT_NAV_ITEMS : NAV_ITEMS;
   const filteredItems = getFilteredNavItems(user?.role, baseNavItems) as Omit<NavItem, 'badge'>[];

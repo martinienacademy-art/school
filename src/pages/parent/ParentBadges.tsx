@@ -3,7 +3,8 @@ import { useStore } from '../../store/useStore';
 import { Award, ShieldCheck, Zap, Star, Loader2, AlertCircle, TrendingUp, Clock, Medal } from 'lucide-react';
 
 export const ParentBadges: React.FC = () => {
-    const { badges } = useStore();
+    const rawBadges = useStore((s) => s.badges);
+    const badges = Array.isArray(rawBadges) ? rawBadges : [];
     const loading = false;
     const error = ''; 
 

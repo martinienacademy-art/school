@@ -19,30 +19,30 @@ export const ParentHistorique: React.FC = () => {
                 const children = dash.students || [];
 
                 // Récupérer paiements
-                const allPayPromises = children.map((c: any) => parentApi.getPayments(c.id));
+                const allPayPromises = children.map((c: any) => parentApi.getPayments(c.id).catch(() => ({ payments: [], student: c })));
                 const payResults = await Promise.all(allPayPromises);
                 const mergedPayments = payResults.flatMap((res: any) =>
-                    res.payments.map((p: any) => ({
+                    (res?.payments || []).map((p: any) => ({
                         ...p,
-                        studentName: `${res.student.prenom} ${res.student.nom}`,
-                        classe: res.student.classe
+                        studentName: res?.student ? `${res.student.prenom || ''} ${res.student.nom || ''}`.trim() : 'Enfant',
+                        classe: res?.student?.classe || ''
                     }))
-                ).sort((a: any) => new Date(a.date).getTime());
+                ).sort((a: any, b: any) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
 
-                setPayments(mergedPayments.reverse());
+                setPayments(mergedPayments);
 
                 // Récupérer présences
-                const allPresPromises = children.map((c: any) => parentApi.getPresences(c.id));
+                const allPresPromises = children.map((c: any) => parentApi.getPresences(c.id).catch(() => ({ presences: [] })));
                 const presResults = await Promise.all(allPresPromises);
                 const mergedPresences = presResults.flatMap((res: any, idx: number) =>
-                    res.presences.map((p: any) => ({
+                    (res?.presences || []).map((p: any) => ({
                         ...p,
-                        studentName: `${children[idx].prenom} ${children[idx].nom}`,
-                        classe: children[idx].classe
+                        studentName: children[idx] ? `${children[idx].prenom || ''} ${children[idx].nom || ''}`.trim() : 'Enfant',
+                        classe: children[idx]?.classe || ''
                     }))
-                ).sort((a: any) => new Date(a.date + 'T' + a.heure).getTime());
+                ).sort((a: any, b: any) => new Date((b.date || '') + 'T' + (b.heure || '00:00')).getTime() - new Date((a.date || '') + 'T' + (a.heure || '00:00')).getTime());
 
-                setPresences(mergedPresences.reverse());
+                setPresences(mergedPresences);
 
             } catch (err: any) {
                 setError("Impossible de charger l'historique.");

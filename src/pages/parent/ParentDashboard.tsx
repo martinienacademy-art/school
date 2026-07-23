@@ -56,7 +56,8 @@ const IMP_STYLES = {
 // ── Composant principal ──────────────────────────────────────
 export const ParentDashboard: React.FC = () => {
     const user = useStore((s) => s.user);
-    const children = useStore((s) => s.students);
+    const rawChildren = useStore((s) => s.students);
+    const children = Array.isArray(rawChildren) ? rawChildren : [];
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
@@ -71,7 +72,8 @@ export const ParentDashboard: React.FC = () => {
     const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('default');
     
     // Accès au store global pour les lectures
-    const announcementReads = useStore(s => s.announcementReads);
+    const rawReads = useStore(s => s.announcementReads);
+    const announcementReads = Array.isArray(rawReads) ? rawReads : [];
     const markAnnouncementRead = useStore(s => s.markAnnouncementRead);
     
     const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -96,7 +98,6 @@ export const ParentDashboard: React.FC = () => {
             if (permission === 'granted') {
                 const { webPushService } = await import('../../services/webPushService');
                 await webPushService.init();
-                // console.log('🚀 Notifications activées');
             }
         } catch (err) {
             console.error('Erreur activation notifs:', err);
@@ -110,10 +111,9 @@ export const ParentDashboard: React.FC = () => {
         setErrorMsg('');
         try {
             const data = await parentApi.getDashboard();
-            // On s'assure que le store est mis à jour aussi
-            useStore.setState({ students: data.students || [] });
+            useStore.setState({ students: Array.isArray(data?.students) ? data.students : [] });
         } catch (err: any) {
-            setErrorMsg(err.message || "Erreur de chargement");
+            console.warn("Soft error dashboard load:", err?.message);
         } finally {
             setLoading(false);
         }
@@ -123,11 +123,10 @@ export const ParentDashboard: React.FC = () => {
     useEffect(() => {
         fetchData();
 
-        // Premier chargement annonces (via le store ou API locale si besoin)
         const fetchAnnouncementsLocal = async () => {
             try {
                 const data = await parentApi.getAnnouncements();
-                setAnnouncements(data.announcements || []);
+                setAnnouncements(Array.isArray(data?.announcements) ? data.announcements : []);
             } catch (err) {
                 console.warn('⚠️ Annonces non disponibles:', err);
             }
@@ -135,7 +134,6 @@ export const ParentDashboard: React.FC = () => {
 
         fetchAnnouncementsLocal();
 
-        // Polling temps réel : toutes les 10 s
         pollingRef.current = setInterval(fetchAnnouncementsLocal, 10_000);
 
         return () => {
@@ -153,15 +151,13 @@ export const ParentDashboard: React.FC = () => {
         }
     };
 
-    const totalEcolage = children.reduce((acc, s) => acc + s.ecolage, 0);
-    const totalDejaPaye = children.reduce((acc, s) => acc + (s.dejaPaye || 0), 0);
-    const totalRestant = children.reduce((acc, s) => acc + s.restant, 0);
+    const totalEcolage = children.reduce((acc, s) => acc + (Number(s?.ecolage) || 0), 0);
+    const totalDejaPaye = children.reduce((acc, s) => acc + (Number(s?.dejaPaye) || 0), 0);
+    const totalRestant = children.reduce((acc, s) => acc + (Number(s?.restant) || 0), 0);
 
     const handleStartChat = async (role: 'administration' | 'comptabilite') => {
         try {
-            // On initialise la conversation d'abord
             await chatApi.initiateConversation(undefined, role);
-            // Puis on navigue vers la page de chat
             useStore.getState().setCurrentPage('chat');
         } catch (err) {
             console.error('Erreur initiation chat:', err);
@@ -172,7 +168,7 @@ export const ParentDashboard: React.FC = () => {
     };
 
     // ── Nombre d'annonces non vues ───────────────────────────
-    const unseenCount = announcements.filter(a => {
+    const unseenCount = (announcements || []).filter(a => {
         const read = announcementReads.find(r => r.announcementId === a.id && r.parentId === user?.id);
         return !read || !read.readAt;
     }).length;

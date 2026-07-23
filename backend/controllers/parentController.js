@@ -331,7 +331,7 @@ async function getParentData(req, res) {
         const { data: dbSettings } = await supabase
             .from(`app_settings_${schoolSlug}`)
             .select('*')
-            .single();
+            .maybeSingle();
         
         const appSettings = dbSettings ? {
             appName: dbSettings.app_name,
