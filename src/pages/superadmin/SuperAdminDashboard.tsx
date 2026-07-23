@@ -5,7 +5,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Building2, Users, AlertTriangle,
   Plus, Check, X, Clock, RefreshCw, ToggleLeft, ToggleRight,
-  Globe, Phone, Mail, MapPin, Wallet, Star, Trash2, ExternalLink, Eye, EyeOff
+  Globe, Phone, Mail, MapPin, Wallet, Star, Trash2, ExternalLink, Eye, EyeOff,
+  CreditCard, Settings, Calendar, Sliders, Zap, CheckCircle2, ShieldCheck
 } from 'lucide-react';
 import { School } from '../../types';
 import { API_BASE_URL } from '../../config';
@@ -265,13 +266,34 @@ export const SuperAdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  
+  // NOUVEAU : Configuration Tarification & Abonnements SaaS
+  const [saasSettings, setSaasSettings] = useState({
+    price_per_student: 2000,
+    default_trial_days: 60,
+    currency: 'FCFA',
+    premium_features: ['scan_presence', 'scan_sortie', 'scan_information', 'carte_scolaire', 'gestion_academique', 'bulletins', 'recouvrement', 'chat', 'import_export']
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsSavedMessage, setSettingsSavedMessage] = useState('');
+
+  const ALL_FEATURES = [
+    { id: 'scan_presence', label: 'Scan des Présences & Sorties' },
+    { id: 'carte_scolaire', label: 'Impression Cartes Scolaires (QR Code)' },
+    { id: 'gestion_academique', label: 'Gestion Académique & Saisie des Notes' },
+    { id: 'bulletins', label: 'Génération Automatique des Bulletins PDF' },
+    { id: 'recouvrement', label: 'Comptabilité & Suivi du Recouvrement' },
+    { id: 'chat', label: 'Messagerie Directe École ↔ Parents' },
+    { id: 'import_export', label: 'Import/Export Excel de la Base de Données' }
+  ];
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [schoolsRes, statsRes] = await Promise.all([
+      const [schoolsRes, statsRes, settingsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/superadmin/schools`, { headers: getAuthHeaders() }),
-        fetch(`${API_BASE_URL}/superadmin/stats`, { headers: getAuthHeaders() })
+        fetch(`${API_BASE_URL}/superadmin/stats`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE_URL}/superadmin/settings`, { headers: getAuthHeaders() })
       ]);
       if (schoolsRes.ok) {
         const d = await schoolsRes.json();
@@ -281,6 +303,17 @@ export const SuperAdminDashboard: React.FC = () => {
         const d = await statsRes.json();
         setStats(d);
       }
+      if (settingsRes.ok) {
+        const d = await settingsRes.json();
+        if (d.price_per_student !== undefined) {
+          setSaasSettings({
+            price_per_student: Number(d.price_per_student) || 2000,
+            default_trial_days: Number(d.default_trial_days) || 60,
+            currency: d.currency || 'FCFA',
+            premium_features: Array.isArray(d.premium_features) ? d.premium_features : saasSettings.premium_features
+          });
+        }
+      }
     } catch (err) {
       console.error('SuperAdmin load error:', err);
     } finally {
@@ -289,6 +322,48 @@ export const SuperAdminDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setSettingsSavedMessage('');
+    try {
+      const res = await fetch(`${API_BASE_URL}/superadmin/settings`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(saasSettings)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur enregistrement tarification');
+      setSettingsSavedMessage('✅ Tarification & Essai enregistrés avec succès !');
+      setTimeout(() => setSettingsSavedMessage(''), 4000);
+      load();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleExtendTrial = async (school: SchoolWithStats, daysToAdd: number) => {
+    if (!confirm(`Prolonger la période d'essai de "${school.name}" de +${daysToAdd} jours ?`)) return;
+    setActionLoading(school.id);
+    try {
+      const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}/extend-trial`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ extra_days: daysToAdd })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur prolongation essai');
+      alert(data.message || 'Essai prolongé avec succès !');
+      load();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const handleStatusToggle = async (school: SchoolWithStats) => {
     const newStatus = school.status === 'active' ? 'suspended' : 'active';
@@ -565,6 +640,16 @@ export const SuperAdminDashboard: React.FC = () => {
                       </button>
 
                       <button
+                        onClick={() => handleExtendTrial(school, 30)}
+                        disabled={actionLoading === school.id}
+                        title="Prolonger l'essai gratuit de +30 jours"
+                        className="flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/30 shadow-md transition-all disabled:opacity-50"
+                      >
+                        <Clock className="w-4 h-4" />
+                        +30J ESSAI
+                      </button>
+
+                      <button
                         onClick={() => handleStatusToggle(school)}
                         disabled={actionLoading === school.id}
                         title={school.status === 'suspended' ? 'Activer' : 'Suspendre'}
@@ -599,6 +684,129 @@ export const SuperAdminDashboard: React.FC = () => {
             })}
           </div>
         )}
+      </div>
+
+      {/* ── PANNEAU CONFIGURATION TARIFICATION & FONCTIONNALITÉS SAAS ── */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-purple-500/20 text-purple-400 rounded-2xl border border-purple-500/30">
+              <Sliders className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white tracking-tight">Tarification &amp; Paramètres des Abonnements SaaS</h2>
+              <p className="text-xs text-slate-400">Définissez dynamiquement le tarif par élève, la durée d'essai gratuit et les fonctionnalités Incluses</p>
+            </div>
+          </div>
+        </div>
+
+        {settingsSavedMessage && (
+          <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-400 font-bold text-sm">
+            {settingsSavedMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSaveSettings} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-4">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-purple-400" />
+                Tarif / Élève (FCFA / Mois)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={saasSettings.price_per_student}
+                  onChange={e => setSaasSettings({ ...saasSettings, price_per_student: Number(e.target.value) })}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-black text-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+                <span className="text-slate-400 font-bold text-sm">FCFA</span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-2">Ce montant est utilisé pour calculer les revenus mensuels prévisionnels des écoles.</p>
+            </div>
+
+            <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-4">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-400" />
+                Durée d'Essai Gratuit (Jours)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={saasSettings.default_trial_days}
+                  onChange={e => setSaasSettings({ ...saasSettings, default_trial_days: Number(e.target.value) })}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-black text-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  required
+                />
+                <span className="text-slate-400 font-bold text-sm">Jours</span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-2">Nombre de jours d'essai gratuits appliqués aux nouvelles écoles à l'inscription.</p>
+            </div>
+
+            <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl p-4">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Devise Monétaire SaaS
+              </label>
+              <input
+                type="text"
+                value={saasSettings.currency}
+                onChange={e => setSaasSettings({ ...saasSettings, currency: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                required
+              />
+              <p className="text-[11px] text-slate-500 mt-2">Devise utilisée pour l'affichage de la facturation (ex: FCFA, EUR, USD).</p>
+            </div>
+          </div>
+
+          {/* Sélection des fonctionnalités incluses/Premium */}
+          <div className="bg-slate-800/30 border border-slate-800 rounded-2xl p-5">
+            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-400" />
+              Fonctionnalités Incluses dans l'Abonnement SaaS
+            </h3>
+            <p className="text-xs text-slate-400 mb-4">Cochez les modules accessibles aux écoles inscrites :</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {ALL_FEATURES.map(feat => {
+                const isChecked = saasSettings.premium_features.includes(feat.id);
+                return (
+                  <label key={feat.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                    isChecked ? 'bg-purple-500/10 border-purple-500/40 text-white' : 'bg-slate-900 border-slate-800 text-slate-400'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={e => {
+                        const updated = e.target.checked
+                          ? [...saasSettings.premium_features, feat.id]
+                          : saasSettings.premium_features.filter(f => f !== feat.id);
+                        setSaasSettings({ ...saasSettings, premium_features: updated });
+                      }}
+                      className="accent-purple-500 rounded scale-110"
+                    />
+                    <span className="text-xs font-semibold">{feat.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={savingSettings}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              {savingSettings ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              {savingSettings ? 'Enregistrement...' : 'Enregistrer la Tarification SaaS'}
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Modal création */}

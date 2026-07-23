@@ -10,7 +10,10 @@ const {
     updateSchool,
     deleteSchool,
     getGlobalStats,
-    impersonateSchool
+    impersonateSchool,
+    getSaasSettings,
+    updateSaaSConfig,
+    extendSchoolTrial
 } = require('../controllers/superAdminController');
 
 // Toutes ces routes sont protégées par le double middleware :
@@ -18,10 +21,13 @@ const {
 // 2. requireSuperAdmin : vérifie que le rôle est 'superadmin'
 
 router.get('/stats', authenticateToken, requireSuperAdmin, getGlobalStats);
+router.get('/settings', authenticateToken, requireSuperAdmin, getSaasSettings);
+router.put('/settings', authenticateToken, requireSuperAdmin, updateSaaSConfig);
 router.get('/schools', authenticateToken, requireSuperAdmin, getAllSchools);
 router.post('/schools', authenticateToken, requireSuperAdmin, createSchool);
 router.put('/schools/:id', authenticateToken, requireSuperAdmin, updateSchool);
 router.patch('/schools/:id/status', authenticateToken, requireSuperAdmin, updateSchoolStatus);
+router.post('/schools/:id/extend-trial', authenticateToken, requireSuperAdmin, extendSchoolTrial);
 router.delete('/schools/:id', authenticateToken, requireSuperAdmin, deleteSchool);
 router.post('/schools/:id/impersonate', authenticateToken, requireSuperAdmin, impersonateSchool);
 

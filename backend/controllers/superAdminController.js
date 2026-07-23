@@ -6,12 +6,89 @@ const { supabase } = require('../utils/supabase');
 const Joi = require('joi');
 const crypto = require('crypto');
 
-const PRICE_PER_STUDENT = 2000; // FCFA
+let LOCAL_SAAS_SETTINGS = {
+    price_per_student: 2000,
+    default_trial_days: 60,
+    currency: 'FCFA',
+    premium_features: ['scan_presence', 'scan_sortie', 'scan_information', 'carte_scolaire', 'gestion_academique', 'bulletins', 'recouvrement', 'chat', 'import_export']
+};
+
+async function getStoredSaasSettings() {
+    try {
+        const { data, error } = await supabase
+            .from('saas_settings')
+            .select('*')
+            .eq('id', 1)
+            .single();
+        if (data && !error) {
+            LOCAL_SAAS_SETTINGS = {
+                price_per_student: Number(data.price_per_student) || 2000,
+                default_trial_days: Number(data.default_trial_days) || 60,
+                currency: data.currency || 'FCFA',
+                premium_features: Array.isArray(data.premium_features) ? data.premium_features : LOCAL_SAAS_SETTINGS.premium_features
+            };
+        }
+    } catch (e) {}
+    return LOCAL_SAAS_SETTINGS;
+}
+
+// ── GET /api/superadmin/settings ────────────────────────────────
+async function getSaasSettings(req, res) {
+    const config = await getStoredSaasSettings();
+    return res.json(config);
+}
+
+// ── PUT /api/superadmin/settings ────────────────────────────────
+async function updateSaaSConfig(req, res) {
+    const { price_per_student, default_trial_days, currency, premium_features } = req.body;
+    
+    try {
+        const updates = {};
+        if (price_per_student !== undefined) updates.price_per_student = Number(price_per_student);
+        if (default_trial_days !== undefined) updates.default_trial_days = Number(default_trial_days);
+        if (currency !== undefined) updates.currency = currency;
+        if (premium_features !== undefined) updates.premium_features = premium_features;
+        updates.updated_at = new Date().toISOString();
+
+        const { data, error } = await supabase
+            .from('saas_settings')
+            .upsert({ id: 1, ...updates })
+            .select()
+            .single();
+
+        if (data && !error) {
+            LOCAL_SAAS_SETTINGS = {
+                price_per_student: Number(data.price_per_student) || 2000,
+                default_trial_days: Number(data.default_trial_days) || 60,
+                currency: data.currency || 'FCFA',
+                premium_features: Array.isArray(data.premium_features) ? data.premium_features : LOCAL_SAAS_SETTINGS.premium_features
+            };
+        } else {
+            // Fallback local si la table saas_settings n'est pas encore exécutée en SQL
+            LOCAL_SAAS_SETTINGS = { ...LOCAL_SAAS_SETTINGS, ...updates };
+        }
+
+        return res.json({
+            message: 'Configuration SaaS mise à jour avec succès.',
+            settings: LOCAL_SAAS_SETTINGS
+        });
+    } catch (err) {
+        console.error('updateSaaSConfig Error:', err.message);
+        // Fallback local gracieux
+        if (price_per_student !== undefined) LOCAL_SAAS_SETTINGS.price_per_student = Number(price_per_student);
+        if (default_trial_days !== undefined) LOCAL_SAAS_SETTINGS.default_trial_days = Number(default_trial_days);
+        if (premium_features !== undefined) LOCAL_SAAS_SETTINGS.premium_features = premium_features;
+        return res.json({ message: 'Configuration enregistrée (mode local).', settings: LOCAL_SAAS_SETTINGS });
+    }
+}
 
 // ── GET /api/superadmin/schools ─────────────────────────────────
 // Liste toutes les écoles inscrites avec leurs stats
 async function getAllSchools(req, res) {
     try {
+        const saasConfig = await getStoredSaasSettings();
+        const pricePerStudent = saasConfig.price_per_student;
+
         const { data: schools, error } = await supabase
             .from('schools')
             .select('*')
@@ -43,7 +120,7 @@ async function getAllSchools(req, res) {
                     ...school,
                     student_count: studentCount || 0,
                     user_count: userCount || 0,
-                    revenue: (studentCount || 0) * PRICE_PER_STUDENT,
+                    revenue: (studentCount || 0) * pricePerStudent,
                     trial_days_left: school.status === 'trial'
                         ? Math.max(0, Math.ceil((new Date(school.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)))
                         : 0
@@ -64,7 +141,10 @@ async function getAllSchools(req, res) {
                 suspended_schools: schools.filter(s => s.status === 'suspended').length,
                 total_students: totalStudents,
                 total_revenue: totalRevenue,
-                price_per_student: PRICE_PER_STUDENT
+                price_per_student: pricePerStudent,
+                currency: saasConfig.currency,
+                default_trial_days: saasConfig.default_trial_days,
+                premium_features: saasConfig.premium_features
             }
         });
     } catch (err) {
@@ -135,6 +215,8 @@ async function createSchool(req, res) {
 
         const ipHash = getIpHash(req);
         const consentedAt = new Date().toISOString();
+        const saasConfig = await getStoredSaasSettings();
+        const trialDays = saasConfig.default_trial_days || 60;
 
         // 1. Créer l'école (Mass assignment protection)
         const schoolPayload = {
@@ -144,7 +226,7 @@ async function createSchool(req, res) {
             phone: validatedData.phone || null,
             email: validatedData.email || null,
             status: 'trial',
-            trial_ends_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // +2 mois
+            trial_ends_at: new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString(),
             accepted_terms: validatedData.accepted_terms,
             accepted_privacy_policy: validatedData.accepted_privacy_policy,
             marketing_consent: validatedData.marketing_consent,
@@ -413,4 +495,65 @@ async function impersonateSchool(req, res) {
     }
 }
 
-module.exports = { getAllSchools, createSchool, updateSchoolStatus, updateSchool, deleteSchool, getGlobalStats, impersonateSchool };
+// ── POST /api/superadmin/schools/:id/extend-trial ─────────────
+// Prolonger ou modifier la période d'essai d'une école
+async function extendSchoolTrial(req, res) {
+    const { id } = req.params;
+    const { extra_days, new_trial_ends_at } = req.body;
+
+    try {
+        const { data: currentSchool, error: fetchErr } = await supabase
+            .from('schools')
+            .select('trial_ends_at, name')
+            .eq('id', id)
+            .single();
+
+        if (fetchErr || !currentSchool) return res.status(404).json({ error: 'École introuvable.' });
+
+        let targetDate = new Date();
+        if (new_trial_ends_at) {
+            targetDate = new Date(new_trial_ends_at);
+        } else {
+            const baseDate = currentSchool.trial_ends_at && new Date(currentSchool.trial_ends_at) > new Date()
+                ? new Date(currentSchool.trial_ends_at)
+                : new Date();
+            const daysToAdd = Number(extra_days) || 30;
+            targetDate = new Date(baseDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+        }
+
+        const { data: updatedSchool, error: updateErr } = await supabase
+            .from('schools')
+            .update({
+                trial_ends_at: targetDate.toISOString(),
+                status: 'trial'
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (updateErr) throw updateErr;
+
+        console.log(`⏳ Essai prolongé pour ${currentSchool.name} jusqu'au ${targetDate.toLocaleDateString('fr-FR')}`);
+
+        return res.json({
+            message: `Période d'essai prolongée jusqu'au ${targetDate.toLocaleDateString('fr-FR')}.`,
+            school: updatedSchool
+        });
+    } catch (err) {
+        console.error('extendSchoolTrial Error:', err.message);
+        return res.status(500).json({ error: 'Erreur prolongation essai: ' + err.message });
+    }
+}
+
+module.exports = {
+    getAllSchools,
+    createSchool,
+    updateSchoolStatus,
+    updateSchool,
+    deleteSchool,
+    getGlobalStats,
+    impersonateSchool,
+    getSaasSettings,
+    updateSaaSConfig,
+    extendSchoolTrial
+};
