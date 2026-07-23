@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import { parentApi } from '../services/parentApi';
 import { LinkStudent } from './LinkStudent';
-import { GraduationCap, Lock, User, Phone, CheckCircle, Store } from 'lucide-react';
+import { GraduationCap, Lock, User, Phone, CheckCircle, Store, Eye, EyeOff } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 // ── Images de fond (Mobile uniquement) ──
@@ -66,6 +66,7 @@ export const Login: React.FC = () => {
   // Auth Form States
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [nom, setNom] = useState('');
   const [error, setError] = useState('');
   const [trialExpiredSchool, setTrialExpiredSchool] = useState<string | null>(null);
@@ -272,9 +273,14 @@ export const Login: React.FC = () => {
 
               <input type="text" placeholder="Nom complet" className="auth-input" value={nom} onChange={(e) => setNom(e.target.value)} required />
               <input type="tel" placeholder="Téléphone" className="auth-input" value={username} onChange={(e) => setUsername(e.target.value)} required />
-              <input type="password" placeholder="Mot de passe" className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="relative w-full">
+                <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" className="auth-input pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               <div className="text-left w-full mt-2 space-y-1.5 max-w-[280px]">
-                <p className="text-[10px] font-bold text-slate-700">Confidentialité & Données (IPDCP)</p>
+                <p className="text-[10px] font-bold text-slate-700">Confidentialité & Données (loi béninoise / APDP)</p>
                 
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" required />
@@ -323,7 +329,12 @@ export const Login: React.FC = () => {
               </select>
 
               <input type="text" placeholder="Utilisateur / Téléphone" className="auth-input" value={username} onChange={(e) => setUsername(e.target.value)} required />
-              <input type="password" placeholder="Mot de passe" className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="relative w-full">
+                <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" className="auth-input pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               <div className="flex items-center justify-between w-full mt-2 text-xs px-1">
                 <a href="#" className="text-slate-400 hover:text-amber-600">Mot de passe oublié ?</a>
                 <button 
@@ -410,7 +421,10 @@ export const Login: React.FC = () => {
                     </div>
                     <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
-                        <input type="password" placeholder="Mot de passe" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                     </div>
 
                     {view === 'login' ? (
@@ -426,7 +440,7 @@ export const Login: React.FC = () => {
                       </div>
                     ) : (
                       <div className="text-left w-full mt-2 space-y-1.5 px-1 border-t border-slate-100 pt-2">
-                        <p className="text-[10px] font-bold text-slate-700">Confidentialité & Données (loi togolaise / IPDCP)</p>
+                        <p className="text-[10px] font-bold text-slate-700">Confidentialité & Données (loi béninoise / APDP)</p>
                         
                         <label className="flex items-start gap-2 cursor-pointer">
                           <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" required />

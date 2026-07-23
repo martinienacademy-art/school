@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Building2, Users, AlertTriangle,
   Plus, Check, X, Clock, RefreshCw, ToggleLeft, ToggleRight,
-  Globe, Phone, Mail, MapPin, Wallet, Star, Trash2, ExternalLink
+  Globe, Phone, Mail, MapPin, Wallet, Star, Trash2, ExternalLink, Eye, EyeOff
 } from 'lucide-react';
 import { School } from '../../types';
 import { API_BASE_URL } from '../../config';
@@ -73,6 +73,7 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
     accepted_privacy_policy: false,
     marketing_consent: false
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -178,16 +179,21 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Mot de passe provisoire *</label>
-                <input type="password" value={form.admin_password} onChange={e => setForm(f => ({ ...f, admin_password: e.target.value }))}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Minimum 8 caractères" required minLength={6} />
+                <div className="relative">
+                  <input type={showPassword ? "text" : "password"} value={form.admin_password} onChange={e => setForm(f => ({ ...f, admin_password: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 pr-12 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Minimum 8 caractères" required minLength={6} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Section Confidentialité et Consentement */}
           <div className="border-t border-slate-700 pt-6">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Confidentialité & Protection des données (loi togolaise)</h3>
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Confidentialité & Protection des données (LOI BÉNINOISE / APDP)</h3>
             <div className="space-y-4">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -211,7 +217,7 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
                   required
                 />
                 <span className="text-sm text-slate-300 leading-tight">
-                  J'autorise le traitement des données de l'établissement conformément à la <span className="text-blue-400 font-bold hover:underline">Politique de Confidentialité (IPDCP)</span>. <span className="text-red-500">*</span>
+                  J'autorise le traitement des données de l'établissement conformément à la <span className="text-blue-400 font-bold hover:underline">Politique de Confidentialité (APDP / Code du Numérique)</span>. <span className="text-red-500">*</span>
                 </span>
               </label>
 

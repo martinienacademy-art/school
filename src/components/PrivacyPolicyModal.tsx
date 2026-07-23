@@ -55,7 +55,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, 
               Chez <span className="font-bold text-amber-500">GestioSchool</span>, nous croyons que la vie privée de vos enfants et la sécurité de vos données financières et académiques sont fondamentales. Cette politique vous explique comment les données sont collectées, stockées, protégées et isolées dans notre système multi-établissement.
             </p>
             <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-              Dernière mise à jour : Mai 2026. Conforme aux standards internationaux de protection des données (RGPD / RPD).
+              Dernière mise à jour : Juillet 2026. Conforme à la loi béninoise (Code du Numérique n° 2017-20) & aux recommandations de l'APDP (Autorité de Protection des Données Personnelles du Bénin).
             </p>
           </div>
 

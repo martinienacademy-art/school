@@ -3,7 +3,7 @@
 // ============================================================
 import React, { useState } from 'react';
 import { parentApi } from '../services/parentApi';
-import { User, Phone, Lock, AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
+import { User, Phone, Lock, AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 interface RegisterProps {
     onBack: () => void;
@@ -14,6 +14,7 @@ export const Register: React.FC<RegisterProps> = ({ onBack, onSuccess }) => {
     const [nom, setNom] = useState('');
     const [telephone, setTelephone] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -100,19 +101,26 @@ export const Register: React.FC<RegisterProps> = ({ onBack, onSuccess }) => {
                     <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-300" />
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Min. 6 caractères"
                             required
                             minLength={6}
-                            className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-full pl-10 pr-10 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-300/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-300 hover:text-white p-1"
+                        >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                     </div>
                 </div>
 
                 <div className="text-left w-full mt-4 space-y-2 border-t border-white/10 pt-3">
-                    <p className="text-xs font-bold text-blue-200">Confidentialité & Protection des données (loi togolaise / IPDCP)</p>
+                    <p className="text-xs font-bold text-blue-200">Confidentialité & Protection des données (loi béninoise / APDP)</p>
                     
                     <label className="flex items-start gap-2 cursor-pointer">
                         <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-1 accent-blue-500 rounded" required />
