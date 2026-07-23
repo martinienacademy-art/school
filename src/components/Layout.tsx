@@ -82,14 +82,14 @@ const RealTimeClock: React.FC = () => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-  const lomeTime = time.toLocaleTimeString('fr-FR', { timeZone: 'Africa/Lome', hour: '2-digit', minute: '2-digit' });
-  const lomeDate = time.toLocaleDateString('fr-FR', { timeZone: 'Africa/Lome', weekday: 'short', day: 'numeric', month: 'short' });
+  const beninTime = time.toLocaleTimeString('fr-FR', { timeZone: 'Africa/Porto-Novo', hour: '2-digit', minute: '2-digit' });
+  const beninDate = time.toLocaleDateString('fr-FR', { timeZone: 'Africa/Porto-Novo', weekday: 'short', day: 'numeric', month: 'short' });
   return (
     <div className="hidden md:flex flex-col items-end gap-0 mr-4">
       <div className="flex items-center gap-1.5 text-sm font-black tabular-nums text-slate-800 dark:text-slate-100">
-        {lomeTime}
+        {beninTime}
       </div>
-      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{lomeDate} — GMT</p>
+      <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{beninDate} — GMT+1 (WAT)</p>
     </div>
   );
 };

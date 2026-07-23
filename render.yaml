@@ -17,3 +17,5 @@ services:
         value: edufinance_secret_jwt_2025
       - key: PORT
         value: "10000"
+      - key: TZ
+        value: Africa/Porto-Novo

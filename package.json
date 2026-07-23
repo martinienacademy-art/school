@@ -45,6 +45,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@supabase/mcp-server-supabase": "^0.9.0",
     "@tailwindcss/vite": "4.1.17",
     "@types/node": "^22.0.0",
     "@types/react": "19.2.7",

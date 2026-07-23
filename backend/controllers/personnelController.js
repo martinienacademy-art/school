@@ -36,7 +36,7 @@ async function createPersonnel(req, res) {
         return res.status(400).json({ error: 'Champs requis : nom, telephone, password, role.' });
     }
 
-    if (!['admin', 'superviseur', 'comptable', 'censeur'].includes(role)) {
+    if (!['admin', 'superviseur', 'comptable', 'censeur', 'proviseur'].includes(role)) {
         return res.status(400).json({ error: 'Rôle invalide.' });
     }
 

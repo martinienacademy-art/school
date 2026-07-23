@@ -151,8 +151,13 @@ export const Parametres: React.FC = () => {
             <Layers className="w-64 h-64 text-indigo-500" />
         </div>
         <div className="relative z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500 text-[10px] font-black text-white uppercase tracking-[0.2em] mb-4 shadow-[0_0_15px_rgba(99,102,241,0.4)]">
-                <Shield className="w-3.5 h-3.5" /> Système
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500 text-[10px] font-black text-white uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+                  <Shield className="w-3.5 h-3.5" /> Système
+              </div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                  <Clock className="w-3.5 h-3.5" /> Fuseau Horaire : GMT+1 (Bénin / Africa/Porto-Novo)
+              </div>
             </div>
             <h2 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">
               Paramètres du <span className="text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 to-indigo-600">Système</span>

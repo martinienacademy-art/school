@@ -128,34 +128,34 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Nom de l'établissement *</label>
                 <input type="text" value={form.name} onChange={e => handleNameChange(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="ex: Lycée Excellence Lomé" required />
+                  placeholder="ex: Complexe Scolaire Excellence" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Slug URL *</label>
                 <div className="flex items-center bg-slate-800 border border-slate-600 rounded-xl overflow-hidden">
                   <span className="px-3 text-slate-500 text-sm">/</span>
-                  <input type="text" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
+                  <input type="text" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
                     className="flex-1 bg-transparent px-2 py-2.5 text-white placeholder-slate-500 focus:outline-none"
-                    placeholder="lycee-excellence-lome" required />
+                    placeholder="complexe-scolaire-excellence" required />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Adresse</label>
                 <input type="text" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
                   className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Adressez à Lomé" />
+                  placeholder="Adresse à Cotonou / Porto-Novo (Bénin)" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Téléphone</label>
                 <input type="text" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                   className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="+228 XX XX XX XX" />
+                  placeholder="+229 XX XX XX XX" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
                 <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                   className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="contact@ecole.tg" />
+                  placeholder="contact@ecole.bj" />
               </div>
             </div>
           </div>
@@ -384,8 +384,14 @@ export const SuperAdminDashboard: React.FC = () => {
             <Star className="w-8 h-8 text-white fill-white/20" />
           </div>
           <div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight uppercase">SuperAdmin Global</h1>
-            <p className="text-slate-400 text-sm sm:text-base font-medium mt-1">Plateforme SaaS — Contrôle & Gestion centralisée</p>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight uppercase">SuperAdmin Global</h1>
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                <Clock className="w-3.5 h-3.5" />
+                GMT+1 (Bénin — Africa/Porto-Novo)
+              </span>
+            </div>
+            <p className="text-slate-400 text-sm sm:text-base font-medium">Plateforme SaaS — Contrôle &amp; Gestion centralisée (Référence : Bénin / UTC+1)</p>
           </div>
         </div>
         <div className="flex items-center gap-3 relative z-10">
