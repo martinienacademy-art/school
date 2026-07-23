@@ -295,14 +295,35 @@ export const SuperAdminDashboard: React.FC = () => {
         fetch(`${API_BASE_URL}/superadmin/stats`, { headers: getAuthHeaders() }),
         fetch(`${API_BASE_URL}/superadmin/settings`, { headers: getAuthHeaders() })
       ]);
+
+      let loadedSchools: SchoolWithStats[] = [];
       if (schoolsRes.ok) {
         const d = await schoolsRes.json();
-        setSchools(d.schools || []);
+        loadedSchools = d.schools || [];
+        setSchools(loadedSchools);
       }
+
       if (statsRes.ok) {
         const d = await statsRes.json();
         setStats(d);
+      } else if (loadedSchools.length >= 0) {
+        // Fallback si la route stats globale rencontre un délai
+        const totalSt = loadedSchools.reduce((a, s) => a + (s.student_count || 0), 0);
+        const totalRev = loadedSchools.reduce((a, s) => a + (s.revenue || 0), 0);
+        setStats({
+          total_schools: loadedSchools.length,
+          active_schools: loadedSchools.filter(s => s.status === 'active').length,
+          trial_schools: loadedSchools.filter(s => s.status === 'trial').length,
+          suspended_schools: loadedSchools.filter(s => s.status === 'suspended').length,
+          expired_trials: loadedSchools.filter(s => s.status === 'trial' && s.trial_days_left === 0).length,
+          total_students: totalSt,
+          total_users: loadedSchools.reduce((a, s) => a + (s.user_count || 0), 0),
+          total_revenue: totalRev,
+          price_per_student: saasSettings.price_per_student || 2000,
+          currency: saasSettings.currency || 'FCFA'
+        });
       }
+
       if (settingsRes.ok) {
         const d = await settingsRes.json();
         if (d.price_per_student !== undefined) {

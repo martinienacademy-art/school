@@ -355,6 +355,9 @@ async function updateSchool(req, res) {
 // Statistiques globales de la plateforme
 async function getGlobalStats(req, res) {
     try {
+        const saasConfig = await getStoredSaasSettings();
+        const pricePerStudent = saasConfig.price_per_student || 2000;
+
         const { count: totalSchools } = await supabase
             .from('schools').select('*', { count: 'exact', head: true });
 
@@ -392,9 +395,9 @@ async function getGlobalStats(req, res) {
             expired_trials: expiredTrials,
             total_students: totalStudents || 0,
             total_users: totalUsers || 0,
-            total_revenue: (totalStudents || 0) * PRICE_PER_STUDENT,
-            price_per_student: PRICE_PER_STUDENT,
-            currency: 'FCFA'
+            total_revenue: (totalStudents || 0) * pricePerStudent,
+            price_per_student: pricePerStudent,
+            currency: saasConfig.currency || 'FCFA'
         });
     } catch (err) {
         console.error('SuperAdmin getGlobalStats Error:', err.message);
