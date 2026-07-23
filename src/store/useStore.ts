@@ -31,6 +31,8 @@ export interface AppState {
   fetchUnreadMessages: () => Promise<void>;
   login: (username: string, password: string, schoolSlug?: string) => Promise<boolean>;
   logout: () => void;
+  isImpersonating: boolean;
+  stopImpersonating: () => void;
 
   // Navigation
   currentPage: AppPage;
@@ -385,7 +387,7 @@ export const useStore = create<AppState>()(
               schoolName: result.user.school_name || 'Établissement',
             });
 
-            set({ user: loggedUser, isAuthenticated: true, currentPage: targetPage });
+            set({ user: loggedUser, isAuthenticated: true, isImpersonating: false, currentPage: targetPage });
             get().addActivityLog(createActivityLog(loggedUser.nom, loggedUser.role, 'connexion', 'Connexion API réussie'));
             if (loggedUser.role !== 'superadmin') get().fetchAllFromBackend();
             return true;
@@ -402,15 +404,52 @@ export const useStore = create<AppState>()(
         // Toute authentification doit passer par le backend API.
         return false;
       },
+      isImpersonating: typeof window !== 'undefined' ? !!localStorage.getItem('superadmin_impersonator_token') : false,
+      stopImpersonating: () => {
+        const saToken = localStorage.getItem('superadmin_impersonator_token');
+        const saUserStr = localStorage.getItem('superadmin_impersonator_user');
+        if (saToken && saUserStr) {
+          localStorage.setItem('parent_token', saToken);
+          localStorage.removeItem('superadmin_impersonator_token');
+          localStorage.removeItem('superadmin_impersonator_user');
+          let saUser: User;
+          try {
+            saUser = JSON.parse(saUserStr);
+          } catch {
+            saUser = { id: 'superadmin', role: 'superadmin', nom: 'SuperAdmin Global', username: 'admin' };
+          }
+          set({
+            user: saUser,
+            isAuthenticated: true,
+            isImpersonating: false,
+            currentPage: 'superadmin_dashboard',
+            students: [],
+            parents: [],
+            presences: [],
+            activityLogs: [],
+            links: [],
+            announcements: [],
+            announcementReads: [],
+            matieres: [],
+            classeMatieres: [],
+            notes: [],
+            schoolLogo: null,
+            schoolName: 'SuperAdmin'
+          });
+        }
+      },
       logout: () => {
         const u = get().user;
         if (u) {
           get().addActivityLog(createActivityLog(u.nom, u.role, 'connexion', 'Déconnexion'));
         }
         localStorage.removeItem('parent_token');
+        localStorage.removeItem('superadmin_impersonator_token');
+        localStorage.removeItem('superadmin_impersonator_user');
         set({
           user: null, 
           isAuthenticated: false, 
+          isImpersonating: false,
           currentPage: 'dashboard',
           students: [],
           parents: [],

@@ -339,6 +339,14 @@ export const SuperAdminDashboard: React.FC = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur lors de la connexion');
       
+      // Sauvegarder l'identité SuperAdmin pour pouvoir y retourner
+      const currentToken = localStorage.getItem('parent_token');
+      const currentUser = useStore.getState().user;
+      if (currentToken && (currentUser?.role === 'superadmin' || !localStorage.getItem('superadmin_impersonator_token'))) {
+        localStorage.setItem('superadmin_impersonator_token', currentToken);
+        localStorage.setItem('superadmin_impersonator_user', JSON.stringify(currentUser || { id: 'superadmin', role: 'superadmin', nom: 'SuperAdmin Global', username: 'admin' }));
+      }
+
       // Stocker le token
       localStorage.setItem('parent_token', data.token);
       
@@ -351,6 +359,7 @@ export const SuperAdminDashboard: React.FC = () => {
         schoolName: data.user.school_name || 'Établissement',
         user: data.user,
         isAuthenticated: true,
+        isImpersonating: true,
         currentPage: 'dashboard'
       });
 

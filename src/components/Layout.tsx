@@ -9,7 +9,7 @@ import {
   Bell, ChevronRight, ChevronLeft, Target, Award, MessageSquare,
   ScanLine, IdCard, ShieldCheck, Activity, Database, Megaphone,
   BookOpen, Edit3, FileSpreadsheet, Sun, Moon, Clock,
-  PanelLeftClose, PanelLeftOpen, RefreshCw, Command, Shield
+  PanelLeftClose, PanelLeftOpen, RefreshCw, Command, Shield, ArrowLeft
 } from 'lucide-react';
 
 import { SupportModal } from './SupportModal';
@@ -294,10 +294,12 @@ const SIDEBAR_COLLAPSED_KEY = 'sidebar_collapsed';
 
 // ── LAYOUT PRINCIPAL ──────────────────────────────────────────
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const user = useStore((s) => s.user);
   const currentPage = useStore((s) => s.currentPage);
   const setCurrentPage = useStore((s) => s.setCurrentPage);
-  const user = useStore((s) => s.user);
   const logout = useStore((s) => s.logout);
+  const isImpersonating = useStore((s) => s.isImpersonating);
+  const stopImpersonating = useStore((s) => s.stopImpersonating);
   const schoolName = useStore((s) => s.schoolName);
   const schoolYear = useStore((s) => s.schoolYear);
   const students = useStore((s) => s.students);
@@ -434,6 +436,34 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       >
         <div className="flex-1 flex flex-col min-w-0 p-2 lg:p-4 pb-24 lg:pb-4">
           
+          {/* ── BANNIÈRE RETOUR SUPERADMIN (IMPERSONNALISATION) ── */}
+          {isImpersonating && (
+            <div className="mb-4 px-4 py-3 bg-gradient-to-r from-amber-600 via-amber-700 to-indigo-950 text-white rounded-[24px] shadow-xl border border-amber-400/30 flex flex-col sm:flex-row items-center justify-between gap-3 animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl text-amber-200 shrink-0">
+                  <Shield className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-200 rounded-md border border-amber-300/30">
+                      Mode SuperAdmin (Impersonnalisation Établissement)
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-white/90 mt-0.5">
+                    Vous naviguez actuellement dans l'établissement <strong className="text-amber-200 underline">{schoolName}</strong> en tant que <strong className="text-white">{user?.nom || 'Admin'}</strong> ({user?.role}).
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => stopImpersonating()}
+                className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-amber-50 text-slate-900 font-black text-xs rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 shrink-0 border border-white/50"
+              >
+                <ArrowLeft className="w-4 h-4 text-amber-600" />
+                Quitter et retourner au SuperAdmin
+              </button>
+            </div>
+          )}
+
           {/* ── Premium Topbar ── */}
           <header className="sticky top-2 lg:top-4 z-40 mb-6 px-4 lg:px-6 h-[72px] flex items-center justify-between gap-4 bg-white/70 dark:bg-slate-900/70 backdrop-blur-[40px] border border-white/50 dark:border-slate-800/50 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)]">
             
