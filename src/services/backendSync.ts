@@ -41,17 +41,19 @@ export async function syncToBackend(store: Partial<AppState>, replace: boolean =
     const { 
         appName, schoolName, schoolYear, 
         messageRemerciement, messageRappel, 
+        officialHeader,
         schoolLogo, schoolStamp, cycleSchedules, tranches 
     } = store;
     
     // Si l'un des paramètres de configuration est fourni, on envoie appSettings
-    if (appName !== undefined || schoolName !== undefined || schoolLogo !== undefined || schoolStamp !== undefined || cycleSchedules !== undefined || tranches !== undefined) {
+    if (appName !== undefined || schoolName !== undefined || schoolLogo !== undefined || schoolStamp !== undefined || cycleSchedules !== undefined || tranches !== undefined || officialHeader !== undefined) {
         payload.appSettings = {
             appName,
             schoolName,
             schoolYear,
             messageRemerciement,
             messageRappel,
+            officialHeader,
             schoolLogo,
             schoolStamp,
             cycleSchedules,

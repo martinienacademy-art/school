@@ -9,6 +9,7 @@ import { Student } from '../types';
 import { ClassFinanceRow, computeMonthlyEvolution, computeRecouvrement } from '../services/analyticsService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useStore } from '../store/useStore';
 
 const COLORS = {
     primary: [0, 0, 0],         // Pure black
@@ -68,19 +69,38 @@ export const generateRapportMensuelPDF = (
     const centerX = w / 2;
     
     // Bloc Ministère (Centre-Gauche)
-    doc.setFontSize(10);
-    doc.text('RÉPUBLIQUE TOGOLAISE', centerX - 35, y, { align: 'center' });
-    doc.setFont('times', 'italic');
-    doc.setFontSize(8);
-    doc.text('Travail - Liberté - Patrie', centerX - 35, y + 5, { align: 'center' });
-    doc.setLineWidth(0.3);
-    doc.line(centerX - 42, y + 7.5, centerX - 28, y + 7.5);
-    doc.setFont('times', 'bold');
-    doc.setFontSize(11);
-    doc.text('MINISTERE DE L\'EDUCATION NATIONALE', centerX - 35, y + 13, { align: 'center' });
-    doc.setFontSize(9.5);
-    doc.text('DIRECTION RÉGIONALE DE L\'ÉDUCATION', centerX - 35, y + 18, { align: 'center' });
-    doc.text('INSPECTION DE L\'ENSEIGNEMENT GENERAL', centerX - 35, y + 23, { align: 'center' });
+    // Bloc Ministère (Centre-Gauche)
+    const officialHeader = useStore.getState().officialHeader;
+    if (officialHeader) {
+      const lines = officialHeader.split('\n');
+      let startY = y;
+      lines.forEach((line, index) => {
+        doc.setFontSize(index === 0 ? 10 : (index === lines.length - 1 ? 11 : 9.5));
+        doc.setFont('times', index === 0 ? 'bold' : (index === 1 ? 'italic' : 'bold'));
+        doc.text(line, centerX - 35, startY, { align: 'center' });
+        if (index === 1) {
+          doc.setLineWidth(0.3);
+          doc.line(centerX - 42, startY + 2.5, centerX - 28, startY + 2.5);
+          startY += 8.5;
+        } else {
+          startY += 5;
+        }
+      });
+    } else {
+      doc.setFontSize(10);
+      doc.text('RÉPUBLIQUE TOGOLAISE', centerX - 35, y, { align: 'center' });
+      doc.setFont('times', 'italic');
+      doc.setFontSize(8);
+      doc.text('Travail - Liberté - Patrie', centerX - 35, y + 5, { align: 'center' });
+      doc.setLineWidth(0.3);
+      doc.line(centerX - 42, y + 7.5, centerX - 28, y + 7.5);
+      doc.setFont('times', 'bold');
+      doc.setFontSize(11);
+      doc.text('MINISTERE DE L\'EDUCATION NATIONALE', centerX - 35, y + 13, { align: 'center' });
+      doc.setFontSize(9.5);
+      doc.text('DIRECTION RÉGIONALE DE L\'ÉDUCATION', centerX - 35, y + 18, { align: 'center' });
+      doc.text('INSPECTION DE L\'ENSEIGNEMENT GENERAL', centerX - 35, y + 23, { align: 'center' });
+    }
 
     // Bloc Établissement (Centre-Droite)
     doc.setFontSize(10);

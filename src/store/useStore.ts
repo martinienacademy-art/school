@@ -17,6 +17,8 @@ export interface AppState {
   setSchoolLogo: (logo: string | null) => void;
   schoolStamp: string | null;       // Sceau de l'école
   setSchoolStamp: (stamp: string | null) => void;
+  officialHeader: string | null;
+  setOfficialHeader: (header: string | null) => void;
   tranches: any[];
   setTranches: (tranches: any[]) => void;
 
@@ -81,6 +83,7 @@ export interface AppState {
     schoolStamp?: string | null,
     messageRemerciement?: string,
     messageRappel?: string,
+    officialHeader?: string | null,
     tranches?: any[]
   }) => Promise<void>;
   settings: AppSettings;
@@ -255,12 +258,14 @@ export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       // ── Identité ─────────────────────────────────────────
-      appName: 'EduFinance',
+      appName: 'GestioSchool',
       setAppName: (name) => set({ appName: name }),
       schoolLogo: null,
       setSchoolLogo: (logo) => set({ schoolLogo: logo }),
       schoolStamp: null,
       setSchoolStamp: (stamp) => set({ schoolStamp: stamp }),
+      officialHeader: "MINISTERE DE L'EDUCATION NATIONALE",
+      setOfficialHeader: (header) => set({ officialHeader: header }),
       tranches: [],
       setTranches: (tranches) => {
         set({ tranches });
@@ -671,6 +676,7 @@ export const useStore = create<AppState>()(
         schoolYear: '2026-2027',
         messageRemerciement: "Nous vous remercions sincèrement pour votre ponctualité dans le règlement de la scolarité. Votre soutien contribue au bon fonctionnement de notre établissement.",
         messageRappel: "Nous vous rappelons cordialement que le règlement du solde de scolarité est attendu. Veuillez régulariser votre situation dans les meilleurs délais.",
+        officialHeader: "MINISTERE DE L'EDUCATION NATIONALE",
         currency: 'FCFA',
         nomEcole: 'Établissement Scolaire',
         anneScolaire: '2026-2027',
@@ -1023,6 +1029,7 @@ export const useStore = create<AppState>()(
               schoolStamp: data.appSettings.schoolStamp !== undefined ? data.appSettings.schoolStamp : get().schoolStamp,
               messageRemerciement: data.appSettings.messageRemerciement || get().messageRemerciement,
               messageRappel: data.appSettings.messageRappel || get().messageRappel,
+              officialHeader: data.appSettings.officialHeader !== undefined ? data.appSettings.officialHeader : get().officialHeader,
               ...(data.appSettings.cycleSchedules ? { cycleSchedules: data.appSettings.cycleSchedules } : {}),
               ...(data.appSettings.tranches ? { tranches: data.appSettings.tranches } : {}),
             });

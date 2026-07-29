@@ -14,10 +14,12 @@ export const Parametres: React.FC = () => {
   const appName = useStore((s) => s.appName);
   const schoolLogo = useStore((s) => s.schoolLogo);
   const schoolStamp = useStore((s) => s.schoolStamp);
+  const officialHeader = useStore((s) => s.officialHeader);
   const user = useStore((s) => s.user);
 
   const [localSchool, setLocalSchool] = useState(schoolName);
   const [localYear, setLocalYear] = useState(schoolYear);
+  const [localHeader, setLocalHeader] = useState(officialHeader || "MINISTERE DE L'EDUCATION NATIONALE");
   const [localRem, setLocalRem] = useState(messageRemerciement);
   const [localRap, setLocalRap] = useState(messageRappel);
   const [localAppName, setLocalAppName] = useState(appName);
@@ -135,6 +137,7 @@ export const Parametres: React.FC = () => {
       messageRemerciement: localRem,
       messageRappel: localRap,
       appName: localAppName,
+      officialHeader: localHeader,
       schoolLogo: logoPreview,
       schoolStamp: stampPreview
     });
@@ -215,6 +218,20 @@ export const Parametres: React.FC = () => {
                             value={localYear}
                             onChange={(e) => setLocalYear(e.target.value)}
                             placeholder="Ex : 2026-2027"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 pt-6 border-t border-slate-100 dark:border-slate-800/60">
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
+                            En-tête officiel (affiché sur les bulletins et reçus)
+                        </label>
+                        <textarea
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none h-24"
+                            value={localHeader}
+                            onChange={(e) => setLocalHeader(e.target.value)}
+                            placeholder="Ex : RÉPUBLIQUE DU BÉNIN&#10;MINISTÈRE DES ENSEIGNEMENTS MATERNEL ET PRIMAIRE"
                         />
                     </div>
                 </div>

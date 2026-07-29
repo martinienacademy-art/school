@@ -6,6 +6,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Student } from '../types';
+import { useStore } from '../store/useStore';
 
 // ── Utilitaires (inchangés) ──────────────────────────────────
 const fmtMoney = (n: number) => new Intl.NumberFormat('fr-FR').format(n).replace(/\s/g, '.') + ' FCFA';
@@ -44,7 +45,8 @@ const drawOfficialHeader = (
   docNumber: string,
   schoolLogo?: string,
   schoolStamp?: string,
-  schoolNameFontSize: number = 18
+  schoolNameFontSize: number = 18,
+  officialHeader?: string
 ): number => {
   const w = doc.internal.pageSize.getWidth();
   let y = 14;
@@ -63,19 +65,36 @@ const drawOfficialHeader = (
   const centerX = w / 2;
   
   // Bloc Ministère (Centre-Gauche)
-  doc.setFontSize(10);
-  doc.text('RÉPUBLIQUE TOGOLAISE', centerX - 35, y, { align: 'center' });
-  doc.setFont('times', 'italic');
-  doc.setFontSize(8);
-  doc.text('Travail - Liberté - Patrie', centerX - 35, y + 5, { align: 'center' });
-  doc.setLineWidth(0.3);
-  doc.line(centerX - 42, y + 7, centerX - 28, y + 7);
-  doc.setFont('times', 'bold');
-  doc.setFontSize(10.5);
-  doc.text('MINISTERE DE L\'EDUCATION NATIONALE', centerX - 35, y + 13, { align: 'center' });
-  doc.setFontSize(9.5);
-  doc.text('DIRECTION RÉGIONALE DE L\'ÉDUCATION', centerX - 35, y + 18, { align: 'center' });
-  doc.text('INSPECTION DE L\'ENSEIGNEMENT GENERAL', centerX - 35, y + 23, { align: 'center' });
+  if (officialHeader) {
+    const lines = officialHeader.split('\n');
+    let startY = y;
+    lines.forEach((line, index) => {
+      doc.setFontSize(index === 0 ? 10 : (index === lines.length - 1 ? 10.5 : 9.5));
+      doc.setFont('times', index === 0 ? 'bold' : (index === 1 ? 'italic' : 'bold'));
+      doc.text(line, centerX - 35, startY, { align: 'center' });
+      if (index === 1) {
+        doc.setLineWidth(0.3);
+        doc.line(centerX - 42, startY + 2, centerX - 28, startY + 2);
+        startY += 8;
+      } else {
+        startY += 5;
+      }
+    });
+  } else {
+    doc.setFontSize(10);
+    doc.text('RÉPUBLIQUE TOGOLAISE', centerX - 35, y, { align: 'center' });
+    doc.setFont('times', 'italic');
+    doc.setFontSize(8);
+    doc.text('Travail - Liberté - Patrie', centerX - 35, y + 5, { align: 'center' });
+    doc.setLineWidth(0.3);
+    doc.line(centerX - 42, y + 7, centerX - 28, y + 7);
+    doc.setFont('times', 'bold');
+    doc.setFontSize(10.5);
+    doc.text('MINISTERE DE L\'EDUCATION NATIONALE', centerX - 35, y + 13, { align: 'center' });
+    doc.setFontSize(9.5);
+    doc.text('DIRECTION RÉGIONALE DE L\'ÉDUCATION', centerX - 35, y + 18, { align: 'center' });
+    doc.text('INSPECTION DE L\'ENSEIGNEMENT GENERAL', centerX - 35, y + 23, { align: 'center' });
+  }
 
   // Bloc Établissement (Centre-Droite)
   doc.setFontSize(schoolNameFontSize);
@@ -404,7 +423,8 @@ export const generateRecuPDF = (
   const h = doc.internal.pageSize.getHeight();
 
   // En-tête officiel centré
-  let y = drawOfficialHeader(doc, schoolName, schoolYear, 'RÉCAPITULATIF FINANCIER DE SCOLARITÉ', docNumber, schoolLogo, schoolStamp, 10);
+  const recuOfficialHeader = useStore.getState().officialHeader || undefined;
+  let y = drawOfficialHeader(doc, schoolName, schoolYear, 'RÉCAPITULATIF FINANCIER DE SCOLARITÉ', docNumber, schoolLogo, schoolStamp, 10, recuOfficialHeader);
 
   // Bloc élève deux colonnes
   y = drawStudentBlock(doc, student, y);
@@ -450,7 +470,8 @@ export const generateClassePDF = (
   const w = doc.internal.pageSize.getWidth();
   const docNumber = `YZO-${new Date().getFullYear()}-CL${classe.replace(/\s/g, '').toUpperCase()}`;
 
-  let y = drawOfficialHeader(doc, schoolName, schoolYear, `LISTE FINANCIÈRE — ${classe.toUpperCase()}`, docNumber, schoolLogo, schoolStamp);
+  const classeOfficialHeader = useStore.getState().officialHeader || undefined;
+  let y = drawOfficialHeader(doc, schoolName, schoolYear, `LISTE FINANCIÈRE — ${classe.toUpperCase()}`, docNumber, schoolLogo, schoolStamp, 18, classeOfficialHeader);
 
   // Statistiques condensées sur une ligne
   const totalEcolage = students.reduce((a, s) => a + s.ecolage, 0);
@@ -577,7 +598,8 @@ export const generateNonSoldesPDF = (
   const w = doc.internal.pageSize.getWidth();
   const docNumber = `YZO-${new Date().getFullYear()}-NONSOL`;
 
-  let y = drawOfficialHeader(doc, schoolName, schoolYear, 'LISTE DES ÉLÈVES NON SOLDÉS — RAPPEL DE PAIEMENT', docNumber, schoolLogo, schoolStamp);
+  const nonSoldesOfficialHeader = useStore.getState().officialHeader || undefined;
+  let y = drawOfficialHeader(doc, schoolName, schoolYear, 'LISTE DES ÉLÈVES NON SOLDÉS — RAPPEL DE PAIEMENT', docNumber, schoolLogo, schoolStamp, 18, nonSoldesOfficialHeader);
 
   // Encadré rappel institutionnel
   doc.setFillColor(255, 241, 242);

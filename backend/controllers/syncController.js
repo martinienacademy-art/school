@@ -226,6 +226,7 @@ async function syncFromFrontend(req, res) {
                     school_stamp: appSettings.schoolStamp,
                     message_remerciement: appSettings.messageRemerciement,
                     message_rappel: appSettings.messageRappel,
+                    official_header: appSettings.officialHeader,
                     tranches: appSettings.tranches || [],
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' });
@@ -435,6 +436,7 @@ async function syncToFrontend(req, res) {
                 schoolStamp: appSettings.school_stamp,
                 messageRemerciement: appSettings.message_remerciement,
                 messageRappel: appSettings.message_rappel,
+                officialHeader: appSettings.official_header,
                 tranches: appSettings.tranches || []
             } : null,
             announcements: (announcements || []).map(a => ({

@@ -8,7 +8,7 @@ import { FileSpreadsheet, Printer, Users, Award, ShieldCheck } from 'lucide-reac
 export const Bulletins: React.FC = () => {
     const { 
         currentPeriode, students, matieres, classeMatieres, notes,
-        schoolName, schoolLogo, schoolStamp, schoolYear 
+        schoolName, schoolLogo, schoolStamp, schoolYear, officialHeader 
     } = useStore();
 
     const classesList = Array.from(new Set(students.map(s => s.classe))).sort();
@@ -144,6 +144,7 @@ export const Bulletins: React.FC = () => {
                                 schoolStamp={schoolStamp}
                                 schoolYear={schoolYear}
                                 studentPhoto={b.eleve.photoUrl || null}
+                                officialHeader={officialHeader}
                             />
                         </div>
                     ))}

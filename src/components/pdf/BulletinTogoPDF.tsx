@@ -8,6 +8,7 @@ interface BulletinTogoPDFProps {
     schoolStamp?: string | null;
     schoolYear: string;
     studentPhoto?: string | null;
+    officialHeader?: string | null;
 }
 
 // Formatte la date du jour en français
@@ -18,7 +19,7 @@ const getDateFr = (): string => {
 };
 
 export const BulletinTogoPDF = React.forwardRef<HTMLDivElement, BulletinTogoPDFProps>(
-    ({ data, schoolName, schoolLogo, schoolStamp, schoolYear, studentPhoto }, ref) => {
+    ({ data, schoolName, schoolLogo, schoolStamp, schoolYear, studentPhoto, officialHeader }, ref) => {
     return (
         <div
             ref={ref}
@@ -62,12 +63,25 @@ export const BulletinTogoPDF = React.forwardRef<HTMLDivElement, BulletinTogoPDFP
                         <div className="flex-1 flex justify-center gap-8 items-start px-2">
                              {/* 2. BLOC MINISTÈRE (Centre-Gauche) */}
                             <div className="flex-1 flex flex-col items-center text-center space-y-1.5">
-                                <p className="font-bold uppercase text-[11px] tracking-widest leading-none">République Togolaise</p>
-                                <p className="italic text-[9px] leading-none">Travail – Liberté – Patrie</p>
-                                <div className="w-12 border-t border-black my-1"></div>
-                                <p className="font-black uppercase text-[11.5px] leading-tight">Ministère de l'Éducation Nationale</p>
-                                <p className="font-bold uppercase text-[10px] leading-tight">Direction Régionale de l'Éducation</p>
-                                <p className="font-bold uppercase text-[10px] leading-tight">Inspection de l'Enseignement Général</p>
+                                {officialHeader ? (
+                                    officialHeader.split('\n').map((line, idx, arr) => (
+                                        <React.Fragment key={idx}>
+                                            <p className={`${idx === 0 ? 'font-bold uppercase text-[11px] tracking-widest' : idx === 1 ? 'italic text-[9px]' : idx === arr.length - 1 ? 'font-black uppercase text-[11.5px]' : 'font-bold uppercase text-[10px]'} leading-tight`}>
+                                                {line}
+                                            </p>
+                                            {idx === 1 && <div className="w-12 border-t border-black my-1"></div>}
+                                        </React.Fragment>
+                                    ))
+                                ) : (
+                                    <>
+                                        <p className="font-bold uppercase text-[11px] tracking-widest leading-none">République Togolaise</p>
+                                        <p className="italic text-[9px] leading-none">Travail – Liberté – Patrie</p>
+                                        <div className="w-12 border-t border-black my-1"></div>
+                                        <p className="font-black uppercase text-[11.5px] leading-tight">Ministère de l'Éducation Nationale</p>
+                                        <p className="font-bold uppercase text-[10px] leading-tight">Direction Régionale de l'Éducation</p>
+                                        <p className="font-bold uppercase text-[10px] leading-tight">Inspection de l'Enseignement Général</p>
+                                    </>
+                                )}
                             </div>
 
                             {/* 3. BLOC ÉTABLISSEMENT (Centre-Droite) */}
