@@ -18,8 +18,11 @@ async function listStudents(req, res) {
 
         if (search || nom) {
             const q = (search || nom).toLowerCase().trim();
-            // Recherche flexible : nom, prénom, ou combinaison
-            query = query.or(`nom.ilike.%${q}%,prenom.ilike.%${q}%`);
+            // Split search terms by space to allow searching "Firstname Lastname"
+            const words = q.split(/\s+/);
+            words.forEach(word => {
+                query = query.or(`nom.ilike.%${word}%,prenom.ilike.%${word}%`);
+            });
         }
 
         if (prenom && !search && prenom !== nom) {
