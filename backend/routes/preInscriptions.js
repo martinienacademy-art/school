@@ -1,13 +1,40 @@
 const express = require('express');
 const router = express.Router();
+const Joi = require('joi');
+const rateLimit = require('express-rate-limit');
 const { supabase } = require('../utils/supabase');
 const { authenticateToken, requireSchool, requireSchoolAdmin } = require('../middleware/auth');
 
+// Rate limiting : 5 requêtes par heure par IP pour prévenir le spam
+const preInscriptionLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 heure
+    max: 5,
+    message: { error: 'Trop de demandes de pré-inscription. Veuillez réessayer plus tard.' }
+});
+
+// Schéma de validation Joi
+const preInscriptionSchema = Joi.object({
+    nom: Joi.string().trim().min(2).max(100).required(),
+    prenom: Joi.string().trim().min(2).max(100).required(),
+    dateNaissance: Joi.string().isoDate().required(),
+    sexe: Joi.string().valid('M', 'F').required(),
+    cycle: Joi.string().trim().max(50).required(),
+    classe: Joi.string().trim().max(50).required(),
+    ecolePrecedente: Joi.string().trim().max(100).allow('', null),
+    contactTuteur: Joi.string().trim().max(50).required(),
+    nomTuteur: Joi.string().trim().max(100).required()
+}).unknown(false); // Refuse les champs non définis
+
 // 1. ROUTE PUBLIQUE : Créer une pré-inscription (appelée sans token)
-router.post('/:schoolSlug', async (req, res) => {
+router.post('/:schoolSlug', preInscriptionLimiter, async (req, res) => {
     try {
         const { schoolSlug } = req.params;
-        const data = req.body; // Identity, Contact, etc.
+        
+        // Validation stricte des données avec Joi
+        const { error: validationError, value: data } = preInscriptionSchema.validate(req.body);
+        if (validationError) {
+            return res.status(400).json({ error: validationError.details[0].message });
+        }
 
         // Vérifier si l'école existe (optionnel mais recommandé)
         const { data: school, error: schoolErr } = await supabase
