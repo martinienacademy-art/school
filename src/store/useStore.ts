@@ -162,6 +162,12 @@ export interface AppState {
   setLastReportMonth: (month: string) => void;
   privacyMode: boolean;
   setPrivacyMode: (v: boolean) => void;
+  
+  // Pré-inscriptions
+  preInscriptions: any[];
+  setPreInscriptions: (p: any[]) => void;
+  fetchPreInscriptions: () => Promise<void>;
+  updatePreInscriptionStatus: (id: string, status: 'APPROVED' | 'REJECTED') => Promise<void>;
 }
 
 // Authentification gérée par Supabase
@@ -1290,6 +1296,43 @@ export const useStore = create<AppState>()(
           });
         } catch (err) {
           console.error('Failed to delete note from cloud:', err);
+        }
+      },
+
+      preInscriptions: [],
+      setPreInscriptions: (p) => set({ preInscriptions: p }),
+      fetchPreInscriptions: async () => {
+        try {
+          const { getAuthHeaders } = await import('../services/apiHelpers');
+          const res = await fetch(`${API_BASE_URL}/pre-inscriptions`, {
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            const data = await res.json();
+            set({ preInscriptions: data });
+          }
+        } catch (err) {
+          console.error('Error fetching preInscriptions', err);
+        }
+      },
+      updatePreInscriptionStatus: async (id, status) => {
+        try {
+          const { getAuthHeaders } = await import('../services/apiHelpers');
+          const res = await fetch(`${API_BASE_URL}/pre-inscriptions/${id}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders()
+            },
+            body: JSON.stringify({ status })
+          });
+          if (res.ok) {
+            set(s => ({
+              preInscriptions: s.preInscriptions.map(p => p.id === id ? { ...p, status } : p)
+            }));
+          }
+        } catch (err) {
+          console.error('Error updating preInscription status', err);
         }
       }
 

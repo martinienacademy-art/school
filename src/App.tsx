@@ -7,6 +7,7 @@ import { Login } from './components/Login';
 import { Layout } from './components/Layout';
 import { AnnouncementPopup } from './components/AnnouncementPopup';
 import { webPushService } from './services/webPushService';
+import { PublicPreInscription } from './components/PublicPreInscription';
 
 
 // Lazy loading for pages to reduce initial bundle size
@@ -36,6 +37,7 @@ const ParentsList = lazy(() => import('./pages/ParentsList').then(m => ({ defaul
 const ImportExport = lazy(() => import('./components/ImportExport').then(m => ({ default: m.ImportExport })));
 const ChatWindow = lazy(() => import('./components/ChatWindow').then(m => ({ default: m.ChatWindow })));
 const Annonces = lazy(() => import('./pages/Annonces').then(m => ({ default: m.Annonces })));
+const PreInscriptions = lazy(() => import('./pages/PreInscriptions').then(m => ({ default: m.PreInscriptions })));
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard').then(m => ({ default: m.SuperAdminDashboard })));
 const GestionPersonnel = lazy(() => import('./components/GestionPersonnel').then(m => ({ default: m.GestionPersonnel })));
 
@@ -147,6 +149,7 @@ const PageContent: React.FC = () => {
     case 'import_export': return <ImportExport />;
     case 'chat': return <ChatWindow />;
     case 'annonces': return <Annonces />;
+    case 'pre_inscriptions': return <PreInscriptions />;
     case 'gestion_personnel': return <GestionPersonnel />;
     case 'superadmin_dashboard':
     case 'superadmin_schools':
@@ -210,6 +213,12 @@ export function App() {
     navigator.serviceWorker.addEventListener('message', handleSWMessage);
     return () => navigator.serviceWorker.removeEventListener('message', handleSWMessage);
   }, []);
+
+  const path = window.location.pathname;
+  if (path.startsWith('/inscription/')) {
+    const slug = path.split('/')[2];
+    if (slug) return <PublicPreInscription schoolSlug={slug} />;
+  }
 
   if (!isAuthenticated) {
     return <Login />;

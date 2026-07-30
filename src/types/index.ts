@@ -262,7 +262,26 @@ export type AppPage =
   // ── Pages SuperAdmin (propriétaire SaaS) ──
   | 'superadmin_dashboard'
   | 'superadmin_schools'
-  | 'superadmin_billing';
+  | 'superadmin_billing'
+  | 'pre_inscriptions';
+
+export interface PreInscription {
+  id: string;
+  school_slug: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  data: {
+    nom: string;
+    prenom: string;
+    sexe: 'M' | 'F';
+    dateNaissance: string;
+    cycle: Cycle;
+    classe: string;
+    parentNom: string;
+    parentTelephone: string;
+    parentEmail: string;
+  };
+  created_at: string;
+}
 
 // Les types de cycles existants
 export const CYCLES: Cycle[] = ['Primaire', 'Collège', 'Lycée'];

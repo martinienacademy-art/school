@@ -39,6 +39,7 @@ async function run() {
         tranches JSONB DEFAULT '[]'::jsonb,
         updated_at TIMESTAMPTZ DEFAULT now()
       );
+      ALTER TABLE "public"."app_settings_${slug}" ADD COLUMN IF NOT EXISTS official_header TEXT;
     `;
     
     console.log(`Altering table for ${slug}...`);
