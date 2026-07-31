@@ -459,7 +459,11 @@ export const SuperAdminDashboard: React.FC = () => {
         notes: [],
         schoolLogo: data.user.school_logo || null,
         schoolName: data.user.school_name || 'Établissement',
-        user: data.user,
+        user: { 
+          ...data.user, 
+          schoolSlug: data.user.school_slug,
+          schoolName: data.user.school_name 
+        },
         isAuthenticated: true,
         isImpersonating: true,
         currentPage: 'dashboard'
