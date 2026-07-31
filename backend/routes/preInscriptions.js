@@ -20,9 +20,9 @@ const preInscriptionSchema = Joi.object({
     sexe: Joi.string().valid('M', 'F').required(),
     cycle: Joi.string().trim().max(50).required(),
     classe: Joi.string().trim().max(50).required(),
-    ecolePrecedente: Joi.string().trim().max(100).allow('', null),
-    contactTuteur: Joi.string().trim().max(50).required(),
-    nomTuteur: Joi.string().trim().max(100).required()
+    parentNom: Joi.string().trim().max(100).required(),
+    parentTelephone: Joi.string().trim().max(50).required(),
+    parentEmail: Joi.string().email({ tlds: { allow: false } }).allow('', null)
 }).unknown(false); // Refuse les champs non définis
 
 // 1. ROUTE PUBLIQUE : Créer une pré-inscription (appelée sans token)
