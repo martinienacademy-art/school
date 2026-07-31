@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Joi = require('joi');
 const rateLimit = require('express-rate-limit');
-const { supabase } = require('../utils/supabase');
+const { supabase, supabaseAdmin } = require('../utils/supabase');
 const { authenticateToken, requireSchool, requireSchoolAdmin } = require('../middleware/auth');
 
 // Rate limiting : 100 requêtes par heure par IP pour prévenir le spam tout en permettant les tests
@@ -47,8 +47,6 @@ router.post('/:schoolSlug', preInscriptionLimiter, async (req, res) => {
             return res.status(404).json({ error: 'École introuvable' });
         }
 
-        const { supabase, supabaseAdmin } = require('../utils/supabase');
-        
         // Utiliser supabaseAdmin pour contourner le RLS lors de l'insertion (route publique)
         const client = supabaseAdmin || supabase;
         const { error: insertErr } = await client
