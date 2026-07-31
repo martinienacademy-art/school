@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { Student, Payment } from '../types';
-import { getEcolageByClass, getCycleByClass } from '../data/classes';
+import { useStore } from '../store/useStore';
 
 export const parseExcelFile = (file: File): Promise<Student[]> => {
   return new Promise((resolve, reject) => {
@@ -34,7 +34,7 @@ export const parseExcelFile = (file: File): Promise<Student[]> => {
           // Ecolage: soit depuis le fichier, soit calculé
           let ecolage = Number(row[8]) || 0;
           if (ecolage === 0) {
-            ecolage = getEcolageByClass(classe);
+            ecolage = useStore.getState().getEcolageByClass(classe);
           }
           
           const dejaPaye = Number(row[9]) || 0;
@@ -79,7 +79,7 @@ export const parseExcelFile = (file: File): Promise<Student[]> => {
               dejaPaye,
               restant,
               recu,
-              cycle: getCycleByClass(classe),
+              cycle: useStore.getState().getCycleByClass(classe),
               status: restant === 0 ? 'Soldé' : (dejaPaye > 0 ? 'Partiel' : 'Non soldé'),
               historiquesPaiements: initialPayment ? [initialPayment] : [],
               paiements: initialPayment ? [initialPayment] : [],

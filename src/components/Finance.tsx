@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { getCycleByClass } from '../data/classes';
+
 import { TrendingUp, TrendingDown, DollarSign, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -13,7 +13,7 @@ export default function Finance() {
   const cycleStats = useMemo(() => {
     const cycles = ['Primaire', 'Collège', 'Lycée'] as const;
     return cycles.map(cycle => {
-      const cycleStudents = students.filter(s => getCycleByClass(s.classe) === cycle);
+      const cycleStudents = students.filter(s => useStore.getState().getCycleByClass(s.classe) === cycle);
       const totalEcolage = cycleStudents.reduce((sum, s) => sum + s.ecolage, 0);
       const totalPaye = cycleStudents.reduce((sum, s) => sum + s.dejaPaye, 0);
       return { cycle, eleves: cycleStudents.length, ecolage: totalEcolage, paye: totalPaye, restant: totalEcolage - totalPaye, taux: totalEcolage > 0 ? Math.round((totalPaye / totalEcolage) * 100) : 0 };

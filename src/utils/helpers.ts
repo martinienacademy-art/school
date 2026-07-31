@@ -1,5 +1,5 @@
 import { Student, StatusPaiement, DashboardStats, ClassStats } from '../types';
-import { getEcolage, getCycle, CLASS_CONFIG } from '../data/classConfig';
+import { useStore } from '../store/useStore';
 
 export const generateId = (): string => {
   // Use a proper UUID v4 format to avoid "invalid input syntax for type uuid" error in Supabase
@@ -11,11 +11,11 @@ export const generateId = (): string => {
 };
 
 export const getCycleFromClasse = (classe: string): 'Primaire' | 'Collège' | 'Lycée' => {
-  return getCycle(classe);
+  return useStore.getState().getCycleByClass(classe) as any;
 };
 
 export const getEcolageFromClasse = (classe: string): number => {
-  return getEcolage(classe);
+  return useStore.getState().getEcolageByClass(classe);
 };
 
 export const getStatusPaiement = (student: Student, seuil: number = 70): StatusPaiement => {

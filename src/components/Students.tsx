@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { parseExcelFile, exportToExcel } from '../utils/excelUtils';
 import { generateReceipt, generateStudentCard } from '../utils/pdfUtils';
 import { Student, Payment } from '../types';
-import { CLASSES } from '../data/classes';
+import { useStore } from '../store/useStore';
 import { formatMontant, getCycleFromClasse, getEcolageFromClasse } from '../utils/helpers';
 import {
   Search,
@@ -24,6 +24,9 @@ import {
 
 export default function Students() {
   const { students, setStudents, addStudent, updateStudent, deleteStudent, addPayment, settings } = useStore();
+  const deleteStudentAction = useStore((state: any) => state.deleteStudent);
+  const addActivityLog = useStore((state: any) => state.addActivityLog);
+  const classes = useStore((state: any) => state.classes);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [search, setSearch] = useState('');
@@ -69,7 +72,7 @@ export default function Students() {
       const matchClass = filterClass === '' || s.classe === filterClass;
       
       const matchCycle = filterCycle === '' || 
-        CLASSES.find(c => c.nom === s.classe)?.cycle === filterCycle;
+        useStore.getState().getCycleByClass(s.classe) === filterCycle;
       
       const matchStatus = filterStatus === '' ||
         (filterStatus === 'solde' && s.restant === 0) ||
@@ -153,8 +156,8 @@ export default function Students() {
       return;
     }
 
-    const classInfo = CLASSES.find(c => c.nom === formData.classe);
-    const ecolage = formData.ecolage || classInfo?.ecolage || 0;
+    const classInfo = classes.find((c: any) => c.nom === formData.classe);
+    const ecolage = classInfo ? classInfo.ecolage : 0;
     const restant = Math.max(0, ecolage - (formData.dejaPaye || 0));
 
     if (isEditing && selectedStudent) {
@@ -527,8 +530,10 @@ export default function Students() {
                     className="select"
                   >
                     <option value="">Sélectionner une classe</option>
-                    {CLASSES.map(c => (
-                      <option key={c.nom} value={c.nom}>{c.nom} ({c.cycle}) - {formatMoney(c.ecolage)}</option>
+                    {classes.map((c: any) => (
+                      <option key={c.nom} value={c.nom}>
+                        {c.nom}
+                      </option>
                     ))}
                   </select>
                 </div>

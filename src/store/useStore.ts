@@ -105,6 +105,16 @@ export interface AppState {
   receiptCounter: number;
   incrementReceiptCounter: () => string;
 
+  // Classes
+  classes: any[];
+  setClasses: (c: any[]) => void;
+  addClass: (c: any) => Promise<void>;
+  updateClass: (id: string, c: any) => Promise<void>;
+  deleteClass: (id: string) => Promise<void>;
+  getEcolageByClass: (nom: string) => number;
+  getCycleByClass: (nom: string) => string;
+  getClassesByCycle: (cycle: string) => any[];
+
   // Synchronisation Cloud
   links: any[];
   setLinks: (links: any[]) => void;
@@ -1104,6 +1114,10 @@ export const useStore = create<AppState>()(
             // sauf si l'utilisateur est sur la page de saisie (sécurisé par le polling manuel)
             set({ notes: cloudNotes });
             console.log(`📝 [Sync] Notes: ${cloudNotes.length} notes synchronisées depuis le cloud.`);
+          }
+          if (Array.isArray(data.classes)) {
+            set({ classes: data.classes });
+            console.log(`🏫 [Sync] Classes: ${data.classes.length} classes synchronisées depuis le cloud.`);
           }
 
           // Mise à jour du timestamp après succès

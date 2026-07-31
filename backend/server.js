@@ -43,6 +43,7 @@ app.use('/api/settings', require('./routes/settings'));
 app.use('/api/announcements', require('./routes/announcements'));
 app.use('/api/personnel', require('./routes/personnel'));
 app.use('/api/pre-inscriptions', require('./routes/preInscriptions'));
+app.use('/api/classes', require('./routes/classes'));
 app.use('/api/superadmin', require('./routes/superAdmin')); // 👑 Routes propriétaire SaaS
 
 // Route publique pour lister les écoles dans le login

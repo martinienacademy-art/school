@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { Student } from '../types';
-import { CLASSES } from '../data/classes';
+import { useStore } from '../store/useStore';
 import { generateId, getCycleFromClasse, getEcolageFromClasse } from './helpers';
 
 export const importExcel = (file: File, existingStudents?: Student[]): Promise<Student[]> => {
@@ -47,7 +47,7 @@ export const importExcel = (file: File, existingStudents?: Student[]): Promise<S
           const ecoleProvenance = String(row[7] || '').trim();
           
           // Validate classe - support various naming conventions
-          const allClasses = CLASSES.map(c => c.nom);
+          const allClasses = useStore.getState().classes.map(c => c.nom);
           
           const classeNormalized = classe.toUpperCase().trim()
             .replace(/È/g, 'E')

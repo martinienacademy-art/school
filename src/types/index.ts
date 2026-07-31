@@ -55,6 +55,13 @@ export interface ClassConfig {
   ecolage: number;
 }
 
+export interface ClassInfo {
+  id?: string;
+  nom: string;
+  cycle: Cycle | 'Maternelle' | 'Crèche';
+  ecolage: number;
+}
+
 export type StatusPaiement = 'solde' | 'tranche_validee' | 'tranche_partielle' | 'non_solde';
 
 export interface ClassStats {

@@ -5,6 +5,7 @@ import {
   Upload, X, Image, Clock, Plus, Calendar, Trash2, Database, AlertCircle, Layers
 } from 'lucide-react';
 import { GestionPersonnel } from '../components/GestionPersonnel';
+import { GestionClasses } from '../components/GestionClasses';
 
 export const Parametres: React.FC = () => {
   const schoolName = useStore((s) => s.schoolName);
@@ -456,6 +457,7 @@ export const Parametres: React.FC = () => {
             {(user?.role === 'directeur' || user?.role === 'directeur_general') && (
                 <div className="pro-card p-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800 overflow-hidden">
                     <GestionPersonnel />
+                    <GestionClasses />
                 </div>
             )}
 

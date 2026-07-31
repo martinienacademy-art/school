@@ -366,6 +366,8 @@ async function syncToFrontend(req, res) {
         const dbNotes = await fetchTable('notes');
         const announcementReads = await fetchTable('announcement_reads');
         
+        const { data: dbClasses } = await supabase.from('school_classes').select('*').eq('school_slug', schoolSlug).order('cycle').order('nom');
+
         const { data: appSettings, error: settingsError } = await supabase.from(tbl('app_settings')).select('*').single();
         console.log('🎨 [Sync GET] appSettings from DB:', {
             found: !!appSettings,

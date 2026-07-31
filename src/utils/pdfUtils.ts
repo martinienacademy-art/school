@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import { Student, AppSettings } from '../types';
-import { getCycleByClass } from '../data/classes';
+import { useStore } from '../store/useStore';
 
 const formatMoney = (amount: number, currency: string): string => {
   return new Intl.NumberFormat('fr-FR').format(amount) + ' ' + currency;
@@ -283,7 +283,7 @@ export const generateStudentCard = (student: Student, settings: AppSettings): vo
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 100, 100);
-  doc.text(`Classe: ${student.classe} | Cycle: ${getCycleByClass(student.classe)}`, 70, y + 25);
+  doc.text(`Classe: ${student.classe} | Cycle: ${useStore.getState().getCycleByClass(student.classe)}`, 70, y + 25);
   
   // Badge statut
   if (student.restant === 0) {
@@ -639,7 +639,7 @@ export const generateGlobalReport = (students: Student[], settings: AppSettings)
   const cycleBoxWidth = (pageWidth - 50) / 3;
   
   cycles.forEach((cycle, index) => {
-    const cycleStudents = students.filter(s => getCycleByClass(s.classe) === cycle);
+    const cycleStudents = students.filter(s => useStore.getState().getCycleByClass(s.classe) === cycle);
     const cycleEcolage = cycleStudents.reduce((sum, s) => sum + s.ecolage, 0);
     const cyclePaye = cycleStudents.reduce((sum, s) => sum + s.dejaPaye, 0);
     const cycleSoldes = cycleStudents.filter(s => s.restant === 0).length;
@@ -735,7 +735,7 @@ export const generateGlobalReport = (students: Student[], settings: AppSettings)
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...COLORS.dark);
     doc.text(classe, 20, y + 5.5);
-    doc.text(getCycleByClass(classe), 55, y + 5.5);
+    doc.text(useStore.getState().getCycleByClass(classe), 55, y + 5.5);
     doc.text(`${classStudents.length}`, 90, y + 5.5);
     doc.setTextColor(...COLORS.success);
     doc.text(`${classSoldes}`, 110, y + 5.5);
