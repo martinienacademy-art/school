@@ -14,16 +14,16 @@ export const PreInscriptions: React.FC = () => {
   }, [fetchPreInscriptions]);
 
   const handleAccept = async (req: any) => {
-    if (!window.confirm(`Accepter la pré-inscription de ${req.data.prenom} ${req.data.nom} ?`)) return;
+    if (!window.confirm(`Accepter la pré-inscription de ${req.data?.prenom || 'Inconnu'} ${req.data?.nom || ''} ?`)) return;
     
     // Ajouter l'élève dans GestioSchool
     addStudent({
-      nom: req.data.nom,
-      prenom: req.data.prenom,
-      sexe: req.data.sexe,
-      dateNaissance: req.data.dateNaissance,
-      classe: req.data.classe,
-      telephone: req.data.parentTelephone,
+      nom: req.data?.nom || 'Inconnu',
+      prenom: req.data?.prenom || 'Inconnu',
+      sexe: req.data?.sexe || 'M',
+      dateNaissance: req.data?.dateNaissance || '',
+      classe: req.data?.classe || '',
+      telephone: req.data?.parentTelephone || '',
       redoublant: false,
       ecoleProvenance: '',
     });
@@ -45,8 +45,8 @@ export const PreInscriptions: React.FC = () => {
   };
 
   const filtered = preInscriptions.filter(p => 
-    p.data.nom.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.data.prenom.toLowerCase().includes(searchTerm.toLowerCase())
+    p.data?.nom?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.data?.prenom?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const pendingCount = preInscriptions.filter(p => p.status === 'PENDING').length;
@@ -106,17 +106,17 @@ export const PreInscriptions: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-slate-800 dark:text-white">{req.data.nom} {req.data.prenom}</div>
-                    <div className="text-xs text-slate-500">{req.data.sexe} - Né(e) le {req.data.dateNaissance}</div>
+                    <div className="text-sm font-semibold text-slate-800 dark:text-white">{req.data?.nom} {req.data?.prenom}</div>
+                    <div className="text-xs text-slate-500">{req.data?.sexe} - Né(e) le {req.data?.dateNaissance}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-600">
-                      {req.data.classe} ({req.data.cycle})
+                      {req.data?.classe} ({req.data?.cycle})
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="text-slate-800 dark:text-white font-medium">{req.data.parentNom}</div>
-                    <div className="text-slate-500">{req.data.parentTelephone}</div>
+                    <div className="text-slate-800 dark:text-white font-medium">{req.data?.parentNom}</div>
+                    <div className="text-slate-500">{req.data?.parentTelephone}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {req.status === 'PENDING' && <span className="px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-xs font-medium">En attente</span>}
