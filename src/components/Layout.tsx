@@ -54,6 +54,7 @@ const PARENT_NAV_ITEMS: Omit<NavItem, 'badge'>[] = [
 
 const NAV_GROUPS: Record<string, string> = {
   dashboard: 'Principal',
+  pre_inscriptions: 'Gestion',
   eleves: 'Gestion',
   parents_list: 'Gestion',
   paiements: 'Finance',
