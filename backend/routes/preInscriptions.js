@@ -5,10 +5,10 @@ const rateLimit = require('express-rate-limit');
 const { supabase } = require('../utils/supabase');
 const { authenticateToken, requireSchool, requireSchoolAdmin } = require('../middleware/auth');
 
-// Rate limiting : 5 requêtes par heure par IP pour prévenir le spam
+// Rate limiting : 100 requêtes par heure par IP pour prévenir le spam tout en permettant les tests
 const preInscriptionLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 heure
-    max: 5,
+    max: 100,
     message: { error: 'Trop de demandes de pré-inscription. Veuillez réessayer plus tard.' }
 });
 
