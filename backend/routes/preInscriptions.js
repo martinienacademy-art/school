@@ -47,7 +47,11 @@ router.post('/:schoolSlug', preInscriptionLimiter, async (req, res) => {
             return res.status(404).json({ error: 'École introuvable' });
         }
 
-        const { error: insertErr } = await supabase
+        const { supabase, supabaseAdmin } = require('../utils/supabase');
+        
+        // Utiliser supabaseAdmin pour contourner le RLS lors de l'insertion (route publique)
+        const client = supabaseAdmin || supabase;
+        const { error: insertErr } = await client
             .from('pre_inscriptions')
             .insert([
                 {
@@ -62,7 +66,7 @@ router.post('/:schoolSlug', preInscriptionLimiter, async (req, res) => {
         res.json({ success: true, message: 'Pré-inscription enregistrée avec succès.' });
     } catch (err) {
         console.error('Erreur POST /pre-inscriptions:', err);
-        res.status(500).json({ error: 'Erreur lors de l\'enregistrement' });
+        res.status(500).json({ error: 'Erreur lors de l\'enregistrement: ' + (err.message || JSON.stringify(err)) });
     }
 });
 
