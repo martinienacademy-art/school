@@ -21,4 +21,12 @@ export const CLASS_CONFIG = new Proxy([], {
   }
 }) as any;
 
-export const CLASSES_BY_CYCLE = CLASS_CONFIG;
+export const CLASSES_BY_CYCLE = new Proxy({}, {
+  get: (target, prop) => {
+    if (prop === 'Primaire' || prop === 'Collège' || prop === 'Lycée') {
+      const classes = useStore.getState().classes || [];
+      return classes.filter((c: any) => c.cycle === prop).map((c: any) => ({ name: c.nom, cycle: c.cycle, ecolage: c.ecolage }));
+    }
+    return undefined;
+  }
+}) as any;

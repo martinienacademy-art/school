@@ -742,7 +742,7 @@ export const Parametres: React.FC = () => {
         <div className="space-y-6">
             
             {/* ── GESTION DU PERSONNEL ────────────────────────────── */}
-            {(user?.role === 'directeur' || user?.role === 'directeur_general') && (
+            {(user?.role === 'admin' || user?.role === 'directeur' || user?.role === 'directeur_general') && (
                 <div className="pro-card p-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-slate-800 overflow-hidden">
                     <GestionPersonnel />
                     <GestionClasses />
