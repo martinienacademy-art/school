@@ -211,7 +211,7 @@ export const ScanInformation: React.FC = () => {
                     }
                 },
                 (errorMessage) => {
-                    if (process.env.NODE_ENV === 'development' && !errorMessage.includes('No QR code found')) {
+                    if (import.meta.env.DEV && !errorMessage.includes('No QR code found')) {
                         console.debug("Scan info:", errorMessage);
                     }
                 }
