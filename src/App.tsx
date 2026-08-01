@@ -110,11 +110,6 @@ const PageContent: React.FC = () => {
     );
   }
 
-  // --- NOUVEAU: Gérer le lien de réinitialisation de mot de passe ---
-  if (window.location.pathname === '/reset-password') {
-    return <ResetPassword />;
-  }
-
   // Sécurité — Empêcher un parent de voir une page admin même si le store est désynchronisé
   if (user?.role === 'parent') {
     const parentPages = ['parent_dashboard', 'parent_historique', 'parent_recus', 'parent_badges', 'chat', 'annonces', 'parent_notes'];
@@ -228,6 +223,10 @@ export function App() {
   if (path.startsWith('/inscription/')) {
     const slug = path.split('/')[2];
     if (slug) return <PublicPreInscription schoolSlug={slug} />;
+  }
+  
+  if (path === '/reset-password') {
+    return <ResetPassword />;
   }
 
   if (!isAuthenticated) {
