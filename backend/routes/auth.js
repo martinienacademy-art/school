@@ -2,12 +2,22 @@
 // ROUTES — Authentification
 // ============================================================
 const router = require('express').Router();
-const { register, login, deleteSelfAccount, updatePushToken } = require('../controllers/authController');
+const { register, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
 
-router.post('/register', register);
-router.post('/login', login);
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limite chaque IP à 10 requêtes par 15 minutes pour ces routes
+    message: { error: 'Trop de tentatives, veuillez réessayer plus tard.' }
+});
+
+router.post('/register', authLimiter, register);
+router.post('/login', authLimiter, login);
+router.post('/logout', logout);
+router.post('/change-password', authenticateToken, authLimiter, changePassword);
 router.post('/update-push-token', authenticateToken, updatePushToken);
-router.delete('/me', authenticateToken, deleteSelfAccount);
+router.post('/forgot-password', authLimiter, forgotPassword);
+router.post('/reset-password', authLimiter, resetPassword);
 
 module.exports = router;

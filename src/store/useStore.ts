@@ -3,7 +3,7 @@
 // ============================================================
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Student, User, AppPage, Payment, Parent, AppSettings, Presence, ActivityLog, CycleSchedule, Announcement, AnnouncementRead, Matiere, ClasseMatiere, Note, PeriodeType } from '../types';
+import { Student, User, AppPage, Payment, Parent, AppSettings, Presence, ActivityLog, CycleSchedule, Announcement, AnnouncementRead, Matiere, ClasseMatiere, Note, PeriodeType, Teacher, RessourcePedagogique } from '../types';
 import { API_BASE_URL } from '../config';
 import { getEcolage, getCycle } from '../data/classConfig';
 import { v4 as uuid } from '../utils/uuid';
@@ -84,7 +84,29 @@ export interface AppState {
     messageRemerciement?: string,
     messageRappel?: string,
     officialHeader?: string | null,
-    tranches?: any[]
+    tranches?: any[],
+    acronyme?: string,
+    adressePhysique?: string,
+    emailOfficiel?: string,
+    siteWeb?: string,
+    description?: string,
+    agrement?: string,
+    devise?: string,
+    republique?: string,
+    ministere?: string,
+    localisationMap?: string,
+    facebook?: string,
+    twitter?: string,
+    linkedin?: string,
+    instagram?: string,
+    youtube?: string,
+    smtpServer?: string,
+    smtpPort?: string,
+    smtpUser?: string,
+    smtpPass?: string,
+    smtpSecurity?: string,
+    smtpSenderEmail?: string,
+    smtpSenderName?: string
   }) => Promise<void>;
   settings: AppSettings;
   updateSettings: (settings: AppSettings) => void;
@@ -158,6 +180,14 @@ export interface AppState {
   updateClasseMatiere: (id: string, cm: Partial<ClasseMatiere>) => void;
   deleteClasseMatiere: (id: string) => void;
 
+  // ── ENSEIGNANTS ──
+  teachers: Teacher[];
+  setTeachers: (t: Teacher[]) => void;
+  addTeacher: (t: Omit<Teacher, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateTeacher: (id: string, updates: Partial<Teacher>) => void;
+  deleteTeacher: (id: string) => void;
+  importTeachers: (t: Teacher[]) => void;
+
   notes: Note[];
   setNotes: (n: Note[]) => void;
   upsertNote: (note: Note) => void;
@@ -178,6 +208,12 @@ export interface AppState {
   setPreInscriptions: (p: any[]) => void;
   fetchPreInscriptions: () => Promise<void>;
   updatePreInscriptionStatus: (id: string, status: 'APPROVED' | 'REJECTED') => Promise<void>;
+
+  // ── ESPACE PÉDAGOGIQUE ──
+  ressources: RessourcePedagogique[];
+  setRessources: (r: RessourcePedagogique[]) => void;
+  addRessource: (r: RessourcePedagogique) => void;
+  deleteRessource: (id: string) => void;
 }
 
 // Authentification gérée par Supabase
@@ -362,7 +398,7 @@ export const useStore = create<AppState>()(
           }
 
           if (res.ok && result.token) {
-            localStorage.setItem('parent_token', result.token);
+            // localStorage.setItem('parent_token', result.token);
             const loggedUser: User = {
               id: result.user.id,
               username: result.user.telephone,
@@ -430,7 +466,7 @@ export const useStore = create<AppState>()(
         const saToken = localStorage.getItem('superadmin_impersonator_token');
         const saUserStr = localStorage.getItem('superadmin_impersonator_user');
         if (saToken && saUserStr) {
-          localStorage.setItem('parent_token', saToken);
+          // localStorage.setItem('parent_token', saToken);
           localStorage.removeItem('superadmin_impersonator_token');
           localStorage.removeItem('superadmin_impersonator_user');
           let saUser: User;
@@ -464,7 +500,7 @@ export const useStore = create<AppState>()(
         if (u) {
           get().addActivityLog(createActivityLog(u.nom, u.role, 'connexion', 'Déconnexion'));
         }
-        localStorage.removeItem('parent_token');
+        // localStorage.removeItem('parent_token');
         localStorage.removeItem('superadmin_impersonator_token');
         localStorage.removeItem('superadmin_impersonator_user');
         set({
@@ -701,7 +737,29 @@ export const useStore = create<AppState>()(
         email: 'contact@ecole.ci',
         badgeParentResponsable: 'Parent Responsable',
         badge2emeTranche: '2ème Tranche Validée',
-        tranches: []
+        tranches: [],
+        acronyme: '',
+        adressePhysique: '',
+        emailOfficiel: '',
+        siteWeb: '',
+        description: '',
+        agrement: '',
+        devise: '',
+        republique: '',
+        ministere: '',
+        localisationMap: '',
+        facebook: '',
+        twitter: '',
+        linkedin: '',
+        instagram: '',
+        youtube: '',
+        smtpServer: '',
+        smtpPort: '587',
+        smtpUser: '',
+        smtpPass: '',
+        smtpSecurity: 'TLS',
+        smtpSenderEmail: '',
+        smtpSenderName: ''
       },
       updateSettings: (newSettings) => set({ settings: newSettings }),
 
@@ -1119,6 +1177,10 @@ export const useStore = create<AppState>()(
             set({ classes: data.classes });
             console.log(`🏫 [Sync] Classes: ${data.classes.length} classes synchronisées depuis le cloud.`);
           }
+          if (Array.isArray(data.ressources)) {
+            set({ ressources: data.ressources });
+            console.log(`📚 [Sync] Ressources: ${data.ressources.length} ressources synchronisées depuis le cloud.`);
+          }
 
           // Mise à jour du timestamp après succès
           set({ lastSyncTimestamp: Date.now() });
@@ -1130,6 +1192,86 @@ export const useStore = create<AppState>()(
           set({ isSyncing: false });
         }
       },
+      classes: [],
+      setClasses: (c) => set({ classes: c }),
+      addClass: async (c) => {
+        try {
+          const { getAuthHeaders } = await import('../services/apiHelpers');
+          const { API_BASE_URL } = await import('../config');
+          const res = await fetch(`${API_BASE_URL}/classes`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders()
+            },
+            body: JSON.stringify(c)
+          });
+          if (res.ok) {
+            const newClass = await res.json();
+            set(s => ({ classes: [...s.classes, newClass] }));
+            import('../services/backendSync').then(({ syncToBackend }) => {
+              syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
+            });
+          } else {
+            console.error('Erreur ajout classe:', await res.text());
+          }
+        } catch (err) {
+          console.error('Exception ajout classe:', err);
+        }
+      },
+      updateClass: async (id, c) => {
+        try {
+          const { getAuthHeaders } = await import('../services/apiHelpers');
+          const { API_BASE_URL } = await import('../config');
+          const res = await fetch(`${API_BASE_URL}/classes/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders()
+            },
+            body: JSON.stringify(c)
+          });
+          if (res.ok) {
+            const updated = await res.json();
+            set(s => ({ classes: s.classes.map(cls => cls.id === id ? updated : cls) }));
+            import('../services/backendSync').then(({ syncToBackend }) => {
+              syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
+            });
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      },
+      deleteClass: async (id) => {
+        try {
+          const { getAuthHeaders } = await import('../services/apiHelpers');
+          const { API_BASE_URL } = await import('../config');
+          const res = await fetch(`${API_BASE_URL}/classes/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            set(s => ({ classes: s.classes.filter(cls => cls.id !== id) }));
+            import('../services/backendSync').then(({ syncToBackend }) => {
+              syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
+            });
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      },
+      getEcolageByClass: (nom) => {
+        const c = get().classes?.find(cls => cls.nom === nom);
+        return c ? c.ecolage : 0;
+      },
+      getCycleByClass: (nom) => {
+        const c = get().classes?.find(cls => cls.nom === nom);
+        return c ? c.cycle : 'Primaire';
+      },
+      getClassesByCycle: (cycle) => {
+        return get().classes?.filter(cls => cls.cycle === cycle) || [];
+      },
+
       clearCloudPresences: async () => {
         try {
           const { getAuthHeaders } = await import('../services/apiHelpers');
@@ -1276,6 +1418,106 @@ export const useStore = create<AppState>()(
         }
       },
 
+      // ── ENSEIGNANTS ──
+      teachers: [],
+      setTeachers: (t) => set({ teachers: t }),
+      addTeacher: (t) => {
+        const newTeacher: Teacher = {
+          ...t,
+          id: uuid(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        set(s => ({ teachers: [...s.teachers, newTeacher] }));
+        
+        const u = get().user;
+        if (u) get().addActivityLog({
+          id: uuid(),
+          utilisateur: u.nom,
+          utilisateurRole: u.role,
+          action: 'gestion_enseignant',
+          description: `Ajout de l'enseignant : ${t.prenom} ${t.nom}`,
+          dateHeure: new Date().toISOString()
+        });
+        
+        import('../services/backendSync').then(({ syncToBackend }) =>
+          syncToBackend({ teachers: get().teachers } as any).then(() => set({ lastSyncTimestamp: Date.now() }))
+        );
+      },
+      updateTeacher: (id, updates) => {
+        set(s => ({
+          teachers: s.teachers.map(t => 
+            t.id === id ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t
+          )
+        }));
+        
+        const u = get().user;
+        const teacher = get().teachers.find(t => t.id === id);
+        if (u && teacher) get().addActivityLog({
+          id: uuid(),
+          utilisateur: u.nom,
+          utilisateurRole: u.role,
+          action: 'gestion_enseignant',
+          description: `Modification de l'enseignant : ${teacher.prenom} ${teacher.nom}`,
+          dateHeure: new Date().toISOString()
+        });
+
+        import('../services/backendSync').then(({ syncToBackend }) =>
+          syncToBackend({ teachers: get().teachers } as any).then(() => set({ lastSyncTimestamp: Date.now() }))
+        );
+      },
+      deleteTeacher: (id) => {
+        const u = get().user;
+        const teacher = get().teachers.find(t => t.id === id);
+        if (u && teacher) get().addActivityLog({
+          id: uuid(),
+          utilisateur: u.nom,
+          utilisateurRole: u.role,
+          action: 'gestion_enseignant',
+          description: `Suppression de l'enseignant : ${teacher.prenom} ${teacher.nom}`,
+          dateHeure: new Date().toISOString()
+        });
+
+        set(s => ({ teachers: s.teachers.filter(t => t.id !== id) }));
+        
+        import('../services/backendSync').then(({ syncToBackend }) =>
+          syncToBackend({ teachers: get().teachers } as any).then(() => set({ lastSyncTimestamp: Date.now() }))
+        );
+      },
+      importTeachers: (newTeachers) => {
+        set(s => {
+          const currentTeachers = [...s.teachers];
+          newTeachers.forEach(nt => {
+            const index = currentTeachers.findIndex(t => t.matricule === nt.matricule);
+            if (index >= 0) {
+              currentTeachers[index] = { ...currentTeachers[index], ...nt, updatedAt: new Date().toISOString() };
+            } else {
+              currentTeachers.push({
+                ...nt,
+                id: nt.id || uuid(),
+                createdAt: nt.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              });
+            }
+          });
+          return { teachers: currentTeachers };
+        });
+        
+        const u = get().user;
+        if (u) get().addActivityLog({
+          id: uuid(),
+          utilisateur: u.nom,
+          utilisateurRole: u.role,
+          action: 'import',
+          description: `Importation massive d'enseignants (${newTeachers.length})`,
+          dateHeure: new Date().toISOString()
+        });
+
+        import('../services/backendSync').then(({ syncToBackend }) =>
+          syncToBackend({ teachers: get().teachers } as any).then(() => set({ lastSyncTimestamp: Date.now() }))
+        );
+      },
+
       notes: [],
       setNotes: (n) => set({ notes: n }),
       upsertNote: (n) => get().upsertNotes([n]),
@@ -1348,8 +1590,12 @@ export const useStore = create<AppState>()(
         } catch (err) {
           console.error('Error updating preInscription status', err);
         }
-      }
+      },
 
+      ressources: [],
+      setRessources: (r) => set({ ressources: r }),
+      addRessource: (r) => set(s => ({ ressources: [r, ...s.ressources] })),
+      deleteRessource: (id) => set(s => ({ ressources: s.ressources.filter(r => r.id !== id) }))
     }),
     {
       name: 'edufinance-storage',
@@ -1379,6 +1625,7 @@ export const useStore = create<AppState>()(
         currentPage: state.currentPage,
         theme: state.theme,
         chatRecipientId: state.chatRecipientId,
+        ressources: state.ressources || [],
       }),
       onRehydrateStorage: () => (state) => {
         // Auto-réparation au chargement du storage local

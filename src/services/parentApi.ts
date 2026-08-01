@@ -16,7 +16,7 @@ export const parentApi = {
         });
         const result = await parseResponse(res);
         if (!res.ok) throw result;
-        if (result.token) localStorage.setItem('parent_token', result.token);
+        if (result.token) // localStorage.setItem('parent_token', result.token);
         return result;
     },
 
@@ -28,7 +28,7 @@ export const parentApi = {
         });
         const result = await parseResponse(res);
         if (!res.ok) throw result;
-        if (result.token) localStorage.setItem('parent_token', result.token);
+        if (result.token) // localStorage.setItem('parent_token', result.token);
         return result;
     },
 
@@ -180,6 +180,6 @@ export const parentApi = {
     },
 
     logout: () => {
-        localStorage.removeItem('parent_token');
+        // localStorage.removeItem('parent_token');
     }
 };

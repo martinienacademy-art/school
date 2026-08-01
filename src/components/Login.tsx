@@ -68,6 +68,7 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [nom, setNom] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [trialExpiredSchool, setTrialExpiredSchool] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -82,6 +83,12 @@ export const Login: React.FC = () => {
   // NOUVEAU : Sélection Établissement
   const [schools, setSchools] = useState<{slug: string, name: string, logo_url: string}[]>([]);
   const [selectedSchool, setSelectedSchool] = useState('');
+
+  // NOUVEAU : Mot de passe oublié
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordStatus, setForgotPasswordStatus] = useState<'idle'|'loading'|'success'|'error'>('idle');
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
 
   useEffect(() => {
     // Récupérer la liste des écoles
@@ -116,6 +123,7 @@ export const Login: React.FC = () => {
             setLoading(true);
             await parentApi.register({
                 nom,
+                email,
                 telephone: username,
                 password,
                 school_slug: selectedSchool,
@@ -139,6 +147,30 @@ export const Login: React.FC = () => {
     } finally {
         setLoading(false);
     }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setForgotPasswordStatus('loading');
+      setForgotPasswordMessage('');
+      try {
+          const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: forgotPasswordEmail, schoolSlug: selectedSchool })
+          });
+          const data = await res.json();
+          if (res.ok) {
+              setForgotPasswordStatus('success');
+              setForgotPasswordMessage(data.message || 'Lien envoyé.');
+          } else {
+              setForgotPasswordStatus('error');
+              setForgotPasswordMessage(data.error || 'Erreur lors de la demande.');
+          }
+      } catch (err) {
+          setForgotPasswordStatus('error');
+          setForgotPasswordMessage('Erreur de connexion au serveur.');
+      }
   };
 
 
@@ -272,6 +304,7 @@ export const Login: React.FC = () => {
               </select>
 
               <input type="text" placeholder="Nom complet" className="auth-input" value={nom} onChange={(e) => setNom(e.target.value)} required />
+              <input type="email" placeholder="Adresse e-mail" className="auth-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
               <input type="tel" placeholder="Téléphone" className="auth-input" value={username} onChange={(e) => setUsername(e.target.value)} required />
               <div className="relative w-full">
                 <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" className="auth-input pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
@@ -335,13 +368,9 @@ export const Login: React.FC = () => {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <div className="flex items-center justify-between w-full mt-2 text-xs px-1">
-                <a href="#" className="text-slate-400 hover:text-amber-600">Mot de passe oublié ?</a>
-                <button 
-                  type="button" 
-                  onClick={() => setIsPrivacyOpen(true)}
-                  className="text-slate-400 hover:text-amber-600 underline cursor-pointer"
-                >
+              <div className="text-left w-full mt-2 space-y-1.5 max-w-[280px]">
+                <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-slate-400 hover:text-amber-600">Mot de passe oublié ?</button>
+                <button type="button" onClick={() => setIsPrivacyOpen(true)} className="text-slate-400 hover:text-amber-600 block underline cursor-pointer">
                   Confidentialité & Données
                 </button>
               </div>
@@ -410,10 +439,16 @@ export const Login: React.FC = () => {
                     </div>
 
                     {view === 'register' && (
-                        <div className="relative">
-                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
-                            <input type="text" placeholder="Nom complet" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={nom} onChange={(e) => setNom(e.target.value)} required />
-                        </div>
+                        <>
+                            <div className="relative">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                <input type="text" placeholder="Nom complet" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={nom} onChange={(e) => setNom(e.target.value)} required />
+                            </div>
+                            <div className="relative mt-3">
+                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                <input type="email" placeholder="Adresse e-mail" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                            </div>
+                        </>
                     )}
                     <div className="relative">
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
@@ -429,7 +464,7 @@ export const Login: React.FC = () => {
 
                     {view === 'login' ? (
                       <div className="flex justify-between items-center px-1 text-[11px] mt-1">
-                        <a href="#" className="text-slate-400 hover:text-amber-600">Mot de passe oublié ?</a>
+                        <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-slate-400 hover:text-amber-600">Mot de passe oublié ?</button>
                         <button 
                           type="button" 
                           onClick={() => setIsPrivacyOpen(true)}
@@ -503,7 +538,55 @@ export const Login: React.FC = () => {
         </button>
       </div>
 
+
       <PrivacyPolicyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
+
+      {/* Forgot Password Modal */}
+      {isForgotPasswordOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200 relative">
+            <button onClick={() => setIsForgotPasswordOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <span className="sr-only">Fermer</span>
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Mot de passe oublié</h3>
+            <p className="text-sm text-gray-500 mb-6">Saisissez l'adresse e-mail associée à votre compte. Si elle existe, nous vous enverrons un lien de réinitialisation.</p>
+            
+            {forgotPasswordStatus === 'success' ? (
+                <div className="p-4 bg-emerald-50 text-emerald-700 rounded-lg text-sm flex gap-2 items-start">
+                    <CheckCircle className="w-5 h-5 shrink-0" />
+                    <p>{forgotPasswordMessage}</p>
+                </div>
+            ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Adresse E-mail</label>
+                        <input 
+                            type="email" 
+                            required 
+                            value={forgotPasswordEmail}
+                            onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                            className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-amber-500 focus:border-amber-500 p-2 border"
+                            placeholder="votre.email@exemple.com"
+                        />
+                    </div>
+                    
+                    {forgotPasswordStatus === 'error' && (
+                        <p className="text-sm text-red-600">{forgotPasswordMessage}</p>
+                    )}
+
+                    <button 
+                        type="submit" 
+                        disabled={forgotPasswordStatus === 'loading'}
+                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50"
+                    >
+                        {forgotPasswordStatus === 'loading' ? 'Envoi...' : 'Envoyer le lien'}
+                    </button>
+                </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

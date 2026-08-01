@@ -6,6 +6,7 @@ import { CLASS_CONFIG } from '../data/classConfig';
 import { API_BASE_URL } from '../config';
 import { parseResponse, getAuthHeaders } from '../services/apiHelpers';
 import { getCycle } from '../data/classConfig';
+import { generateNextSequence } from '../utils/idGenerator';
 
 const computeStatus = (restant: number, ecolage: number): 'Soldé' | 'Partiel' | 'Non soldé' => {
   if (restant <= 0) return 'Soldé';
@@ -21,7 +22,17 @@ const fmtDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2
 // ── Modale ajout paiement ────────────────────────────────────
 const PaymentModal: React.FC<{ student: Student; onClose: () => void }> = ({ student, onClose }) => {
   const addPayment = useStore((s) => s.addPayment);
-  const [form, setForm] = useState({ montant: '', recu: '', note: '', date: new Date().toISOString().slice(0, 10) });
+  const allStudents = useStore((s) => s.students);
+  
+  const autoRecu = useMemo(() => {
+    const receipts = allStudents.map(s => s.recu || '');
+    allStudents.forEach(s => {
+      s.historiquesPaiements?.forEach(p => receipts.push(p.recu || ''));
+    });
+    return generateNextSequence('Rec', receipts.filter(Boolean), 3);
+  }, [allStudents]);
+
+  const [form, setForm] = useState({ montant: '', recu: autoRecu, note: '', date: new Date().toISOString().slice(0, 10) });
   const [error, setError] = useState('');
 
   const maxPay = student.restant;

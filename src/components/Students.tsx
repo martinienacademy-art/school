@@ -3,8 +3,8 @@ import { useStore } from '../store/useStore';
 import { parseExcelFile, exportToExcel } from '../utils/excelUtils';
 import { generateReceipt, generateStudentCard } from '../utils/pdfUtils';
 import { Student, Payment } from '../types';
-import { useStore } from '../store/useStore';
 import { formatMontant, getCycleFromClasse, getEcolageFromClasse } from '../utils/helpers';
+import { generateNextSequence } from '../utils/idGenerator';
 import {
   Search,
   Upload,
@@ -199,6 +199,12 @@ export default function Students() {
       return;
     }
 
+    const receipts = students.map(s => s.recu || '');
+    students.forEach(s => {
+      s.historiquesPaiements?.forEach(p => receipts.push(p.recu || ''));
+    });
+    const autoRecu = generateNextSequence('Rec', receipts.filter(Boolean), 3);
+
     const payment: Payment = {
       id: `payment-${Date.now()}`,
       studentId: selectedStudent.id,
@@ -207,7 +213,7 @@ export default function Students() {
       mode: (paymentData.mode as Payment['mode']) || 'Espèces',
       reference: paymentData.reference || '',
       commentaire: paymentData.commentaire || '',
-      recu: `REC-${Date.now()}`
+      recu: autoRecu
     };
 
     addPayment(selectedStudent.id, payment);

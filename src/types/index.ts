@@ -23,6 +23,11 @@ export interface Student {
   restant: number;
   recu: string;
   adsn?: string;
+  nationalite?: string;
+  adresse?: string;
+  numeroCNI?: string;
+  dateDelivranceCNI?: string;
+  statutAdmin?: 'Actif' | 'Suspendu' | 'Abandon' | 'Admis' | 'Ajourné';
   statutElv?: 'NOUVEAU' | 'ANCIEN' | 'REDOUBLANT';
   dateNaissance?: string;
   acteNaissanceUrl?: string;
@@ -103,14 +108,36 @@ export interface AppSettings extends AdminSettings {
   currency: string;
   badgeParentResponsable: string;
   badge2emeTranche: string;
-  messageSolde?: string; // Utilisé dans pdfUtils.ts
-  messagePartiel?: string; // Utilisé dans pdfUtils.ts
-  messageNonPaye?: string; // Utilisé dans pdfUtils.ts
-  schoolAddress?: string; // Utilisé dans pdfUtils.ts
-  schoolPhone?: string; // Utilisé dans pdfUtils.ts
-  schoolEmail?: string; // Utilisé dans pdfUtils.ts
-  academicYear?: string; // Utilisé dans pdfUtils.ts
+  messageSolde?: string; 
+  messagePartiel?: string; 
+  messageNonPaye?: string; 
+  schoolAddress?: string; 
+  schoolPhone?: string; 
+  schoolEmail?: string; 
+  academicYear?: string; 
   tranches?: Tranche[];
+  acronyme?: string;
+  adressePhysique?: string;
+  emailOfficiel?: string;
+  siteWeb?: string;
+  description?: string;
+  agrement?: string;
+  devise?: string;
+  republique?: string;
+  ministere?: string;
+  localisationMap?: string;
+  facebook?: string;
+  twitter?: string;
+  linkedin?: string;
+  instagram?: string;
+  youtube?: string;
+  smtpServer?: string;
+  smtpPort?: string;
+  smtpUser?: string;
+  smtpPass?: string;
+  smtpSecurity?: string;
+  smtpSenderEmail?: string;
+  smtpSenderName?: string;
 }
 
 export interface DashboardStats {
@@ -136,6 +163,7 @@ export type UserRole =
   | 'superviseur'
   | 'surveillant'
   | 'comptable'
+  | 'enseignant'
   | 'parent';
 
 export interface User {
@@ -219,7 +247,7 @@ export interface ActivityLog {
   id: string;
   utilisateur: string;
   utilisateurRole: string;
-  action: 'connexion' | 'paiement' | 'modification_eleve' | 'generation_recu' | 'presence' | 'import' | 'export' | 'suppression' | 'autre';
+  action: 'connexion' | 'paiement' | 'modification_eleve' | 'generation_recu' | 'presence' | 'import' | 'export' | 'suppression' | 'gestion_enseignant' | 'autre';
   description: string;
   dateHeure: string;  // ISO string
   metadata?: Record<string, any>;
@@ -266,6 +294,8 @@ export type AppPage =
   | 'import_export'
   | 'chat'
   | 'gestion_personnel'
+  | 'enseignants'
+  | 'espace_pedagogique'
   // ── Pages SuperAdmin (propriétaire SaaS) ──
   | 'superadmin_dashboard'
   | 'superadmin_schools'
@@ -288,6 +318,29 @@ export interface PreInscription {
     parentEmail: string;
   };
   created_at: string;
+}
+
+// ── Enseignants (Professeurs) ────────────────────────────
+export interface Teacher {
+  id: string;
+  ide: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  matricule: string;
+  dateNaissance: string;
+  telephone: string;
+  adresse: string;
+  titre: string; // ex: 'M.', 'Mme', 'Dr', 'Prof'
+  departement: string;
+  statut: 'Actif' | 'Inactif';
+  dateEmbauche: string;
+  tauxHoraire: number;
+  quotaHoraire: number;
+  rib: string;
+  banque: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Les types de cycles existants
@@ -320,5 +373,25 @@ export interface Note {
   noteClasse: number | null; // ex: Interrogations (sur 20)
   noteDevoir: number | null; // ex: Devoirs surveillés
   noteCompo: number | null;  // ex: Composition
+}
+
+// ── MODULE 3 : ESPACE PÉDAGOGIQUE (BIBLIOTHÈQUE) ────────────────
+export type TypeRessource = 'Cours' | 'Epreuve' | 'Livre' | 'TD_TP';
+
+export interface RessourcePedagogique {
+  id: string;
+  titre: string;
+  type: TypeRessource;
+  anneeAcademique: string;
+  cycle: Cycle | 'Tous';
+  classe: string | 'Toutes';
+  matiere: string | 'Toutes';
+  description?: string;
+  fichierUrl: string; // Lien vers le fichier stocké
+  fichierNom: string;
+  fichierTaille?: number; // en octets
+  auteurId: string;
+  auteurNom: string;
+  dateAjout: string; // ISO string
 }
 

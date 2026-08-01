@@ -3,11 +3,12 @@ import { useStore } from '../store/useStore';
 import { Student } from '../types';
 import { CLASS_CONFIG } from '../data/classConfig';
 import { generateRecuPDF } from '../utils/pdfGenerator';
+import { generateNextSequence } from '../utils/idGenerator';
 import { uploadStudentPhoto, deleteStudentPhoto } from '../services/photoService';
 import {
   Search, Plus, Trash2, Edit2, FileText,
   MessageCircle, ChevronUp, ChevronDown, X, Check,
-  Download, Filter, Camera, User, Users, GraduationCap, Building2, Smartphone
+  Download, Filter, Camera, User, Users, GraduationCap, Building2, Smartphone, FileBadge, ImagePlus, CheckCircle2, Globe2, MapPin, AlertCircle
 } from 'lucide-react';
 import { StudentDetail } from '../components/StudentDetail';
 
@@ -36,6 +37,15 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
   const addStudent = useStore((s) => s.addStudent);
   const updateStudent = useStore((s) => s.updateStudent);
 
+  const allStudents = useStore((s) => s.students);
+  const allReceipts = useMemo(() => {
+    const receipts = allStudents.map(s => s.recu || '');
+    allStudents.forEach(s => {
+      s.historiquesPaiements?.forEach(p => receipts.push(p.recu || ''));
+    });
+    return receipts.filter(Boolean);
+  }, [allStudents]);
+
   const [form, setForm] = useState({
     nom: student?.nom ?? '',
     prenom: student?.prenom ?? '',
@@ -45,8 +55,22 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
     redoublant: student?.redoublant ?? false,
     ecoleProvenance: student?.ecoleProvenance ?? '',
     dejaPaye: student?.dejaPaye ?? 0,
-    recu: student?.recu ?? '',
+    recu: student?.recu ?? generateNextSequence('Rec', allReceipts, 3),
+    nationalite: student?.nationalite ?? 'Togolaise',
+    adresse: student?.adresse ?? '',
+    numeroCNI: student?.numeroCNI ?? '',
+    dateDelivranceCNI: student?.dateDelivranceCNI ?? '',
+    statutAdmin: student?.statutAdmin ?? 'Actif',
+    photoUrl: student?.photoUrl ?? '',
   });
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setForm({ ...form, photoUrl: ev.target?.result as string });
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,84 +99,180 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Nom de l'élève *</label>
-              <input 
-                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white uppercase placeholder:normal-case" 
-                required 
-                placeholder="Ex: DOSSOU"
-                value={form.nom} 
-                onChange={(e) => setForm({ ...form, nom: e.target.value })} 
-              />
+          {/* --- Section Identité --- */}
+          <div className="p-5 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-blue-900/10 rounded-2xl border border-slate-200 dark:border-blue-500/20">
+            <h3 className="text-xs font-black text-slate-800 dark:text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2"><User className="w-4 h-4"/> Identité de l'élève</h3>
+            
+            <div className="flex flex-col sm:flex-row gap-6 mb-5">
+              <div className="flex-shrink-0 flex flex-col items-center gap-3">
+                <div className="relative group">
+                  <div className={`w-28 h-28 rounded-2xl overflow-hidden border-2 flex items-center justify-center bg-white dark:bg-slate-800 shadow-sm ${form.photoUrl ? 'border-blue-500' : 'border-dashed border-slate-300 dark:border-slate-600'}`}>
+                    {form.photoUrl ? (
+                      <img src={form.photoUrl} alt="Photo" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                    )}
+                  </div>
+                  <label className="absolute -bottom-3 -right-3 w-10 h-10 bg-amber-500 text-white rounded-xl shadow-lg hover:bg-amber-600 cursor-pointer flex items-center justify-center transition-all hover:scale-110">
+                    <ImagePlus className="w-5 h-5" />
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                  </label>
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Photo</span>
+              </div>
+              
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Nom de l'élève *</label>
+                  <input 
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white uppercase placeholder:normal-case" 
+                    required 
+                    placeholder="Ex: DOSSOU"
+                    value={form.nom} 
+                    onChange={(e) => setForm({ ...form, nom: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Prénoms *</label>
+                  <input 
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white capitalize placeholder:normal-case" 
+                    required 
+                    placeholder="Ex: Jean Paul"
+                    value={form.prenom} 
+                    onChange={(e) => setForm({ ...form, prenom: e.target.value })} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2"><Globe2 className="w-3 h-3" /> Nationalité</label>
+                  <input 
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
+                    value={form.nationalite} 
+                    onChange={(e) => setForm({ ...form, nationalite: e.target.value })} 
+                    placeholder="Ex: Togolaise" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2"><User className="w-3 h-3" /> Sexe</label>
+                  <select 
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white cursor-pointer" 
+                    value={form.sexe} 
+                    onChange={(e) => setForm({ ...form, sexe: e.target.value as 'M' | 'F' })}
+                  >
+                    <option value="M">Masculin</option>
+                    <option value="F">Féminin</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Prénoms *</label>
-              <input 
-                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white capitalize placeholder:normal-case" 
-                required 
-                placeholder="Ex: Jean Paul"
-                value={form.prenom} 
-                onChange={(e) => setForm({ ...form, prenom: e.target.value })} 
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <GraduationCap className="w-3 h-3" /> Classe *
-              </label>
-              <select 
-                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white cursor-pointer" 
-                value={form.classe} 
-                onChange={(e) => setForm({ ...form, classe: e.target.value })}
-              >
-                {CLASS_CONFIG.map((c) => <option key={c.name} value={c.name}>{c.name} — {c.cycle} ({new Intl.NumberFormat('fr-FR').format(c.ecolage)} F)</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <User className="w-3 h-3" /> Sexe
-              </label>
-              <select 
-                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white cursor-pointer" 
-                value={form.sexe} 
-                onChange={(e) => setForm({ ...form, sexe: e.target.value as 'M' | 'F' })}
-              >
-                <option value="M">Masculin</option>
-                <option value="F">Féminin</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <Smartphone className="w-3 h-3" /> Téléphone parent
-              </label>
-              <input 
-                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
-                value={form.telephone} 
-                onChange={(e) => setForm({ ...form, telephone: e.target.value })} 
-                placeholder="+228" 
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <Building2 className="w-3 h-3" /> École de provenance
-              </label>
-              <input 
-                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
-                value={form.ecoleProvenance} 
-                onChange={(e) => setForm({ ...form, ecoleProvenance: e.target.value })} 
-                placeholder="Ex: EPL Les Génies"
-              />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2"><MapPin className="w-3 h-3" /> Adresse Domicilière</label>
+                <input 
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
+                  value={form.adresse} 
+                  onChange={(e) => setForm({ ...form, adresse: e.target.value })} 
+                  placeholder="Ex: Agoè, Lomé" 
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <Smartphone className="w-3 h-3" /> Téléphone parent
+                </label>
+                <input 
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
+                  value={form.telephone} 
+                  onChange={(e) => setForm({ ...form, telephone: e.target.value })} 
+                  placeholder="+228" 
+                />
+              </div>
             </div>
           </div>
 
+          {/* --- Section Administratif --- */}
+          <div className="p-5 bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-800/50 dark:to-purple-900/10 rounded-2xl border border-slate-200 dark:border-purple-500/20">
+            <h3 className="text-xs font-black text-slate-800 dark:text-purple-400 uppercase tracking-widest mb-4 flex items-center gap-2"><FileBadge className="w-4 h-4"/> Informations Administratives</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Numéro CNI</label>
+                <input 
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white" 
+                  value={form.numeroCNI} 
+                  onChange={(e) => setForm({ ...form, numeroCNI: e.target.value })} 
+                  placeholder="N° Pièce d'Identité" 
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Date Délivrance CNI</label>
+                <input 
+                  type="date"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white" 
+                  value={form.dateDelivranceCNI} 
+                  onChange={(e) => setForm({ ...form, dateDelivranceCNI: e.target.value })} 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <GraduationCap className="w-3 h-3" /> Classe *
+                </label>
+                <select 
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white cursor-pointer" 
+                  value={form.classe} 
+                  onChange={(e) => setForm({ ...form, classe: e.target.value })}
+                >
+                  {CLASS_CONFIG.map((c) => <option key={c.name} value={c.name}>{c.name} — {c.cycle} ({new Intl.NumberFormat('fr-FR').format(c.ecolage)} F)</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-3 h-3" /> Statut Administratif
+                </label>
+                <select 
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white cursor-pointer" 
+                  value={form.statutAdmin} 
+                  onChange={(e) => setForm({ ...form, statutAdmin: e.target.value as any })}
+                >
+                  <option value="Actif">Actif</option>
+                  <option value="Suspendu">Suspendu</option>
+                  <option value="Abandon">Abandon</option>
+                  <option value="Admis">Admis</option>
+                  <option value="Ajourné">Ajourné</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 mt-5">
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <Building2 className="w-3 h-3" /> École de provenance
+                </label>
+                <input 
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white" 
+                  value={form.ecoleProvenance} 
+                  onChange={(e) => setForm({ ...form, ecoleProvenance: e.target.value })} 
+                  placeholder="Ex: EPL Les Génies"
+                />
+              </div>
+            </div>
+            
+            <label className="mt-5 flex items-center gap-3 p-4 border border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors bg-white dark:bg-slate-900">
+              <input 
+                type="checkbox" 
+                checked={form.redoublant} 
+                onChange={(e) => setForm({ ...form, redoublant: e.target.checked })} 
+                className="w-5 h-5 rounded border-slate-300 text-purple-500 focus:ring-purple-500 dark:bg-slate-800 dark:border-slate-600" 
+              />
+              <span className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Élève Redoublant</span>
+            </label>
+          </div>
+
+          {/* --- Section Financière --- */}
           <div className="p-5 bg-gradient-to-br from-slate-50 to-emerald-50 dark:from-slate-800/50 dark:to-emerald-900/10 rounded-2xl border border-slate-200 dark:border-emerald-500/20">
-            <h3 className="text-xs font-black text-slate-800 dark:text-emerald-400 uppercase tracking-widest mb-4">Informations financières (1er versement)</h3>
+            <h3 className="text-xs font-black text-slate-800 dark:text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2"><CheckCircle2 className="w-4 h-4"/> Informations Financières (1er versement)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Montant payé (FCFA)</label>
@@ -174,16 +294,6 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
               </div>
             </div>
           </div>
-
-          <label className="flex items-center gap-3 p-4 border border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <input 
-              type="checkbox" 
-              checked={form.redoublant} 
-              onChange={(e) => setForm({ ...form, redoublant: e.target.checked })} 
-              className="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500 dark:bg-slate-800 dark:border-slate-600" 
-            />
-            <span className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Élève Redoublant</span>
-          </label>
 
           <div className="flex gap-3 pt-4">
             <button type="button" onClick={onClose} className="flex-1 py-4 border border-slate-200 dark:border-slate-700 rounded-2xl text-[13px] font-black text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors uppercase tracking-widest">

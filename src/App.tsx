@@ -8,6 +8,7 @@ import { Layout } from './components/Layout';
 import { AnnouncementPopup } from './components/AnnouncementPopup';
 import { webPushService } from './services/webPushService';
 import { PublicPreInscription } from './components/PublicPreInscription';
+import { ResetPassword } from './pages/ResetPassword';
 
 
 // Lazy loading for pages to reduce initial bundle size
@@ -40,6 +41,8 @@ const Annonces = lazy(() => import('./pages/Annonces').then(m => ({ default: m.A
 const PreInscriptions = lazy(() => import('./pages/PreInscriptions').then(m => ({ default: m.PreInscriptions })));
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard').then(m => ({ default: m.SuperAdminDashboard })));
 const GestionPersonnel = lazy(() => import('./components/GestionPersonnel').then(m => ({ default: m.GestionPersonnel })));
+const Enseignants = lazy(() => import('./pages/Enseignants'));
+const EspacePedagogique = lazy(() => import('./pages/EspacePedagogique'));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center p-12">
@@ -107,6 +110,11 @@ const PageContent: React.FC = () => {
     );
   }
 
+  // --- NOUVEAU: Gérer le lien de réinitialisation de mot de passe ---
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPassword />;
+  }
+
   // Sécurité — Empêcher un parent de voir une page admin même si le store est désynchronisé
   if (user?.role === 'parent') {
     const parentPages = ['parent_dashboard', 'parent_historique', 'parent_recus', 'parent_badges', 'chat', 'annonces', 'parent_notes'];
@@ -151,6 +159,8 @@ const PageContent: React.FC = () => {
     case 'annonces': return <Annonces />;
     case 'pre_inscriptions': return <PreInscriptions />;
     case 'gestion_personnel': return <GestionPersonnel />;
+    case 'enseignants': return <Enseignants />;
+    case 'espace_pedagogique': return <EspacePedagogique />;
     case 'superadmin_dashboard':
     case 'superadmin_schools':
     case 'superadmin_billing':

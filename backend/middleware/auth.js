@@ -4,11 +4,17 @@ const { JWT_SECRET } = require('../config');
 // ── Middleware d'authentification de base ──────────────────────
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
+    let token = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    } else if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Accès refusé. Token manquant.' });
+    }
     try {
         const payload = jwt.verify(token, JWT_SECRET);
         req.user = payload; // Contient id, nom, role, schoolSlug (ou null pour superadmin)

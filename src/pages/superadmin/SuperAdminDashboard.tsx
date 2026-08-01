@@ -450,7 +450,7 @@ export const SuperAdminDashboard: React.FC = () => {
       }
 
       // Stocker le token
-      localStorage.setItem('parent_token', data.token);
+      // localStorage.setItem('parent_token', data.token);
       
       // Vider le cache de l'école précédente et appliquer les nouvelles infos de l'école
       useStore.setState({

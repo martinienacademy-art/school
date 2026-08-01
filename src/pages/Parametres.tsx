@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
+import { API_BASE_URL } from '../config';
 import { useStore } from '../store/useStore';
 import {
   Save, School, MessageSquare, Shield, Info,
-  Upload, X, Image, Clock, Plus, Calendar, Trash2, Database, AlertCircle, Layers
+  Upload, X, Image, Clock, Plus, Calendar, Trash2, Database, AlertCircle, Layers, Eye, EyeOff, Globe, MapPin, Facebook, Twitter, Linkedin, Instagram, Youtube, Phone, Mail, FileText
 } from 'lucide-react';
 import { GestionPersonnel } from '../components/GestionPersonnel';
 import { GestionClasses } from '../components/GestionClasses';
@@ -25,6 +26,70 @@ export const Parametres: React.FC = () => {
   const [localRap, setLocalRap] = useState(messageRappel);
   const [localAppName, setLocalAppName] = useState(appName);
   const [saved, setSaved] = useState(false);
+  const settings = useStore((s) => s.settings);
+  const [localAcronyme, setLocalAcronyme] = useState(settings?.acronyme || '');
+  const [localAdresse, setLocalAdresse] = useState(settings?.adressePhysique || '');
+  const [localEmail, setLocalEmail] = useState(settings?.emailOfficiel || '');
+  const [localSiteWeb, setLocalSiteWeb] = useState(settings?.siteWeb || '');
+  const [localDesc, setLocalDesc] = useState(settings?.description || '');
+  const [localAgrement, setLocalAgrement] = useState(settings?.agrement || '');
+  const [localDevise, setLocalDevise] = useState(settings?.devise || '');
+  const [localRepublique, setLocalRepublique] = useState(settings?.republique || '');
+  const [localMinistere, setLocalMinistere] = useState(settings?.ministere || '');
+  const [localMap, setLocalMap] = useState(settings?.localisationMap || '');
+  const [localFb, setLocalFb] = useState(settings?.facebook || '');
+  const [localTw, setLocalTw] = useState(settings?.twitter || '');
+  const [localIn, setLocalIn] = useState(settings?.linkedin || '');
+  const [localIg, setLocalIg] = useState(settings?.instagram || '');
+  const [localYt, setLocalYt] = useState(settings?.youtube || '');
+  const [smtpServer, setSmtpServer] = useState(settings?.smtpServer || '');
+  const [smtpPort, setSmtpPort] = useState(settings?.smtpPort || '587');
+  const [smtpUser, setSmtpUser] = useState(settings?.smtpUser || '');
+  const [smtpPass, setSmtpPass] = useState(settings?.smtpPass || '');
+  const [smtpSecurity, setSmtpSecurity] = useState(settings?.smtpSecurity || 'TLS');
+  const [smtpSenderEmail, setSmtpSenderEmail] = useState(settings?.smtpSenderEmail || '');
+  const [smtpSenderName, setSmtpSenderName] = useState(settings?.smtpSenderName || '');
+  const [isTestingSmtp, setIsTestingSmtp] = useState(false);
+
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
+  const [pwdMsg, setPwdMsg] = useState({ type: '', text: '' });
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPwdMsg({ type: 'error', text: 'Les mots de passe ne correspondent pas.' });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwdMsg({ type: 'error', text: 'Le mot de passe doit contenir au moins 6 caractères.' });
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ oldPassword, newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPwdMsg({ type: 'error', text: data.error || 'Erreur.' });
+      } else {
+        setPwdMsg({ type: 'success', text: 'Mot de passe mis à jour avec succès.' });
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err) {
+      setPwdMsg({ type: 'error', text: 'Erreur réseau.' });
+    }
+  };
+
   
   const [logoPreview, setLogoPreview] = useState<string | null>(schoolLogo);
   const [logoError, setLogoError] = useState('');
@@ -140,10 +205,68 @@ export const Parametres: React.FC = () => {
       appName: localAppName,
       officialHeader: localHeader,
       schoolLogo: logoPreview,
-      schoolStamp: stampPreview
+      schoolStamp: stampPreview,
+      acronyme: localAcronyme,
+      adressePhysique: localAdresse,
+      emailOfficiel: localEmail,
+      siteWeb: localSiteWeb,
+      description: localDesc,
+      agrement: localAgrement,
+      devise: localDevise,
+      republique: localRepublique,
+      ministere: localMinistere,
+      localisationMap: localMap,
+      facebook: localFb,
+      twitter: localTw,
+      linkedin: localIn,
+      instagram: localIg,
+      youtube: localYt,
+      smtpServer,
+      smtpPort,
+      smtpUser,
+      smtpPass,
+      smtpSecurity,
+      smtpSenderEmail,
+      smtpSenderName
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const [testEmail, setTestEmail] = useState('');
+  
+  const handleTestSMTP = async () => {
+    if (!testEmail) {
+      alert('Veuillez renseigner un email de test');
+      return;
+    }
+    setIsTestingSmtp(true);
+    try {
+      const response = await fetch('/api/email/test-smtp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          smtpServer,
+          smtpPort,
+          smtpUser,
+          smtpPass,
+          smtpSecurity,
+          smtpSenderEmail,
+          smtpSenderName,
+          testEmail
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert('Configuration SMTP valide. Email de test envoyé !');
+      } else {
+        alert('Erreur: ' + data.error);
+      }
+    } catch (err: any) {
+      alert('Erreur lors du test: ' + err.message);
+    } finally {
+      setIsTestingSmtp(false);
+    }
   };
 
   return (
@@ -223,16 +346,100 @@ export const Parametres: React.FC = () => {
                     </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-100 dark:border-slate-800/60">
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
+                            Acronyme
+                        </label>
+                        <input
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            value={localAcronyme}
+                            onChange={(e) => setLocalAcronyme(e.target.value)}
+                            placeholder="Ex : GSE"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
+                            Agrément / Autorisation
+                        </label>
+                        <input
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            value={localAgrement}
+                            onChange={(e) => setLocalAgrement(e.target.value)}
+                            placeholder="Ex : Arrêté N° 1234/MEMP..."
+                        />
+                    </div>
+                    <div className="md:col-span-2">
+                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
+                            Devise de l'établissement
+                        </label>
+                        <input
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            value={localDevise}
+                            onChange={(e) => setLocalDevise(e.target.value)}
+                            placeholder="Ex : Travail - Discipline - Succès"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-100 dark:border-slate-800/60">
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
+                            Adresse Physique
+                        </label>
+                        <input
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            value={localAdresse}
+                            onChange={(e) => setLocalAdresse(e.target.value)}
+                            placeholder="Ex : Quartier Agoè..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
+                            Email Officiel
+                        </label>
+                        <input
+                            type="email"
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            value={localEmail}
+                            onChange={(e) => setLocalEmail(e.target.value)}
+                            placeholder="Ex : contact@ecole.com"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
+                            Site Web
+                        </label>
+                        <input
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            value={localSiteWeb}
+                            onChange={(e) => setLocalSiteWeb(e.target.value)}
+                            placeholder="Ex : https://mon-ecole.com"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
+                            Lien Google Maps
+                        </label>
+                        <input
+                            className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            value={localMap}
+                            onChange={(e) => setLocalMap(e.target.value)}
+                            placeholder="Lien URL Google Maps"
+                        />
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 gap-6 pt-6 border-t border-slate-100 dark:border-slate-800/60">
                     <div>
                         <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">
-                            En-tête officiel (affiché sur les bulletins et reçus)
+                            En-tête officiel des documents (République, Ministère, Direction...)
                         </label>
                         <textarea
                             className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none h-24"
                             value={localHeader}
                             onChange={(e) => setLocalHeader(e.target.value)}
-                            placeholder="Ex : RÉPUBLIQUE DU BÉNIN&#10;MINISTÈRE DES ENSEIGNEMENTS MATERNEL ET PRIMAIRE"
+                            placeholder="Ex : RÉPUBLIQUE DU BÉNIN\nMINISTÈRE DES ENSEIGNEMENTS MATERNEL ET PRIMAIRE"
                         />
                     </div>
                 </div>
@@ -319,18 +526,99 @@ export const Parametres: React.FC = () => {
                     </div>
                 </div>
 
+                <div className="pt-6 border-t border-slate-100 dark:border-slate-800/60">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Globe className="w-3.5 h-3.5 text-indigo-500" /> Réseaux Sociaux
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <Facebook className="w-5 h-5 text-blue-600 ml-2" />
+                        <input className="flex-1 bg-transparent border-none outline-none text-sm font-medium dark:text-white" placeholder="Lien Facebook" value={localFb} onChange={(e) => setLocalFb(e.target.value)} />
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <Twitter className="w-5 h-5 text-sky-500 ml-2" />
+                        <input className="flex-1 bg-transparent border-none outline-none text-sm font-medium dark:text-white" placeholder="Lien Twitter" value={localTw} onChange={(e) => setLocalTw(e.target.value)} />
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <Linkedin className="w-5 h-5 text-blue-700 ml-2" />
+                        <input className="flex-1 bg-transparent border-none outline-none text-sm font-medium dark:text-white" placeholder="Lien LinkedIn" value={localIn} onChange={(e) => setLocalIn(e.target.value)} />
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <Instagram className="w-5 h-5 text-pink-600 ml-2" />
+                        <input className="flex-1 bg-transparent border-none outline-none text-sm font-medium dark:text-white" placeholder="Lien Instagram" value={localIg} onChange={(e) => setLocalIg(e.target.value)} />
+                      </div>
+                      <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <Youtube className="w-5 h-5 text-red-600 ml-2" />
+                        <input className="flex-1 bg-transparent border-none outline-none text-sm font-medium dark:text-white" placeholder="Lien YouTube" value={localYt} onChange={(e) => setLocalYt(e.target.value)} />
+                      </div>
+                    </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-100 dark:border-slate-800/60">
+                    <h4 className="text-[10px] font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-emerald-600" /> Configuration e-mail (SMTP)
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Serveur SMTP</label>
+                            <input className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={smtpServer} onChange={(e) => setSmtpServer(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Port SMTP</label>
+                            <input type="number" className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Nom d'utilisateur SMTP</label>
+                            <input className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Mot de passe SMTP</label>
+                            <input type="password" placeholder="••••••••" className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Sécurité SMTP</label>
+                            <select className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all cursor-pointer" value={smtpSecurity} onChange={(e) => setSmtpSecurity(e.target.value)}>
+                                <option value="TLS">TLS</option>
+                                <option value="SSL">SSL</option>
+                                <option value="None">None</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Email d'expéditeur</label>
+                            <input type="email" className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={smtpSenderEmail} onChange={(e) => setSmtpSenderEmail(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Nom d'expéditeur</label>
+                            <input className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all" value={smtpSenderName} onChange={(e) => setSmtpSenderName(e.target.value)} />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Email de test</label>
+                            <input type="email" className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none transition-all" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} />
+                        </div>
+                    </div>
+                </div>
+
                 {(user?.role === 'directeur' || user?.role === 'comptable') && (
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-end pt-4 gap-3">
                         <button
-                        type="submit"
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all ${
-                            saved
-                            ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'
-                        }`}
+                          type="button"
+                          onClick={handleTestSMTP}
+                          disabled={isTestingSmtp}
+                          className="flex items-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all bg-[#fbc02d] hover:bg-[#f9a825] text-slate-900 shadow-lg shadow-[#fbc02d]/20 disabled:opacity-50"
                         >
-                        <Save className="w-4 h-4" />
-                        {saved ? 'Enregistré' : 'Enregistrer'}
+                          <Mail className="w-4 h-4" />
+                          {isTestingSmtp ? 'Test en cours...' : 'Tester la configuration'}
+                        </button>
+                        <button
+                          type="submit"
+                          className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all ${
+                              saved
+                              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
+                              : 'bg-[#115e59] hover:bg-[#0f766e] text-white shadow-lg shadow-[#115e59]/20'
+                          }`}
+                        >
+                          <Save className="w-4 h-4" />
+                          {saved ? 'Enregistré' : 'Enregistrer'}
                         </button>
                     </div>
                 )}
@@ -530,6 +818,55 @@ export const Parametres: React.FC = () => {
                             {user?.role}
                         </span>
                     </div>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/60">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Shield className="w-3.5 h-3.5 text-indigo-500" /> Modifier mon mot de passe
+                    </h4>
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <div>
+                        <input 
+                          type={showPwd ? 'text' : 'password'} 
+                          placeholder="Ancien mot de passe" 
+                          required
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none" 
+                        />
+                      </div>
+                      <div className="relative">
+                        <input 
+                          type={showPwd ? 'text' : 'password'} 
+                          placeholder="Nouveau mot de passe" 
+                          required
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none" 
+                        />
+                        <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-500">
+                          {showPwd ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
+                        </button>
+                      </div>
+                      <div>
+                        <input 
+                          type={showPwd ? 'text' : 'password'} 
+                          placeholder="Confirmer le mot de passe" 
+                          required
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none" 
+                        />
+                      </div>
+                      {pwdMsg.text && (
+                        <div className={`p-3 rounded-xl text-[11px] font-bold ${pwdMsg.type === 'error' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                          {pwdMsg.text}
+                        </div>
+                      )}
+                      <button type="submit" className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[12px] font-black uppercase tracking-widest transition-colors">
+                        Mettre à jour
+                      </button>
+                    </form>
                 </div>
             </div>
 

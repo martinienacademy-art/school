@@ -7,6 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
+const cookieParser = require('cookie-parser');
 const { supabase } = require('./utils/supabase');
 
 const { PORT } = require('./config');
@@ -20,9 +21,10 @@ const app = express();
 
 // Middleware globaux
 app.use(cors({
-    origin: '*', // Plus flexible pour le dév, à restreindre en prod
+    origin: true, // Echo the requested origin, permet les credentials en toute sécurité
     credentials: true,
 }));
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -34,17 +36,20 @@ app.use((req, res, next) => {
 
 // ── Routes API ────────────────────────────────────────────────
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/parent', require('./routes/parent'));
-app.use('/api/students', require('./routes/students'));
-app.use('/api/sync', require('./routes/sync'));
-app.use('/api/chat', require('./routes/chat'));
-app.use('/api/notifications', require('./routes/notifications'));
-app.use('/api/settings', require('./routes/settings'));
-app.use('/api/announcements', require('./routes/announcements'));
-app.use('/api/personnel', require('./routes/personnel'));
-app.use('/api/pre-inscriptions', require('./routes/preInscriptions'));
-app.use('/api/classes', require('./routes/classes'));
-app.use('/api/superadmin', require('./routes/superAdmin')); // 👑 Routes propriétaire SaaS
+app.use('/api/pre-inscriptions', require('./routes/preInscriptions')); // Route publique
+// ── Sécurisation par défaut (Deny by default) ───────────────────
+const { authenticateToken } = require('./middleware/auth');
+app.use('/api/parent', authenticateToken, require('./routes/parent'));
+app.use('/api/students', authenticateToken, require('./routes/students'));
+app.use('/api/sync', authenticateToken, require('./routes/sync'));
+app.use('/api/chat', authenticateToken, require('./routes/chat'));
+app.use('/api/notifications', authenticateToken, require('./routes/notifications'));
+app.use('/api/settings', authenticateToken, require('./routes/settings'));
+app.use('/api/announcements', authenticateToken, require('./routes/announcements'));
+app.use('/api/personnel', authenticateToken, require('./routes/personnel'));
+app.use('/api/classes', authenticateToken, require('./routes/classes'));
+app.use('/api/email', authenticateToken, require('./routes/email'));
+app.use('/api/superadmin', authenticateToken, require('./routes/superAdmin')); // 👑 Routes propriétaire SaaS
 
 // Route publique pour lister les écoles dans le login
 app.get('/api/schools', async (req, res) => {

@@ -10,6 +10,10 @@ const parentRegisterSchema = Joi.object({
     nom: Joi.string().trim().required().messages({
         'any.required': 'Le nom complet est requis.'
     }),
+    email: Joi.string().email().required().messages({
+        'any.required': 'L\'adresse e-mail est requise.',
+        'string.email': 'L\'adresse e-mail est invalide.'
+    }),
     telephone: Joi.string().trim().required().messages({
         'any.required': 'Le numéro de téléphone est requis.'
     }),
@@ -44,7 +48,8 @@ async function register(req, res) {
         return res.status(400).json({ error: validationError.details.map(d => d.message).join(', ') });
     }
 
-    const { nom, telephone, password, school_slug, accepted_terms, accepted_privacy_policy, marketing_consent, parent_photo_authorization } = validatedData;
+    let { nom, email, telephone, password, school_slug, accepted_terms, accepted_privacy_policy, marketing_consent, parent_photo_authorization } = validatedData;
+    telephone = telephone.replace(/\s+/g, '').trim();
 
     try {
         const { data: school } = await supabase
@@ -77,6 +82,7 @@ async function register(req, res) {
         // Mass assignment protection
         const insertPayload = {
             nom: nom.trim(),
+            email: email.toLowerCase().trim(),
             telephone: telephone.trim(),
             password: hashed,
             role: 'parent',
@@ -102,10 +108,18 @@ async function register(req, res) {
             { expiresIn: JWT_EXPIRES }
         );
 
+        // On met le token dans un cookie HttpOnly sécurisé
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
+        });
+
         return res.status(201).json({
             message: 'Compte créé avec succès.',
-            token,
-            parent: { id: parent.id, nom: parent.nom, telephone: parent.telephone, role: parent.role, schoolSlug: school_slug },
+            token, // On le garde pour compatibilité temporaire si besoin, mais le frontend doit utiliser credentials: true
+            user: { id: parent.id, nom: parent.nom, telephone: parent.telephone, role: parent.role, schoolSlug: school_slug },
         });
     } catch (err) {
         console.error('Register Error:', err.message);
@@ -115,7 +129,8 @@ async function register(req, res) {
 
 // ── Login (Tout Rôles) ──────────────────────────
 async function login(req, res) {
-    const { telephone, password, schoolSlug } = req.body;
+    let { telephone, password, schoolSlug } = req.body;
+    telephone = (telephone || '').replace(/\s+/g, '').trim();
 
     if (!telephone || !password) {
         return res.status(400).json({ error: 'Champs requis : telephone, password.' });
@@ -140,6 +155,7 @@ async function login(req, res) {
                     JWT_SECRET,
                     { expiresIn: JWT_EXPIRES }
                 );
+                res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 });
                 return res.json({
                     message: 'Connexion globale réussie.',
                     token,
@@ -200,6 +216,7 @@ async function login(req, res) {
         // Update last login de façon asynchrone
         supabase.from(`profiles_${schoolSlug}`).update({ last_login: new Date().toISOString() }).eq('id', user.id).then(() => {});
 
+        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 });
         return res.json({
             message: 'Connexion réussie.',
             token,
@@ -264,4 +281,165 @@ async function updatePushToken(req, res) {
     }
 }
 
-module.exports = { register, login, deleteSelfAccount, updatePushToken };
+async function changePassword(req, res) {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+    const role = req.user.role;
+    const schoolSlug = req.user.schoolSlug;
+
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ error: 'L\'ancien et le nouveau mot de passe sont requis.' });
+    }
+
+    try {
+        let table = '';
+        if (role === 'superadmin') {
+            table = 'superadmins';
+        } else {
+            table = `profiles_${schoolSlug}`;
+        }
+
+        const { data: user, error } = await supabase
+            .from(table)
+            .select('password')
+            .eq('id', userId)
+            .single();
+
+        if (error || !user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        }
+
+        const valid = await bcrypt.compare(oldPassword, user.password);
+        if (!valid) {
+            return res.status(401).json({ error: 'L\'ancien mot de passe est incorrect.' });
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 10);
+        const { error: updateError } = await supabase
+            .from(table)
+            .update({ password: hashed })
+            .eq('id', userId);
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        return res.json({ message: 'Mot de passe mis à jour avec succès.' });
+    } catch (error) {
+        console.error('Erreur changePassword:', error.message);
+        return res.status(500).json({ error: 'Erreur lors du changement de mot de passe.' });
+    }
+}
+
+// ── Mot de Passe Oublié ──────────────────────────────────
+async function forgotPassword(req, res) {
+    const { email, schoolSlug } = req.body;
+    if (!email) {
+        return res.status(400).json({ error: 'L\'adresse e-mail est requise.' });
+    }
+
+    try {
+        let userFound = null;
+        let tableFound = '';
+
+        // Chercher dans superadmins
+        let { data: sa } = await supabase.from('superadmins').select('id, email, nom').eq('email', email).single();
+        if (sa) {
+            userFound = sa;
+            tableFound = 'superadmins';
+        } else {
+            // Chercher dans parents
+            let { data: p } = await supabase.from('parents').select('id, email, nom').eq('email', email).single();
+            if (p) {
+                userFound = p;
+                tableFound = 'parents';
+            } else if (schoolSlug) {
+                // Chercher dans profiles de l'école (Staff)
+                let { data: staff } = await supabase.from(`profiles_${schoolSlug}`).select('id, email, nom').eq('email', email).single();
+                if (staff) {
+                    userFound = staff;
+                    tableFound = `profiles_${schoolSlug}`;
+                }
+            }
+        }
+
+        if (!userFound) {
+            // Sécurité : Ne pas révéler que l'e-mail n'existe pas
+            return res.json({ message: 'Si cet e-mail correspond à un compte, un lien de réinitialisation a été envoyé.' });
+        }
+
+        // Générer un token
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 1); // 1 heure valide
+
+        await supabase.from('password_resets').insert({
+            email: email,
+            token: token,
+            expires_at: expiresAt.toISOString()
+        });
+
+        // Envoi de l'e-mail (Simulation si nodemailer n'est pas configuré ici)
+        console.log(`[AUTH] Lien de réinitialisation pour ${email}: /reset-password?token=${token}&email=${email}&table=${tableFound}`);
+        
+        // TODO: Envoyer réellement l'e-mail via SMTP si configuré
+
+        return res.json({ message: 'Si cet e-mail correspond à un compte, un lien de réinitialisation a été envoyé.' });
+    } catch (error) {
+        console.error('Erreur forgotPassword:', error);
+        return res.status(500).json({ error: 'Une erreur interne est survenue.' });
+    }
+}
+
+async function resetPassword(req, res) {
+    const { token, email, table, newPassword } = req.body;
+    if (!token || !email || !table || !newPassword) {
+        return res.status(400).json({ error: 'Données manquantes ou invalides.' });
+    }
+
+    try {
+        // Vérifier le token
+        const { data: resetRecord } = await supabase
+            .from('password_resets')
+            .select('*')
+            .eq('token', token)
+            .eq('email', email)
+            .single();
+
+        if (!resetRecord) {
+            return res.status(400).json({ error: 'Lien de réinitialisation invalide.' });
+        }
+
+        if (new Date(resetRecord.expires_at) < new Date()) {
+            return res.status(400).json({ error: 'Le lien de réinitialisation a expiré.' });
+        }
+
+        // Hacher le nouveau mot de passe
+        const hashed = await bcrypt.hash(newPassword, 10);
+        const { error: updateError } = await supabase
+            .from(table)
+            .update({ password: hashed })
+            .eq('email', email);
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        // Supprimer le token
+        await supabase.from('password_resets').delete().eq('id', resetRecord.id);
+
+        return res.json({ message: 'Mot de passe réinitialisé avec succès.' });
+    } catch (error) {
+        console.error('Erreur resetPassword:', error);
+        return res.status(500).json({ error: 'Erreur lors de la réinitialisation du mot de passe.' });
+    }
+}
+
+// ── Logout ────────────────────────────────────────────────────
+async function logout(req, res) {
+    res.clearCookie('token');
+    return res.json({ message: 'Déconnecté avec succès.' });
+}
+
+// ── Export ────────────────────────────────────────────────────
+module.exports = { register, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword };

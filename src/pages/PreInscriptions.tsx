@@ -26,6 +26,8 @@ export const PreInscriptions: React.FC = () => {
       telephone: req.data?.parentTelephone || '',
       redoublant: false,
       ecoleProvenance: '',
+      dejaPaye: 0,
+      recu: '',
     });
 
     // Mettre à jour le statut

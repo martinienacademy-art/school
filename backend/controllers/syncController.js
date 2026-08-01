@@ -13,7 +13,7 @@ async function syncFromFrontend(req, res) {
         return res.status(401).json({ error: 'Authentification requise.' });
     }
 
-    const { students = [], presences = [], activityLogs = [], appSettings = null, replace = false, matieres = [], classeMatieres = [], notes = [] } = req.body;
+    const { students = [], presences = [], activityLogs = [], appSettings = null, replace = false, matieres = [], classeMatieres = [], notes = [], ressources = [] } = req.body;
     const { role, schoolSlug } = req.user;
 
     if (!['admin', 'directeur', 'directeur_general', 'comptable', 'superviseur', 'proviseur', 'censeur'].includes(role)) {
@@ -84,12 +84,21 @@ async function syncFromFrontend(req, res) {
                 ecole_provenance: s.ecoleProvenance || '',
                 date_naissance: s.dateNaissance || null,
                 adsn: s.adsn || null,
-                photo_url: s.photoUrl || null
+                photo_url: s.photoUrl || null,
+                nationalite: s.nationalite || 'Togolaise',
+                adresse: s.adresse || '',
+                numero_cni: s.numeroCNI || '',
+                date_delivrance_cni: s.dateDelivranceCNI || null,
+                statut_admin: s.statutAdmin || 'Actif'
             }));
 
             for (let i = 0; i < studentData.length; i += CHUNK_SIZE) {
                 const chunk = studentData.slice(i, i + CHUNK_SIZE);
-                await supabase.from(tbl('students')).upsert(chunk, { onConflict: 'id' });
+                const { error: chunkErr } = await supabase.from(tbl('students')).upsert(chunk, { onConflict: 'id' });
+                if (chunkErr) {
+                    console.error("❌ [Sync POST] Erreur upsert students:", chunkErr.message, chunkErr);
+                    throw new Error("Erreur insertion élèves: " + chunkErr.message);
+                }
             }
 
             // --- 2. Sync Payments ---
@@ -228,6 +237,28 @@ async function syncFromFrontend(req, res) {
                     message_rappel: appSettings.messageRappel,
                     official_header: appSettings.officialHeader,
                     tranches: appSettings.tranches || [],
+                    acronyme: appSettings.acronyme || '',
+                    adresse_physique: appSettings.adressePhysique || '',
+                    email_officiel: appSettings.emailOfficiel || '',
+                    site_web: appSettings.siteWeb || '',
+                    description: appSettings.description || '',
+                    agrement: appSettings.agrement || '',
+                    devise: appSettings.devise || '',
+                    republique: appSettings.republique || '',
+                    ministere: appSettings.ministere || '',
+                    localisation_map: appSettings.localisationMap || '',
+                    facebook: appSettings.facebook || '',
+                    twitter: appSettings.twitter || '',
+                    linkedin: appSettings.linkedin || '',
+                    instagram: appSettings.instagram || '',
+                    youtube: appSettings.youtube || '',
+                    smtp_server: appSettings.smtpServer || '',
+                    smtp_port: appSettings.smtpPort || '587',
+                    smtp_user: appSettings.smtpUser || '',
+                    smtp_pass: appSettings.smtpPass || '',
+                    smtp_security: appSettings.smtpSecurity || 'TLS',
+                    smtp_sender_email: appSettings.smtpSenderEmail || '',
+                    smtp_sender_name: appSettings.smtpSenderName || '',
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' });
                 if (settingsErr) {
@@ -312,6 +343,48 @@ async function syncFromFrontend(req, res) {
             }
         }
 
+        // --- 8. Sync Ressources ---
+        if (ressources && ressources.length > 0) {
+            try {
+                let chunkSize = 500;
+                let ressourcesOk = 0;
+                let ressourcesErr = null;
+                for (let i = 0; i < ressources.length; i += chunkSize) {
+                    const chunk = ressources.slice(i, i + chunkSize).map(r => ({
+                        id: r.id,
+                        titre: r.titre,
+                        type: r.type,
+                        anneeAcademique: r.anneeAcademique,
+                        cycle: r.cycle,
+                        classe: r.classe,
+                        matiere: r.matiere,
+                        description: r.description || null,
+                        fichierUrl: r.fichierUrl,
+                        fichierNom: r.fichierNom,
+                        fichierTaille: r.fichierTaille || null,
+                        auteurId: r.auteurId,
+                        auteurNom: r.auteurNom,
+                        dateAjout: r.dateAjout
+                    }));
+                    
+                    const { error: chunkErr } = await supabase.from(tbl('ressources')).upsert(chunk, { onConflict: 'id' });
+                    if (chunkErr) {
+                        ressourcesErr = chunkErr;
+                        console.error(`❌ [Sync POST] Erreur ressources (chunk ${i}-${i+chunk.length}):`, chunkErr.message, chunkErr.details);
+                    } else {
+                        ressourcesOk += chunk.length;
+                    }
+                }
+                if (ressourcesErr) {
+                    console.error(`❌ [Sync POST] ${ressourcesOk}/${ressources.length} ressources sauvées, erreurs sur le reste.`);
+                } else {
+                    console.log(`✅ [Sync POST] ${ressourcesOk} ressources synchronisées avec succès !`);
+                }
+            } catch (ressourcesException) {
+                console.error('❌ [Sync POST] Exception ressources:', ressourcesException);
+            }
+        }
+
         console.log(`🎉 [Sync] Completed: ${students.length} students, etc.`);
         return res.json({ 
             message: 'Synchronisation cloud réussie.',
@@ -364,6 +437,7 @@ async function syncToFrontend(req, res) {
         const dbMatieres = await fetchTable('matieres');
         const dbClasseMatieres = await fetchTable('classe_matieres');
         const dbNotes = await fetchTable('notes');
+        const dbRessources = await fetchTable('ressources');
         const announcementReads = await fetchTable('announcement_reads');
         
         const { data: dbClasses } = await supabase.from('school_classes').select('*').eq('school_slug', schoolSlug).order('cycle').order('nom');
@@ -391,6 +465,11 @@ async function syncToFrontend(req, res) {
                 dateNaissance: s.date_naissance || null,
                 adsn: s.adsn || null,
                 photoUrl: s.photo_url || null,
+                nationalite: s.nationalite || 'Togolaise',
+                adresse: s.adresse || '',
+                numeroCNI: s.numero_cni || '',
+                dateDelivranceCNI: s.date_delivrance_cni || null,
+                statutAdmin: s.statut_admin || 'Actif',
                 historiquesPaiements: []
             });
         });
@@ -409,6 +488,7 @@ async function syncToFrontend(req, res) {
             }
         });
 
+        const sData = appSettings || {};
         return res.json({
             students: Array.from(studentMap.values()),
             presences: presences.map(pr => ({
@@ -431,15 +511,37 @@ async function syncToFrontend(req, res) {
             })),
             links: links || [],
             appSettings: appSettings ? {
-                appName: appSettings.app_name,
-                schoolName: appSettings.school_name,
-                schoolYear: appSettings.school_year,
-                schoolLogo: appSettings.school_logo,
-                schoolStamp: appSettings.school_stamp,
-                messageRemerciement: appSettings.message_remerciement,
-                messageRappel: appSettings.message_rappel,
-                officialHeader: appSettings.official_header,
-                tranches: appSettings.tranches || []
+                appName: sData.app_name,
+                schoolName: sData.school_name,
+                schoolYear: sData.school_year,
+                schoolLogo: sData.school_logo,
+                schoolStamp: sData.school_stamp,
+                messageRemerciement: sData.message_remerciement,
+                messageRappel: sData.message_rappel,
+                officialHeader: sData.official_header,
+                tranches: sData.tranches || [],
+                acronyme: sData.acronyme || '',
+                adressePhysique: sData.adresse_physique || '',
+                emailOfficiel: sData.email_officiel || '',
+                siteWeb: sData.site_web || '',
+                description: sData.description || '',
+                agrement: sData.agrement || '',
+                devise: sData.devise || '',
+                republique: sData.republique || '',
+                ministere: sData.ministere || '',
+                localisationMap: sData.localisation_map || '',
+                facebook: sData.facebook,
+                twitter: sData.twitter,
+                linkedin: sData.linkedin,
+                instagram: sData.instagram,
+                youtube: sData.youtube,
+                smtpServer: sData.smtp_server,
+                smtpPort: sData.smtp_port,
+                smtpUser: sData.smtp_user,
+                smtpPass: sData.smtp_pass,
+                smtpSecurity: sData.smtp_security,
+                smtpSenderEmail: sData.smtp_sender_email,
+                smtpSenderName: sData.smtp_sender_name
             } : null,
             announcements: (announcements || []).map(a => ({
                 id: a.id,
@@ -471,6 +573,22 @@ async function syncToFrontend(req, res) {
                 noteClasse: n.note_classe !== undefined ? Number(n.note_classe) : null,
                 noteDevoir: n.note_devoir !== undefined ? Number(n.note_devoir) : null,
                 noteCompo: n.note_compo !== undefined ? Number(n.note_compo) : null
+            })) : undefined,
+            ressources: dbRessources ? dbRessources.map(r => ({
+                id: r.id,
+                titre: r.titre,
+                type: r.type,
+                anneeAcademique: r.anneeAcademique,
+                cycle: r.cycle,
+                classe: r.classe,
+                matiere: r.matiere,
+                description: r.description,
+                fichierUrl: r.fichierUrl,
+                fichierNom: r.fichierNom,
+                fichierTaille: r.fichierTaille,
+                auteurId: r.auteurId,
+                auteurNom: r.auteurNom,
+                dateAjout: r.dateAjout
             })) : undefined,
             announcementReads: (announcementReads || []).map(r => ({
                 announcementId: r.announcement_id,
