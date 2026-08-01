@@ -49,7 +49,7 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
   const [form, setForm] = useState({
     nom: student?.nom ?? '',
     prenom: student?.prenom ?? '',
-    classe: student?.classe ?? CLASS_CONFIG[0].name,
+    classe: student?.classe ?? (CLASS_CONFIG[0]?.name || ''),
     telephone: student?.telephone ?? '+228',
     sexe: (student?.sexe ?? 'M') as 'M' | 'F',
     redoublant: student?.redoublant ?? false,
