@@ -77,18 +77,35 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Service du Frontend (Static Files) ───────────────────────
-// On pointe vers le dossier 'dist' à la racine du projet
 const frontendDir = path.join(__dirname, '..', 'dist');
-if (fs.existsSync(frontendDir)) {
-    app.use(express.static(frontendDir));
 
-    // Pour toutes les autres routes, on renvoie index.html (React Router)
-    app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(frontendDir, 'index.html'));
-        }
-    });
-}
+// Serveur les fichiers statiques de dist
+app.use(express.static(frontendDir));
+
+// Pour toutes les autres routes non-API, renvoyer index.html (SPA React)
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
+    
+    const indexPath = path.join(frontendDir, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+    } else {
+        console.error(`❌ [Frontend] index.html introuvable à: ${indexPath}`);
+        return res.status(500).send(`
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head><meta charset="UTF-8"><title>Erreur Déploiement</title></head>
+            <body style="font-family: system-ui, sans-serif; text-align: center; padding: 50px; background: #0f172a; color: white;">
+                <h1 style="color: #f43f5e;">Dossier de build frontend introuvable</h1>
+                <p>Le fichier index.html n'a pas été trouvé à l'emplacement : <code>${indexPath}</code></p>
+                <p>Veuillez vérifier que la commande "npm run build" s'est bien exécutée lors du déploiement.</p>
+            </body>
+            </html>
+        `);
+    }
+});
 
 // ── Gestion globale des erreurs ───────────────────────────────
 app.use((err, req, res, _next) => {
