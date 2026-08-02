@@ -68,7 +68,7 @@ export const Parametres: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+      const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

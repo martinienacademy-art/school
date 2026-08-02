@@ -12,6 +12,7 @@ export interface Student {
   id: string;
   nom: string;
   prenom: string;
+  matriculeNational?: string;
   classe: string;
   telephone: string;
   parentId?: string;
@@ -309,6 +310,7 @@ export interface PreInscription {
   data: {
     nom: string;
     prenom: string;
+    matriculeNational?: string;
     sexe: 'M' | 'F';
     dateNaissance: string;
     cycle: Cycle;

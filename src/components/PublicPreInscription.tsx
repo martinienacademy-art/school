@@ -16,12 +16,13 @@ export const PublicPreInscription: React.FC<PublicPreInscriptionProps> = ({ scho
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
+    matriculeNational: '',
     sexe: 'M',
     dateNaissance: '',
     cycle: 'Primaire',
     classe: '',
     parentNom: '',
-    parentTelephone: '',
+    parentTelephone: '+229',
     parentEmail: '',
   });
 
@@ -162,6 +163,10 @@ export const PublicPreInscription: React.FC<PublicPreInscriptionProps> = ({ scho
                       <input required type="text" name="prenom" value={formData.prenom} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Prénom(s)" />
                     </div>
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 font-medium">Matricule National (Optionnel)</label>
+                    <input type="text" name="matriculeNational" value={formData.matriculeNational} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition uppercase placeholder:normal-case" placeholder="Ex: BEN-2026-XXXXX" />
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-xs text-slate-300 font-medium">Sexe</label>
@@ -206,7 +211,7 @@ export const PublicPreInscription: React.FC<PublicPreInscriptionProps> = ({ scho
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs text-slate-300 font-medium">Numéro de téléphone (WhatsApp si possible) *</label>
-                    <input required type="tel" name="parentTelephone" value={formData.parentTelephone} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="+228..." />
+                    <input required type="tel" name="parentTelephone" value={formData.parentTelephone} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="+229..." />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs text-slate-300 font-medium">Email (Optionnel)</label>

@@ -411,7 +411,6 @@ async function deleteSchool(req, res) {
     const { id } = req.params;
 
     try {
-        // Optionnel : s'assurer qu'on ne supprime pas si l'id n'est pas fourni
         if (!id) return res.status(400).json({ error: 'ID manquant.' });
 
         // 1. Récupérer le slug de l'école
@@ -425,21 +424,20 @@ async function deleteSchool(req, res) {
             return res.status(404).json({ error: 'École introuvable.' });
         }
 
-        // 2. Exécuter la routine Supabase RPC pour dropper toutes les tables associées à ce slug
-        console.log(`🗑️ Tentative de suppression des tables pour le slug : ${school.slug}`);
-        const { error: rpcErr } = await supabase.rpc('drop_school_tables', { school_slug: school.slug });
-        if (rpcErr) {
-            console.error('Erreur RPC Drop Tables:', rpcErr.message);
-            // On continue quand même pour la supprimer du catalogue, on nettoiera les bases manuellement si besoin
-        }
-
-        // 3. Supprimer du catalogue (Table schools)
+        // 2. Supprimer du catalogue (Table schools) en premier pour interdire immédiatement la connexion/requêtes
         const { error: deleteErr } = await supabase
             .from('schools')
             .delete()
             .eq('id', id);
 
         if (deleteErr) throw deleteErr;
+
+        // 3. Exécuter la routine Supabase RPC pour dropper toutes les tables associées à ce slug
+        console.log(`🗑️ Tentative de suppression des tables pour le slug : ${school.slug}`);
+        const { error: rpcErr } = await supabase.rpc('drop_school_tables', { school_slug: school.slug });
+        if (rpcErr) {
+            console.error('Erreur RPC Drop Tables:', rpcErr.message);
+        }
 
         console.log(`🗑️ L'école ${school.name} a été complétement supprimée du système.`);
         return res.json({ message: `L'établissement ${school.name} a été supprimé sans retour possible.` });

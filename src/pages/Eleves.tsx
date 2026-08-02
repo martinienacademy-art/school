@@ -52,8 +52,9 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
   const [form, setForm] = useState({
     nom: student?.nom ?? '',
     prenom: student?.prenom ?? '',
+    matriculeNational: student?.matriculeNational ?? '',
     classe: student?.classe ?? (classConfigList[0]?.name || ''),
-    telephone: student?.telephone ?? '+228',
+    telephone: student?.telephone ?? '+229',
     sexe: (student?.sexe ?? 'M') as 'M' | 'F',
     redoublant: student?.redoublant ?? false,
     ecoleProvenance: student?.ecoleProvenance ?? '',
@@ -168,14 +169,25 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <FileBadge className="w-3 h-3" /> Matricule National
+                </label>
+                <input 
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white uppercase placeholder:normal-case" 
+                  value={form.matriculeNational} 
+                  onChange={(e) => setForm({ ...form, matriculeNational: e.target.value })} 
+                  placeholder="Ex: BEN-2026-XXXXX" 
+                />
+              </div>
               <div>
                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2"><MapPin className="w-3 h-3" /> Adresse Domicilière</label>
                 <input 
                   className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
                   value={form.adresse} 
                   onChange={(e) => setForm({ ...form, adresse: e.target.value })} 
-                  placeholder="Ex: Agoè, Lomé" 
+                  placeholder="Ex: Cotonou" 
                 />
               </div>
               <div>
@@ -186,7 +198,7 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
                   className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
                   value={form.telephone} 
                   onChange={(e) => setForm({ ...form, telephone: e.target.value })} 
-                  placeholder="+228" 
+                  placeholder="+229" 
                 />
               </div>
             </div>

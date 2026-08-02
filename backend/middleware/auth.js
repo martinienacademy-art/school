@@ -34,8 +34,8 @@ function requireSuperAdmin(req, res, next) {
 }
 
 // ── Middleware école requise ────────────────────────────────────
-// Garantit que tout utilisateur (sauf superadmin) possède un schoolSlug
-function requireSchool(req, res, next) {
+// Garantit que tout utilisateur (sauf superadmin) possède un schoolSlug et que l'école existe toujours
+async function requireSchool(req, res, next) {
     if (!req.user) {
         return res.status(401).json({ error: 'Non authentifié.' });
     }
@@ -48,7 +48,25 @@ function requireSchool(req, res, next) {
             error: 'Aucun établissement défini dans la session.'
         });
     }
-    next();
+
+    try {
+        const { supabase } = require('../utils/supabase');
+        const { data: school } = await supabase
+            .from('schools')
+            .select('id, status')
+            .eq('slug', req.user.schoolSlug)
+            .single();
+
+        if (!school) {
+            return res.status(403).json({ error: 'Cet établissement a été supprimé du système.' });
+        }
+        if (school.status === 'suspended') {
+            return res.status(403).json({ error: 'L\'accès à cet établissement est actuellement suspendu.' });
+        }
+        next();
+    } catch (err) {
+        return res.status(403).json({ error: 'Erreur vérification établissement.' });
+    }
 }
 
 // ── Middleware rôle école (admin / directeur / etc.) ──────────
