@@ -1195,67 +1195,53 @@ export const useStore = create<AppState>()(
       classes: [],
       setClasses: (c) => set({ classes: c }),
       addClass: async (c) => {
+        const newClass = { ...c, id: c.id || uuid() };
+        set(s => ({ classes: [...s.classes, newClass] }));
+        import('../services/backendSync').then(({ syncToBackend }) => {
+          syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
+        });
+        // Optimistic sync to API
         try {
           const { getAuthHeaders } = await import('../services/apiHelpers');
           const { API_BASE_URL } = await import('../config');
-          const res = await fetch(`${API_BASE_URL}/classes`, {
+          await fetch(`${API_BASE_URL}/classes`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...getAuthHeaders()
-            },
-            body: JSON.stringify(c)
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify(newClass)
           });
-          if (res.ok) {
-            const newClass = await res.json();
-            set(s => ({ classes: [...s.classes, newClass] }));
-            import('../services/backendSync').then(({ syncToBackend }) => {
-              syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
-            });
-          } else {
-            console.error('Erreur ajout classe:', await res.text());
-          }
         } catch (err) {
-          console.error('Exception ajout classe:', err);
+          console.error('Exception ajout classe API:', err);
         }
       },
       updateClass: async (id, c) => {
+        set(s => ({ classes: s.classes.map(cls => cls.id === id ? { ...cls, ...c } : cls) }));
+        import('../services/backendSync').then(({ syncToBackend }) => {
+          syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
+        });
         try {
           const { getAuthHeaders } = await import('../services/apiHelpers');
           const { API_BASE_URL } = await import('../config');
-          const res = await fetch(`${API_BASE_URL}/classes/${id}`, {
+          await fetch(`${API_BASE_URL}/classes/${id}`, {
             method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              ...getAuthHeaders()
-            },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(c)
           });
-          if (res.ok) {
-            const updated = await res.json();
-            set(s => ({ classes: s.classes.map(cls => cls.id === id ? updated : cls) }));
-            import('../services/backendSync').then(({ syncToBackend }) => {
-              syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
-            });
-          }
         } catch (err) {
           console.error(err);
         }
       },
       deleteClass: async (id) => {
+        set(s => ({ classes: s.classes.filter(cls => cls.id !== id) }));
+        import('../services/backendSync').then(({ syncToBackend }) => {
+          syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
+        });
         try {
           const { getAuthHeaders } = await import('../services/apiHelpers');
           const { API_BASE_URL } = await import('../config');
-          const res = await fetch(`${API_BASE_URL}/classes/${id}`, {
+          await fetch(`${API_BASE_URL}/classes/${id}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
           });
-          if (res.ok) {
-            set(s => ({ classes: s.classes.filter(cls => cls.id !== id) }));
-            import('../services/backendSync').then(({ syncToBackend }) => {
-              syncToBackend({ classes: get().classes }).then(() => set({ lastSyncTimestamp: Date.now() }));
-            });
-          }
         } catch (err) {
           console.error(err);
         }

@@ -46,10 +46,13 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
     return receipts.filter(Boolean);
   }, [allStudents]);
 
+  const storeClasses = useStore((s: any) => s.classes) || [];
+  const classConfigList = storeClasses.map((c: any) => ({ name: c.nom, cycle: c.cycle, ecolage: c.ecolage }));
+
   const [form, setForm] = useState({
     nom: student?.nom ?? '',
     prenom: student?.prenom ?? '',
-    classe: student?.classe ?? (CLASS_CONFIG[0]?.name || ''),
+    classe: student?.classe ?? (classConfigList[0]?.name || ''),
     telephone: student?.telephone ?? '+228',
     sexe: (student?.sexe ?? 'M') as 'M' | 'F',
     redoublant: student?.redoublant ?? false,
@@ -224,7 +227,7 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
                   value={form.classe} 
                   onChange={(e) => setForm({ ...form, classe: e.target.value })}
                 >
-                  {CLASS_CONFIG.map((c) => <option key={c.name} value={c.name}>{c.name} — {c.cycle} ({new Intl.NumberFormat('fr-FR').format(c.ecolage)} F)</option>)}
+                  {classConfigList.map((c: any) => <option key={c.name} value={c.name}>{c.name} — {c.cycle} ({new Intl.NumberFormat('fr-FR').format(c.ecolage)} F)</option>)}
                 </select>
               </div>
               <div>
@@ -478,7 +481,8 @@ export const Eleves: React.FC = () => {
     else setDeleteConfirm(id);
   };
 
-  const classes = [...new Set(CLASS_CONFIG.map((c) => c.name))];
+  const storeClasses = useStore((s: any) => s.classes) || [];
+  const classNames = [...new Set(storeClasses.map((c: any) => c.nom))];
 
   return (
     <div className="space-y-6 pb-20 max-w-[1600px] mx-auto animate-slideUp">
@@ -552,7 +556,7 @@ export const Eleves: React.FC = () => {
             </select>
             <select className="flex-1 min-w-[200px] bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-[13px] font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all cursor-pointer" value={filterClasse} onChange={(e) => setFilterClasse(e.target.value)}>
               <option value="">Toutes les classes</option>
-              {classes.map((c) => <option key={c}>{c}</option>)}
+              {classNames.map((c) => <option key={c as string}>{c as string}</option>)}
             </select>
             <select className="flex-1 min-w-[200px] bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-[13px] font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all cursor-pointer" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
               <option value="">Tous les statuts financiers</option>

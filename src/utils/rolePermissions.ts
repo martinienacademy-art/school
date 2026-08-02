@@ -15,19 +15,19 @@ const ROLE_PAGES: Record<Role, AppPage[]> = {
         'dashboard', 'pre_inscriptions', 'eleves', 'paiements', 'analyses', 'documents',
         'parametres', 'recouvrement', 'scan_information',
         'verification_recu', 'historique_activites', 'parents_list', 'import_export', 'chat', 'annonces',
-        'gestion_academique', 'saisie_notes', 'bulletins', 'gestion_personnel', 'enseignants'
+        'gestion_academique', 'saisie_notes', 'bulletins', 'gestion_personnel', 'enseignants', 'espace_pedagogique'
     ],
     admin: [
         'dashboard', 'pre_inscriptions', 'eleves', 'paiements', 'analyses', 'documents',
         'parametres', 'recouvrement', 'scan_information',
         'verification_recu', 'historique_activites', 'parents_list', 'import_export', 'chat', 'annonces',
-        'gestion_academique', 'saisie_notes', 'bulletins', 'gestion_personnel', 'enseignants'
+        'gestion_academique', 'saisie_notes', 'bulletins', 'gestion_personnel', 'enseignants', 'espace_pedagogique'
     ],
     directeur: [
         'dashboard', 'pre_inscriptions', 'eleves', 'paiements', 'analyses', 'documents',
         'parametres', 'recouvrement', 'scan_information',
         'verification_recu', 'historique_activites', 'parents_list', 'import_export', 'chat', 'annonces',
-        'gestion_academique', 'saisie_notes', 'bulletins', 'gestion_personnel', 'enseignants'
+        'gestion_academique', 'saisie_notes', 'bulletins', 'gestion_personnel', 'enseignants', 'espace_pedagogique'
     ],
     comptable: [
         'dashboard', 'eleves', 'paiements', 'analyses', 'documents',
@@ -41,11 +41,11 @@ const ROLE_PAGES: Record<Role, AppPage[]> = {
     ],
     proviseur: [
         'dashboard', 'eleves', 'analyses', 'chat', 'scan_information',
-        'gestion_academique', 'saisie_notes', 'bulletins', 'enseignants'
+        'gestion_academique', 'saisie_notes', 'bulletins', 'enseignants', 'espace_pedagogique'
     ],
     censeur: [
         'dashboard', 'eleves', 'analyses', 'chat', 'scan_information',
-        'gestion_academique', 'saisie_notes', 'bulletins', 'enseignants'
+        'gestion_academique', 'saisie_notes', 'bulletins', 'enseignants', 'espace_pedagogique'
     ],
     parent: [
         'parent_dashboard', 'parent_historique', 'parent_recus',

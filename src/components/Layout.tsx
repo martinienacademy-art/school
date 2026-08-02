@@ -9,7 +9,7 @@ import {
   Bell, ChevronRight, ChevronLeft, Target, Award, MessageSquare,
   ScanLine, IdCard, ShieldCheck, Activity, Database, Megaphone,
   BookOpen, Edit3, FileSpreadsheet, Sun, Moon, Clock,
-  PanelLeftClose, PanelLeftOpen, RefreshCw, Command, Shield, ArrowLeft, UserPlus, PenTool
+  PanelLeftClose, PanelLeftOpen, RefreshCw, Command, Shield, ArrowLeft, UserPlus, Pen
 } from 'lucide-react';
 
 import { SupportModal } from './SupportModal';
@@ -31,7 +31,7 @@ const NAV_ITEMS: Omit<NavItem, 'badge'>[] = [
   { id: 'carte_scolaire',       label: 'Cartes Scolaires',  icon: <IdCard className="w-[18px] h-[18px]" /> },
   { id: 'gestion_academique',   label: 'Académique',        icon: <BookOpen className="w-[18px] h-[18px]" /> },
   { id: 'espace_pedagogique',   label: 'Bibliothèque',      icon: <BookOpen className="w-[18px] h-[18px]" /> },
-  { id: 'saisie_notes',         label: 'Saisie des notes',  icon: <PenTool className="w-[18px] h-[18px]" /> },
+  { id: 'saisie_notes',         label: 'Saisie des notes',  icon: <Pen className="w-[18px] h-[18px]" /> },
   { id: 'bulletins',            label: 'Bulletins',         icon: <Award className="w-[18px] h-[18px]" /> },
   { id: 'enseignants',          label: 'Professeurs',       icon: <GraduationCap className="w-[18px] h-[18px]" /> },
   { id: 'gestion_personnel',    label: 'Personnel',         icon: <Users className="w-[18px] h-[18px]" /> },
