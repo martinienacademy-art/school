@@ -526,7 +526,7 @@ export default function Students() {
                   <select
                     value={formData.classe || ''}
                     onChange={(e) => {
-                      const classInfo = CLASSES.find(c => c.nom === e.target.value);
+                      const classInfo = (classes || []).find((c: any) => c.nom === e.target.value);
                       setFormData({ 
                         ...formData, 
                         classe: e.target.value,

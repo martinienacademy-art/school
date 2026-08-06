@@ -45,6 +45,7 @@ export const getActionStyle = (action: ActivityAction) => {
         import: { color: 'text-indigo-600', bg: 'bg-indigo-50', label: 'Import' },
         export: { color: 'text-slate-600', bg: 'bg-slate-50', label: 'Export' },
         suppression: { color: 'text-red-600', bg: 'bg-red-50', label: 'Suppression' },
+        gestion_enseignant: { color: 'text-violet-600', bg: 'bg-violet-50', label: 'Enseignant' },
         autre: { color: 'text-gray-600', bg: 'bg-gray-50', label: 'Autre' },
     };
     return styles[action] || styles.autre;

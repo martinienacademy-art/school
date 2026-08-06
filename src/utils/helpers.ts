@@ -1,5 +1,6 @@
 import { Student, StatusPaiement, DashboardStats, ClassStats } from '../types';
 import { useStore } from '../store/useStore';
+import { CLASS_CONFIG } from '../data/classConfig';
 
 export const generateId = (): string => {
   // Use a proper UUID v4 format to avoid "invalid input syntax for type uuid" error in Supabase
