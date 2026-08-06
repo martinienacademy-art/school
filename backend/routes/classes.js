@@ -7,6 +7,7 @@ const { authenticateToken, requireSchoolAdmin, requireSchool } = require('../mid
 const classSchema = Joi.object({
     nom: Joi.string().trim().max(50).required(),
     cycle: Joi.string().valid('Primaire', 'Collège', 'Lycée', 'Maternelle', 'Crèche').required(),
+    niveau: Joi.string().trim().max(50).allow('', null).optional(),
     ecolage: Joi.number().min(0).required()
 });
 

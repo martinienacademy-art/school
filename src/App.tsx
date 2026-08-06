@@ -43,6 +43,8 @@ const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDash
 const GestionPersonnel = lazy(() => import('./components/GestionPersonnel').then(m => ({ default: m.GestionPersonnel })));
 const Enseignants = lazy(() => import('./pages/Enseignants'));
 const EspacePedagogique = lazy(() => import('./pages/EspacePedagogique'));
+const TeacherLogin = lazy(() => import('./pages/teacher/TeacherLogin'));
+const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center p-12">
@@ -110,6 +112,18 @@ const PageContent: React.FC = () => {
     );
   }
 
+  // Enseignant : dashboard dédié
+  if (user?.role === 'enseignant') {
+    const teacherPages = ['teacher_dashboard', 'saisie_notes', 'bulletins', 'espace_pedagogique', 'chat', 'annonces', 'documents'];
+    if (!teacherPages.includes(currentPage as any)) {
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <TeacherDashboard />
+        </Suspense>
+      );
+    }
+  }
+
   // Sécurité — Empêcher un parent de voir une page admin même si le store est désynchronisé
   if (user?.role === 'parent') {
     const parentPages = ['parent_dashboard', 'parent_historique', 'parent_recus', 'parent_badges', 'chat', 'annonces', 'parent_notes'];
@@ -156,11 +170,15 @@ const PageContent: React.FC = () => {
     case 'gestion_personnel': return <GestionPersonnel />;
     case 'enseignants': return <Enseignants />;
     case 'espace_pedagogique': return <EspacePedagogique />;
+    case 'teacher_dashboard': return <TeacherDashboard />;
     case 'superadmin_dashboard':
     case 'superadmin_schools':
     case 'superadmin_billing':
       return <SuperAdminDashboard />;
-    default: return user?.role === 'parent' ? <ParentDashboard /> : <Dashboard />;
+    default:
+      if (user?.role === 'parent') return <ParentDashboard />;
+      if (user?.role === 'enseignant') return <TeacherDashboard />;
+      return <Dashboard />;
   }
 };
 
@@ -227,6 +245,17 @@ export function App() {
   
   if (path === '/reset-password') {
     return <ResetPassword />;
+  }
+
+  // Route dédiée portail enseignant
+  if (path === '/teacher' || path === '/teacher-login') {
+    if (!isAuthenticated) {
+      return (
+        <Suspense fallback={<LoadingSpinner />}>
+          <TeacherLogin />
+        </Suspense>
+      );
+    }
   }
 
   if (!isAuthenticated) {

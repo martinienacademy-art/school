@@ -38,17 +38,17 @@ app.use((req, res, next) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/pre-inscriptions', require('./routes/preInscriptions')); // Route publique
 // ── Sécurisation par défaut (Deny by default) ───────────────────
-const { authenticateToken } = require('./middleware/auth');
-app.use('/api/parent', authenticateToken, require('./routes/parent'));
-app.use('/api/students', authenticateToken, require('./routes/students'));
-app.use('/api/sync', authenticateToken, require('./routes/sync'));
-app.use('/api/chat', authenticateToken, require('./routes/chat'));
-app.use('/api/notifications', authenticateToken, require('./routes/notifications'));
-app.use('/api/settings', authenticateToken, require('./routes/settings'));
-app.use('/api/announcements', authenticateToken, require('./routes/announcements'));
-app.use('/api/personnel', authenticateToken, require('./routes/personnel'));
-app.use('/api/classes', authenticateToken, require('./routes/classes'));
-app.use('/api/email', authenticateToken, require('./routes/email'));
+const { authenticateToken, requireSchool } = require('./middleware/auth');
+app.use('/api/parent', authenticateToken, requireSchool, require('./routes/parent'));
+app.use('/api/students', authenticateToken, requireSchool, require('./routes/students'));
+app.use('/api/sync', authenticateToken, requireSchool, require('./routes/sync'));
+app.use('/api/chat', authenticateToken, requireSchool, require('./routes/chat'));
+app.use('/api/notifications', authenticateToken, requireSchool, require('./routes/notifications'));
+app.use('/api/settings', authenticateToken, requireSchool, require('./routes/settings'));
+app.use('/api/announcements', authenticateToken, requireSchool, require('./routes/announcements'));
+app.use('/api/personnel', authenticateToken, requireSchool, require('./routes/personnel'));
+app.use('/api/classes', authenticateToken, requireSchool, require('./routes/classes'));
+app.use('/api/email', authenticateToken, requireSchool, require('./routes/email'));
 app.use('/api/superadmin', authenticateToken, require('./routes/superAdmin')); // 👑 Routes propriétaire SaaS
 
 // Route publique pour lister les écoles dans le login

@@ -2,7 +2,7 @@
 // ROUTES — Authentification
 // ============================================================
 const router = require('express').Router();
-const { register, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword } = require('../controllers/authController');
+const { register, registerTeacher, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword } = require('../controllers/authController');
 const { authenticateToken } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
 
@@ -13,6 +13,7 @@ const authLimiter = rateLimit({
 });
 
 router.post('/register', authLimiter, register);
+router.post('/register-teacher', authLimiter, registerTeacher);
 router.post('/login', authLimiter, login);
 router.post('/logout', logout);
 router.post('/change-password', authenticateToken, authLimiter, changePassword);

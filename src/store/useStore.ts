@@ -986,6 +986,11 @@ export const useStore = create<AppState>()(
             const res = await fetch(`${BACKEND_URL}/api/parent/data`, {
               headers: getAuthHeaders()
             });
+            if (res.status === 401 || res.status === 403) {
+              console.warn('⛔ [Parent Sync] Session invalide ou école supprimée. Déconnexion...');
+              get().logout();
+              return;
+            }
             if (!res.ok) return;
             const data = await res.json();
             
@@ -1080,6 +1085,12 @@ export const useStore = create<AppState>()(
 
           if (!data) {
             console.warn('⚠️ [Sync] Le backend n\'a retourné aucune donnée.');
+            return;
+          }
+
+          if (data.authError) {
+            console.warn('⛔ [Sync] Session invalide ou école supprimée. Déconnexion automatique...');
+            get().logout();
             return;
           }
 
@@ -1586,6 +1597,7 @@ export const useStore = create<AppState>()(
     {
       name: 'edufinance-storage',
       partialize: (state) => ({
+        classes: state.classes || [],
         students: state.students,
         schoolName: state.schoolName,
         schoolYear: state.schoolYear,

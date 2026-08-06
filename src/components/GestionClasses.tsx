@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Plus, Trash2, Edit2, Check, X, BookOpen } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, BookOpen } from 'lucide-react';
 import { formatMontant } from '../utils/helpers';
 import { ClassInfo } from '../types';
 
@@ -15,11 +15,13 @@ export const GestionClasses: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [nom, setNom] = useState('');
+  const [niveau, setNiveau] = useState('');
   const [cycle, setCycle] = useState('Primaire');
   const [ecolage, setEcolage] = useState('');
 
   const resetForm = () => {
     setNom('');
+    setNiveau('');
     setCycle('Primaire');
     setEcolage('');
     setIsAdding(false);
@@ -28,6 +30,7 @@ export const GestionClasses: React.FC = () => {
 
   const handleEdit = (c: ClassInfo) => {
     setNom(c.nom);
+    setNiveau(c.niveau || '');
     setCycle(c.cycle);
     setEcolage(c.ecolage.toString());
     setEditingId(c.id || null);
@@ -42,6 +45,7 @@ export const GestionClasses: React.FC = () => {
 
     const payload = {
       nom,
+      niveau,
       cycle,
       ecolage: Number(ecolage)
     };
@@ -86,7 +90,17 @@ export const GestionClasses: React.FC = () => {
           <h4 className="font-bold text-sm text-slate-700 dark:text-slate-300 mb-4">
             {editingId ? "Modifier la classe" : "Nouvelle classe"}
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-1">Niveau</label>
+              <input
+                type="text"
+                placeholder="Ex: 6ème"
+                value={niveau}
+                onChange={(e) => setNiveau(e.target.value)}
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold"
+              />
+            </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">Nom de la classe</label>
               <input
@@ -94,7 +108,7 @@ export const GestionClasses: React.FC = () => {
                 placeholder="Ex: 6EME A"
                 value={nom}
                 onChange={(e) => setNom(e.target.value.toUpperCase())}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold"
               />
             </div>
             <div>
@@ -102,7 +116,7 @@ export const GestionClasses: React.FC = () => {
               <select
                 value={cycle}
                 onChange={(e) => setCycle(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold"
               >
                 <option value="Crèche">Crèche</option>
                 <option value="Maternelle">Maternelle</option>
@@ -118,7 +132,7 @@ export const GestionClasses: React.FC = () => {
                 placeholder="Ex: 50000"
                 value={ecolage}
                 onChange={(e) => setEcolage(e.target.value)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold"
               />
             </div>
           </div>
@@ -143,6 +157,7 @@ export const GestionClasses: React.FC = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-slate-200 dark:border-slate-700">
+              <th className="py-3 font-black text-xs text-slate-400 uppercase tracking-wider">Niveau</th>
               <th className="py-3 font-black text-xs text-slate-400 uppercase tracking-wider">Classe</th>
               <th className="py-3 font-black text-xs text-slate-400 uppercase tracking-wider">Cycle</th>
               <th className="py-3 font-black text-xs text-slate-400 uppercase tracking-wider text-right">Écolage</th>
@@ -152,6 +167,9 @@ export const GestionClasses: React.FC = () => {
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
             {classes.map((c: ClassInfo) => (
               <tr key={c.id || c.nom} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                <td className="py-3 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  {c.niveau ? <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded font-bold text-xs">{c.niveau}</span> : <span className="text-slate-400 font-normal">—</span>}
+                </td>
                 <td className="py-3 text-sm font-bold text-slate-900 dark:text-white">{c.nom}</td>
                 <td className="py-3 text-sm font-medium text-slate-500 dark:text-slate-400">
                   <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-xs">{c.cycle}</span>

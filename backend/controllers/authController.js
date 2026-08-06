@@ -127,23 +127,120 @@ async function register(req, res) {
     }
 }
 
+// ── Register (Enseignants / Professeurs) ─────────────────────
+const teacherRegisterSchema = Joi.object({
+    nom: Joi.string().trim().required().messages({
+        'any.required': 'Le nom complet est requis.'
+    }),
+    email: Joi.string().email().required().messages({
+        'any.required': 'L\'adresse e-mail est requise.',
+        'string.email': 'L\'adresse e-mail est invalide.'
+    }),
+    password: Joi.string().min(6).required().messages({
+        'string.min': 'Le mot de passe doit contenir au moins 6 caractères.',
+        'any.required': 'Le mot de passe est requis.'
+    }),
+    school_slug: Joi.string().trim().required().messages({
+        'any.required': 'Le code de l\'établissement (school_slug) est requis.'
+    })
+});
+
+async function registerTeacher(req, res) {
+    const { value: validatedData, error: validationError } = teacherRegisterSchema.validate(req.body, { abortEarly: false });
+    
+    if (validationError) {
+        return res.status(400).json({ error: validationError.details.map(d => d.message).join(', ') });
+    }
+
+    let { nom, email, password, school_slug } = validatedData;
+    const cleanEmail = email.toLowerCase().trim();
+
+    try {
+        const { data: school } = await supabase
+            .from('schools')
+            .select('status')
+            .eq('slug', school_slug)
+            .single();
+            
+        if (!school) {
+            return res.status(404).json({ error: "Établissement inconnu." });
+        }
+        if (school.status === 'suspended') {
+            return res.status(403).json({ error: "L'établissement est suspendu." });
+        }
+
+        const { data: existing } = await supabase
+            .from(`profiles_${school_slug}`)
+            .select('id')
+            .eq('email', cleanEmail)
+            .single();
+
+        if (existing) {
+            return res.status(409).json({ error: 'Cette adresse e-mail est déjà enregistrée.' });
+        }
+
+        const hashed = await bcrypt.hash(password, 10);
+        const ipHash = getIpHash(req);
+
+        const insertPayload = {
+            nom: nom.trim(),
+            email: cleanEmail,
+            telephone: cleanEmail,
+            password: hashed,
+            role: 'enseignant',
+            consented_at: new Date().toISOString(),
+            signup_ip_hash: ipHash
+        };
+
+        const { data: teacher, error } = await supabase
+            .from(`profiles_${school_slug}`)
+            .insert(insertPayload)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        const token = jwt.sign(
+            { id: teacher.id, nom: teacher.nom, role: 'enseignant', schoolSlug: school_slug },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRES }
+        );
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        return res.status(201).json({
+            message: 'Compte Enseignant créé avec succès.',
+            token,
+            user: { id: teacher.id, nom: teacher.nom, email: teacher.email, role: 'enseignant', schoolSlug: school_slug }
+        });
+    } catch (err) {
+        console.error('Register Teacher Error:', err.message);
+        return res.status(500).json({ error: 'Erreur lors de la création du compte enseignant : ' + err.message });
+    }
+}
+
 // ── Login (Tout Rôles) ──────────────────────────
 async function login(req, res) {
-    let { telephone, password, schoolSlug } = req.body;
-    telephone = (telephone || '').replace(/\s+/g, '').trim();
+    let { telephone, email, password, schoolSlug } = req.body;
+    let identifier = (telephone || email || '').replace(/\s+/g, '').trim().toLowerCase();
 
-    if (!telephone || !password) {
-        return res.status(400).json({ error: 'Champs requis : telephone, password.' });
+    if (!identifier || !password) {
+        return res.status(400).json({ error: 'Champs requis : identifiant (email/téléphone) et mot de passe.' });
     }
 
     try {
-        console.log(`🔍 [Auth] Tentative login pour: ${telephone.trim()}`);
+        console.log(`🔍 [Auth] Tentative login pour: ${identifier}`);
 
         // ── 1. Vérifier si c'est le SuperAdmin ──
         const { data: superadmin } = await supabase
             .from('superadmins')
             .select('*')
-            .eq('telephone', telephone.trim())
+            .or(`telephone.eq.${identifier},email.eq.${identifier}`)
             .single();
 
         if (superadmin) {
@@ -179,11 +276,11 @@ async function login(req, res) {
             .single();
 
         if (schoolErr || !school) {
-            return res.status(404).json({ error: 'Établissement introuvable.' });
+            return res.status(404).json({ error: 'Établissement introuvable ou supprimé.' });
         }
 
-        if (school.status === 'suspended') {
-            return res.status(403).json({ error: "L'accès à cet établissement est suspendu." });
+        if (!['active', 'trial'].includes(school.status)) {
+            return res.status(403).json({ error: "L'accès à cet établissement est suspendu ou désactivé." });
         }
         if (school.status === 'trial' && new Date(school.trial_ends_at) < new Date()) {
             return res.status(402).json({ error: 'trial_expired', message: "La période d'essai est terminée." });
@@ -193,16 +290,16 @@ async function login(req, res) {
         const { data: user, error } = await supabase
             .from(`profiles_${schoolSlug}`)
             .select('*')
-            .eq('telephone', telephone.trim())
+            .or(`telephone.eq.${identifier},email.eq.${identifier}`)
             .single();
 
         if (error || !user) {
-            return res.status(401).json({ error: 'Numéro de téléphone ou mot de passe incorrect.' });
+            return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect.' });
         }
 
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) {
-            return res.status(401).json({ error: 'Numéro de téléphone ou mot de passe incorrect.' });
+            return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect.' });
         }
 
         console.log(`✅ [Auth] Utilisateur trouvé: ${user.nom} (Rôle: ${user.role}) - École: ${schoolSlug}`);
@@ -442,4 +539,4 @@ async function logout(req, res) {
 }
 
 // ── Export ────────────────────────────────────────────────────
-module.exports = { register, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword };
+module.exports = { register, registerTeacher, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword };

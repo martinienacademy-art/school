@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { Student } from '../types';
-import { CLASS_CONFIG } from '../data/classConfig';
 import { generateRecuPDF } from '../utils/pdfGenerator';
 import { generateNextSequence } from '../utils/idGenerator';
 import { uploadStudentPhoto, deleteStudentPhoto } from '../services/photoService';
@@ -47,7 +46,21 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
   }, [allStudents]);
 
   const storeClasses = useStore((s: any) => s.classes) || [];
-  const classConfigList = storeClasses.map((c: any) => ({ name: c.nom, cycle: c.cycle, ecolage: c.ecolage }));
+  const classConfigList = storeClasses.map((c: any) => ({ name: c.nom, cycle: c.cycle, niveau: c.niveau || '', ecolage: c.ecolage }));
+
+  const availableNiveaux = useMemo(() => {
+    const set = new Set<string>();
+    classConfigList.forEach((c: any) => { if (c.niveau) set.add(c.niveau); });
+    return Array.from(set);
+  }, [classConfigList]);
+
+  const initialClassObj = classConfigList.find((c: any) => c.name === student?.classe);
+  const [selectedNiveau, setSelectedNiveau] = useState<string>(initialClassObj?.niveau || '');
+
+  const filteredClassConfigList = useMemo(() => {
+    if (!selectedNiveau) return classConfigList;
+    return classConfigList.filter((c: any) => c.niveau === selectedNiveau);
+  }, [classConfigList, selectedNiveau]);
 
   const [form, setForm] = useState({
     nom: student?.nom ?? '',
@@ -60,7 +73,7 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
     ecoleProvenance: student?.ecoleProvenance ?? '',
     dejaPaye: student?.dejaPaye ?? 0,
     recu: student?.recu ?? generateNextSequence('Rec', allReceipts, 3),
-    nationalite: student?.nationalite ?? 'Togolaise',
+    nationalite: student?.nationalite ?? 'Béninoise',
     adresse: student?.adresse ?? '',
     numeroCNI: student?.numeroCNI ?? '',
     dateDelivranceCNI: student?.dateDelivranceCNI ?? '',
@@ -229,8 +242,32 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {availableNiveaux.length > 0 && (
+                <div>
+                  <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <GraduationCap className="w-3 h-3" /> Niveau
+                  </label>
+                  <select 
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-purple-500 outline-none transition-all dark:text-white cursor-pointer" 
+                    value={selectedNiveau} 
+                    onChange={(e) => {
+                      const niv = e.target.value;
+                      setSelectedNiveau(niv);
+                      const matching = classConfigList.filter((c: any) => !niv || c.niveau === niv);
+                      if (matching.length > 0 && !matching.some((c: any) => c.name === form.classe)) {
+                        setForm(f => ({ ...f, classe: matching[0].name }));
+                      }
+                    }}
+                  >
+                    <option value="">Tous les niveaux</option>
+                    {availableNiveaux.map((n: any) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className={availableNiveaux.length > 0 ? '' : 'md:col-span-2'}>
                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
                   <GraduationCap className="w-3 h-3" /> Classe *
                 </label>
@@ -239,7 +276,7 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
                   value={form.classe} 
                   onChange={(e) => setForm({ ...form, classe: e.target.value })}
                 >
-                  {classConfigList.map((c: any) => <option key={c.name} value={c.name}>{c.name} — {c.cycle} ({new Intl.NumberFormat('fr-FR').format(c.ecolage)} F)</option>)}
+                  {filteredClassConfigList.map((c: any) => <option key={c.name} value={c.name}>{c.name} — {c.cycle} ({new Intl.NumberFormat('fr-FR').format(c.ecolage)} F)</option>)}
                 </select>
               </div>
               <div>

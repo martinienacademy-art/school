@@ -119,6 +119,9 @@ export async function fetchFromBackend() {
 
         if (!response.ok) {
             console.warn('⚠️ Fetch from backend failed:', response.status);
+            if (response.status === 401 || response.status === 403) {
+                return { authError: true, status: response.status };
+            }
             return null;
         }
 

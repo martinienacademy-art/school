@@ -3,7 +3,7 @@
 // ============================================================
 import { AppPage } from '../types';
 
-type Role = 'superadmin' | 'admin' | 'directeur' | 'directeur_general' | 'proviseur' | 'censeur' | 'superviseur' | 'surveillant' | 'comptable' | 'parent';
+type Role = 'superadmin' | 'admin' | 'directeur' | 'directeur_general' | 'proviseur' | 'censeur' | 'superviseur' | 'surveillant' | 'comptable' | 'enseignant' | 'parent';
 
 // Pages accessibles par rôle
 const ROLE_PAGES: Record<Role, AppPage[]> = {
@@ -50,6 +50,10 @@ const ROLE_PAGES: Record<Role, AppPage[]> = {
     parent: [
         'parent_dashboard', 'parent_historique', 'parent_recus',
         'parent_badges', 'parent_messages', 'chat', 'annonces'
+    ],
+    enseignant: [
+        'teacher_dashboard', 'saisie_notes', 'bulletins',
+        'espace_pedagogique', 'chat', 'annonces', 'documents'
     ],
 };
 
@@ -100,6 +104,7 @@ const ROLE_ACTIONS: Record<Role, ActionType[]> = {
     ],
     censeur: [],
     parent: [],
+    enseignant: [],
 };
 
 export const canAccessPage = (role: string | undefined, page: AppPage): boolean => {
@@ -135,6 +140,7 @@ export const getRoleLabel = (role: string): string => {
         superviseur: 'Surveillant',
         proviseur: 'Proviseur',
         censeur: 'Censeur',
+        enseignant: 'Enseignant',
         parent: 'Parent',
     };
     return labels[role] || role;

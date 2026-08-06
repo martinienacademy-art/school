@@ -12,7 +12,7 @@ export const getEcolage = (classe: string) => {
 export const CLASS_CONFIG = new Proxy([], {
   get: (target, prop) => {
     const classes = useStore.getState().classes || [];
-    const mapped = classes.map((c: any) => ({ name: c.nom, cycle: c.cycle, ecolage: c.ecolage }));
+    const mapped = classes.map((c: any) => ({ name: c.nom, cycle: c.cycle, niveau: c.niveau || '', ecolage: c.ecolage }));
     const val = (mapped as any)[prop];
     if (typeof val === 'function') {
       return val.bind(mapped);
@@ -25,7 +25,7 @@ export const CLASSES_BY_CYCLE = new Proxy({}, {
   get: (target, prop) => {
     if (prop === 'Primaire' || prop === 'Collège' || prop === 'Lycée') {
       const classes = useStore.getState().classes || [];
-      return classes.filter((c: any) => c.cycle === prop).map((c: any) => ({ name: c.nom, cycle: c.cycle, ecolage: c.ecolage }));
+      return classes.filter((c: any) => c.cycle === prop).map((c: any) => ({ name: c.nom, cycle: c.cycle, niveau: c.niveau || '', ecolage: c.ecolage }));
     }
     return undefined;
   }

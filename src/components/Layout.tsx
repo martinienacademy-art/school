@@ -54,6 +54,16 @@ const PARENT_NAV_ITEMS: Omit<NavItem, 'badge'>[] = [
   { id: 'annonces',          label: 'Annonces',            icon: <Megaphone className="w-[18px] h-[18px]" /> },
 ];
 
+const TEACHER_NAV_ITEMS: Omit<NavItem, 'badge'>[] = [
+  { id: 'teacher_dashboard'  as AppPage, label: 'Tableau de bord',  icon: <LayoutDashboard className="w-[18px] h-[18px]" /> },
+  { id: 'saisie_notes',                  label: 'Saisie des notes', icon: <Edit3 className="w-[18px] h-[18px]" /> },
+  { id: 'bulletins',                     label: 'Bulletins',        icon: <Award className="w-[18px] h-[18px]" /> },
+  { id: 'espace_pedagogique',            label: 'Bibliothèque',      icon: <BookOpen className="w-[18px] h-[18px]" /> },
+  { id: 'chat',                          label: 'Messagerie',       icon: <MessageSquare className="w-[18px] h-[18px]" /> },
+  { id: 'annonces',                      label: 'Annonces',         icon: <Megaphone className="w-[18px] h-[18px]" /> },
+  { id: 'documents',                     label: 'Documents',        icon: <FileText className="w-[18px] h-[18px]" /> },
+];
+
 const NAV_GROUPS: Record<string, string> = {
   dashboard: 'Principal',
   pre_inscriptions: 'Gestion',
@@ -374,7 +384,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const isSyncing = useStore((s) => s.isSyncing);
   const nonSoldes = (students || []).filter((s) => s?.status !== 'Soldé').length;
   const isParent = user?.role === 'parent';
-  const baseNavItems = isParent ? PARENT_NAV_ITEMS : NAV_ITEMS;
+  const isTeacher = user?.role === 'enseignant';
+  const baseNavItems = isTeacher ? TEACHER_NAV_ITEMS : (isParent ? PARENT_NAV_ITEMS : NAV_ITEMS);
   const filteredItems = getFilteredNavItems(user?.role, baseNavItems) as Omit<NavItem, 'badge'>[];
 
   const navItems: NavItem[] = filteredItems.map((item) => ({
@@ -400,7 +411,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { id: 'scan_presence' as AppPage, label: 'Entrée', icon: <ScanLine className="w-5 h-5" /> },
     { id: 'scan_sortie'   as AppPage, label: 'Sortie', icon: <ScanLine className="w-5 h-5" /> },
     { id: 'scan_information' as AppPage, label: 'Info', icon: <ScanLine className="w-5 h-5" /> },
-    { id: 'carte_scolaire'as AppPage, label: 'Cartes', icon: <IdCard className="w-5 h-5" /> },
+    { id: 'carte_scolaire' as AppPage, label: 'Cartes', icon: <IdCard className="w-5 h-5" /> },
+  ] : isTeacher ? [
+    { id: 'teacher_dashboard' as AppPage, label: 'Accueil', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { id: 'saisie_notes' as AppPage, label: 'Notes', icon: <Edit3 className="w-5 h-5" /> },
+    { id: 'chat' as AppPage, label: 'Chat', icon: <MessageSquare className="w-5 h-5" />, badge: unreadMessages },
+    { id: 'annonces' as AppPage, label: 'Annonces', icon: <Megaphone className="w-5 h-5" /> },
   ] : [
     { id: (isParent ? 'parent_dashboard' : 'dashboard') as AppPage, label: 'Accueil', icon: <LayoutDashboard className="w-5 h-5" /> },
     { id: (isParent ? 'parent_historique' : 'eleves') as AppPage, label: isParent ? 'Paiements' : 'Élèves', icon: isParent ? <CreditCard className="w-5 h-5" /> : <Users className="w-5 h-5" /> },

@@ -57,11 +57,8 @@ async function requireSchool(req, res, next) {
             .eq('slug', req.user.schoolSlug)
             .single();
 
-        if (!school) {
-            return res.status(403).json({ error: 'Cet établissement a été supprimé du système.' });
-        }
-        if (school.status === 'suspended') {
-            return res.status(403).json({ error: 'L\'accès à cet établissement est actuellement suspendu.' });
+        if (!school || !['active', 'trial'].includes(school.status)) {
+            return res.status(403).json({ error: 'Cet établissement a été supprimé ou son accès a été suspendu.' });
         }
         next();
     } catch (err) {

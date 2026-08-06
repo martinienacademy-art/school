@@ -58,6 +58,7 @@ export interface Payment {
 export interface ClassConfig {
   name: string;
   cycle: Cycle;
+  niveau?: string;
   ecolage: number;
 }
 
@@ -65,6 +66,7 @@ export interface ClassInfo {
   id?: string;
   nom: string;
   cycle: Cycle | 'Maternelle' | 'Crèche';
+  niveau?: string;
   ecolage: number;
 }
 
@@ -173,7 +175,9 @@ export interface User {
   role: UserRole;
   nom: string;
   telephone?: string;
+  email?: string;
   schoolSlug?: string; // lié à une école (null pour superadmin)
+  school_slug?: string; // alias pour compatibilité enseignant
   schoolName?: string; // nom de l'école pour affichage
 }
 
@@ -297,6 +301,11 @@ export type AppPage =
   | 'gestion_personnel'
   | 'enseignants'
   | 'espace_pedagogique'
+  // ── Pages Portail Enseignant ──
+  | 'teacher_dashboard'
+  | 'teacher_classes'
+  | 'teacher_notes'
+  | 'teacher_presence'
   // ── Pages SuperAdmin (propriétaire SaaS) ──
   | 'superadmin_dashboard'
   | 'superadmin_schools'
