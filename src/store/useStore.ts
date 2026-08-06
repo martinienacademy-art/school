@@ -377,6 +377,7 @@ export const useStore = create<AppState>()(
           const res = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ telephone: username, password, schoolSlug })
           });
 
@@ -984,7 +985,8 @@ export const useStore = create<AppState>()(
             const { getAuthHeaders } = await import('../services/apiHelpers');
             const { BACKEND_URL } = await import('../config');
             const res = await fetch(`${BACKEND_URL}/api/parent/data`, {
-              headers: getAuthHeaders()
+              headers: getAuthHeaders(),
+              credentials: 'include'
             });
             if (res.status === 401 || res.status === 403) {
               console.warn('⛔ [Parent Sync] Session invalide ou école supprimée. Déconnexion...');

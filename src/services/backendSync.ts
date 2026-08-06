@@ -66,6 +66,7 @@ export async function syncToBackend(store: Partial<AppState>, replace: boolean =
         const response = await fetch(`${BACKEND_URL}/api/sync`, {
             method: 'POST',
             headers: getAuthHeaders(),
+            credentials: 'include',
             body: JSON.stringify(payload),
         });
 
@@ -115,6 +116,7 @@ export async function fetchFromBackend() {
         const response = await fetch(`${BACKEND_URL}/api/sync?t=${Date.now()}`, {
             method: 'GET',
             headers: getAuthHeaders(),
+            credentials: 'include',
         });
 
         if (!response.ok) {

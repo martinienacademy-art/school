@@ -12,15 +12,21 @@ export async function parseResponse(res: Response) {
 }
 
 /**
- * Common headers including JWT token from local storage when available.
- * `Content-Type` is always set to application/json because most endpoints
- * expect JSON. For file uploads you'll still need to construct a FormData
- * request manually and omit the content type.
+ * Common headers for API requests.
+ * Authentication is handled via HttpOnly cookie (set by the backend at login).
+ * We use credentials: 'include' on fetch calls to send the cookie automatically.
+ * Content-Type is always application/json.
  */
 export function getAuthHeaders(): Record<string, string> {
-    const token = localStorage.getItem('parent_token');
     return {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 }
+
+/**
+ * Returns the fetch options to always include credentials (cookies).
+ * Use this as a spread: fetch(url, { ...credentialOptions, ... })
+ */
+export const credentialOptions: RequestInit = {
+    credentials: 'include',
+};

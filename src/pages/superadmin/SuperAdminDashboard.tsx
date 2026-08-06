@@ -15,8 +15,12 @@ import { useStore } from '../../store/useStore';
 // ── Helpers ──────────────────────────────────────────────────
 
 function getAuthHeaders() {
-  const token = localStorage.getItem('parent_token');
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+  // Auth is handled via HttpOnly cookie set at login.
+  return { 'Content-Type': 'application/json' };
+}
+
+function apiFetch(url: string, options: RequestInit = {}) {
+  return fetch(url, { ...options, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(options.headers as any) } });
 }
 
 function formatFCFA(n: number) {
@@ -82,9 +86,8 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      const res = await fetch(`${API_BASE_URL}/superadmin/schools`, {
+      const res = await apiFetch(`${API_BASE_URL}/superadmin/schools`, {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: JSON.stringify(form)
       });
       const data = await res.json();
@@ -291,9 +294,9 @@ export const SuperAdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       const [schoolsRes, statsRes, settingsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/superadmin/schools`, { headers: getAuthHeaders() }),
-        fetch(`${API_BASE_URL}/superadmin/stats`, { headers: getAuthHeaders() }),
-        fetch(`${API_BASE_URL}/superadmin/settings`, { headers: getAuthHeaders() })
+        apiFetch(`${API_BASE_URL}/superadmin/schools`),
+        apiFetch(`${API_BASE_URL}/superadmin/stats`),
+        apiFetch(`${API_BASE_URL}/superadmin/settings`)
       ]);
 
       let loadedSchools: SchoolWithStats[] = [];
@@ -349,9 +352,8 @@ export const SuperAdminDashboard: React.FC = () => {
     setSavingSettings(true);
     setSettingsSavedMessage('');
     try {
-      const res = await fetch(`${API_BASE_URL}/superadmin/settings`, {
+      const res = await apiFetch(`${API_BASE_URL}/superadmin/settings`, {
         method: 'PUT',
-        headers: getAuthHeaders(),
         body: JSON.stringify(saasSettings)
       });
       const data = await res.json();
@@ -370,9 +372,8 @@ export const SuperAdminDashboard: React.FC = () => {
     if (!confirm(`Prolonger la période d'essai de "${school.name}" de +${daysToAdd} jours ?`)) return;
     setActionLoading(school.id);
     try {
-      const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}/extend-trial`, {
+      const res = await apiFetch(`${API_BASE_URL}/superadmin/schools/${school.id}/extend-trial`, {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: JSON.stringify({ extra_days: daysToAdd })
       });
       const data = await res.json();
@@ -393,9 +394,8 @@ export const SuperAdminDashboard: React.FC = () => {
 
     setActionLoading(school.id);
     try {
-      const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}/status`, {
+      const res = await apiFetch(`${API_BASE_URL}/superadmin/schools/${school.id}/status`, {
         method: 'PATCH',
-        headers: getAuthHeaders(),
         body: JSON.stringify({ status: newStatus })
       });
       if (res.ok) await load();
@@ -416,9 +416,8 @@ export const SuperAdminDashboard: React.FC = () => {
 
     setActionLoading(school.id);
     try {
-      const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}`, {
-         method: 'DELETE',
-         headers: getAuthHeaders()
+      const res = await apiFetch(`${API_BASE_URL}/superadmin/schools/${school.id}`, {
+         method: 'DELETE'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -434,23 +433,17 @@ export const SuperAdminDashboard: React.FC = () => {
   const handleImpersonate = async (school: SchoolWithStats) => {
     setActionLoading(school.id);
     try {
-      const res = await fetch(`${API_BASE_URL}/superadmin/schools/${school.id}/impersonate`, {
-        method: 'POST',
-        headers: getAuthHeaders()
+      const res = await apiFetch(`${API_BASE_URL}/superadmin/schools/${school.id}/impersonate`, {
+        method: 'POST'
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur lors de la connexion');
       
       // Sauvegarder l'identité SuperAdmin pour pouvoir y retourner
-      const currentToken = localStorage.getItem('parent_token');
       const currentUser = useStore.getState().user;
-      if (currentToken && (currentUser?.role === 'superadmin' || !localStorage.getItem('superadmin_impersonator_token'))) {
-        localStorage.setItem('superadmin_impersonator_token', currentToken);
+      if (currentUser?.role === 'superadmin' || !localStorage.getItem('superadmin_impersonator_token')) {
         localStorage.setItem('superadmin_impersonator_user', JSON.stringify(currentUser || { id: 'superadmin', role: 'superadmin', nom: 'SuperAdmin Global', username: 'admin' }));
       }
-
-      // Stocker le token
-      // localStorage.setItem('parent_token', data.token);
       
       // Vider le cache de l'école précédente et appliquer les nouvelles infos de l'école
       useStore.setState({
