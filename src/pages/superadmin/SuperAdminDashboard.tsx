@@ -337,15 +337,48 @@ export const SuperAdminDashboard: React.FC = () => {
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSavedMessage, setSettingsSavedMessage] = useState('');
 
+  const [selectedSchoolForFeatures, setSelectedSchoolForFeatures] = useState<SchoolWithStats | null>(null);
+  const [schoolFeatures, setSchoolFeatures] = useState<string[]>([]);
+  const [schoolCustomPrice, setSchoolCustomPrice] = useState<number>(2000);
+  const [savingSchoolFeatures, setSavingSchoolFeatures] = useState(false);
+
   const ALL_FEATURES = [
     { id: 'scan_presence', label: 'Scan des Présences & Sorties' },
     { id: 'carte_scolaire', label: 'Impression Cartes Scolaires (QR Code)' },
-    { id: 'gestion_academique', label: 'Gestion Académique & Saisie des Notes' },
+    { id: 'saisie_notes', label: 'Gestion Académique & Saisie des Notes' },
     { id: 'bulletins', label: 'Génération Automatique des Bulletins PDF' },
     { id: 'recouvrement', label: 'Comptabilité & Suivi du Recouvrement' },
     { id: 'chat', label: 'Messagerie Directe École ↔ Parents' },
-    { id: 'import_export', label: 'Import/Export Excel de la Base de Données' }
+    { id: 'import_export', label: 'Import/Export Excel de la Base de Données' },
+    { id: 'pre_inscriptions', label: 'Module de Pré-inscriptions en Ligne' },
+    { id: 'documents', label: 'Gestion de Documents Scolaires' }
   ];
+
+  const handleSaveSchoolFeatures = async () => {
+    if (!selectedSchoolForFeatures) return;
+    setSavingSchoolFeatures(true);
+    try {
+      const res = await apiFetch(`${API_BASE_URL}/superadmin/schools/${selectedSchoolForFeatures.id}/features`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          features: schoolFeatures,
+          custom_price_per_student: schoolCustomPrice
+        })
+      });
+      if (res.ok) {
+        toast.success('Paramètres et fonctionnalités de l\'école mis à jour !');
+        setSelectedSchoolForFeatures(null);
+        load();
+      } else {
+        const d = await res.json();
+        toast.error(d.error || 'Erreur lors de la mise à jour.');
+      }
+    } catch (err: any) {
+      toast.error('Erreur de connexion au serveur.');
+    } finally {
+      setSavingSchoolFeatures(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -715,6 +748,19 @@ export const SuperAdminDashboard: React.FC = () => {
                       </button>
 
                       <button
+                        onClick={() => {
+                          setSelectedSchoolForFeatures(school);
+                          setSchoolFeatures(Array.isArray(school.features) && school.features.length > 0 ? school.features : ALL_FEATURES.map(f => f.id));
+                          setSchoolCustomPrice(school.custom_price_per_student || saasSettings.price_per_student);
+                        }}
+                        title="Paramètres de l'Abonnement & Fonctionnalités"
+                        className="flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 shadow-md transition-all"
+                      >
+                        <Settings className="w-4 h-4" />
+                        FONCTIONNALITÉS & ABONNEMENT
+                      </button>
+
+                      <button
                         onClick={() => handleExtendTrial(school, 30)}
                         disabled={actionLoading === school.id}
                         title="Prolonger l'essai gratuit de +30 jours"
@@ -890,6 +936,133 @@ export const SuperAdminDashboard: React.FC = () => {
           onClose={() => setShowCreateModal(false)}
           onCreated={() => { setShowCreateModal(false); load(); }}
         />
+      )}
+
+      {/* Modal Réglages Fonctionnalités & Abonnement de l'École */}
+      {selectedSchoolForFeatures && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Building2 className="w-6 h-6 text-amber-400" />
+                  {selectedSchoolForFeatures.name}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Configuration sur-mesure de l'abonnement et des fonctionnalités accordées au Directeur.
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedSchoolForFeatures(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Tarif & Abonnement */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-400" />
+                Tarif & Facturation École
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/50 p-4 rounded-2xl border border-slate-800">
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1.5 font-medium">Tarif / élève / mois (FCFA)</label>
+                  <input
+                    type="number"
+                    value={schoolCustomPrice}
+                    onChange={e => setSchoolCustomPrice(Number(e.target.value))}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white font-bold text-sm focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1.5 font-medium">Statut Actuel</label>
+                  <div className="pt-2">
+                    {getStatusBadge(selectedSchoolForFeatures.status)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Cochez les fonctionnalités autorisées */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  Fonctionnalités Incluses pour le Directeur
+                </h4>
+                <div className="flex gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setSchoolFeatures(ALL_FEATURES.map(f => f.id))}
+                    className="text-amber-400 hover:underline font-semibold"
+                  >
+                    Tout Cocher
+                  </button>
+                  <span className="text-slate-600">|</span>
+                  <button
+                    type="button"
+                    onClick={() => setSchoolFeatures([])}
+                    className="text-slate-400 hover:underline font-semibold"
+                  >
+                    Tout Décocher
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ALL_FEATURES.map(feat => {
+                  const isChecked = schoolFeatures.includes(feat.id);
+                  return (
+                    <label
+                      key={feat.id}
+                      className={`flex items-center gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                        isChecked
+                          ? 'bg-amber-500/10 border-amber-500/40 text-white font-bold'
+                          : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setSchoolFeatures([...schoolFeatures, feat.id]);
+                          } else {
+                            setSchoolFeatures(schoolFeatures.filter(f => f !== feat.id));
+                          }
+                        }}
+                        className="accent-amber-500 rounded scale-110"
+                      />
+                      <span className="text-xs">{feat.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-4">
+              <button
+                type="button"
+                onClick={() => setSelectedSchoolForFeatures(null)}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSchoolFeatures}
+                disabled={savingSchoolFeatures}
+                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {savingSchoolFeatures ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                {savingSchoolFeatures ? 'Enregistrement...' : 'Enregistrer les Réglages'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

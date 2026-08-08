@@ -179,6 +179,7 @@ export interface User {
   schoolSlug?: string; // lié à une école (null pour superadmin)
   school_slug?: string; // alias pour compatibilité enseignant
   schoolName?: string; // nom de l'école pour affichage
+  features?: string[]; // fonctionnalités SaaS accordées à cette école
 }
 
 // ── École (Multi-Tenant) ─────────────────────────────────
@@ -195,6 +196,8 @@ export interface School {
   created_at: string;
   student_count?: number;  // calculé côté serveur
   revenue?: number;        // 2000 FCFA/élève
+  features?: string[];     // fonctionnalités activées pour cette école
+  custom_price_per_student?: number; // tarif personnalisé par élève
 }
 
 export interface Parent {

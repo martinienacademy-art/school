@@ -230,6 +230,7 @@ async function createSchool(req, res) {
             email: validatedData.email || null,
             status: 'trial',
             trial_ends_at: new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString(),
+            features: Array.isArray(saasConfig.premium_features) ? saasConfig.premium_features : ['scan_presence', 'scan_sortie', 'carte_scolaire', 'saisie_notes', 'bulletins', 'recouvrement', 'chat', 'import_export', 'pre_inscriptions', 'documents'],
             accepted_terms: validatedData.accepted_terms,
             accepted_privacy_policy: validatedData.accepted_privacy_policy,
             marketing_consent: validatedData.marketing_consent,
@@ -572,6 +573,39 @@ async function extendSchoolTrial(req, res) {
     }
 }
 
+// ── PUT /api/superadmin/schools/:id/features ───────────────────
+// Mise à jour granulaire des fonctionnalités et du tarif d'une école spécifique
+async function updateSchoolFeaturesAndBilling(req, res) {
+    const { id } = req.params;
+    const { features, custom_price_per_student, trial_ends_at, status } = req.body;
+
+    try {
+        const updates = {};
+        if (Array.isArray(features)) updates.features = features;
+        if (custom_price_per_student !== undefined) updates.custom_price_per_student = Number(custom_price_per_student);
+        if (trial_ends_at) updates.trial_ends_at = trial_ends_at;
+        if (status) updates.status = status;
+
+        const { data: updatedSchool, error } = await supabase
+            .from('schools')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        console.log(`⚙️  Mise à jour des fonctionnalités/abonnement pour l'école ${id}`);
+        return res.json({
+            message: 'Fonctionnalités et abonnement mis à jour avec succès.',
+            school: updatedSchool
+        });
+    } catch (err) {
+        console.error('updateSchoolFeaturesAndBilling Error:', err.message);
+        return res.status(500).json({ error: 'Erreur mise à jour fonctionnalités: ' + err.message });
+    }
+}
+
 module.exports = {
     getAllSchools,
     createSchool,
@@ -582,5 +616,6 @@ module.exports = {
     impersonateSchool,
     getSaasSettings,
     updateSaaSConfig,
-    extendSchoolTrial
+    extendSchoolTrial,
+    updateSchoolFeaturesAndBilling
 };

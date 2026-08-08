@@ -280,7 +280,7 @@ async function login(req, res) {
         // Vérification accès école
         const { data: school, error: schoolErr } = await supabase
             .from('schools')
-            .select('id, name, slug, status, trial_ends_at, logo_url')
+            .select('id, name, slug, status, trial_ends_at, logo_url, features')
             .eq('slug', schoolSlug)
             .single();
 
@@ -322,6 +322,9 @@ async function login(req, res) {
         // Update last login de façon asynchrone
         supabase.from(`profiles_${schoolSlug}`).update({ last_login: new Date().toISOString() }).eq('id', user.id).then(() => {});
 
+        const defaultAllFeatures = ['scan_presence', 'scan_sortie', 'carte_scolaire', 'saisie_notes', 'bulletins', 'recouvrement', 'chat', 'import_export', 'pre_inscriptions', 'documents'];
+        const activeFeatures = Array.isArray(school.features) && school.features.length > 0 ? school.features : defaultAllFeatures;
+
         res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 });
         return res.json({
             message: 'Connexion réussie.',
@@ -333,7 +336,10 @@ async function login(req, res) {
                 role: user.role,
                 school_name: school.name,
                 school_slug: school.slug,
-                school_logo: school.logo_url
+                school_logo: school.logo_url,
+                trial_ends_at: school.trial_ends_at,
+                school_status: school.status,
+                features: activeFeatures
             },
         });
     } catch (err) {
@@ -598,7 +604,10 @@ async function registerSchool(req, res) {
 
         const ipHash = getIpHash(req);
         const consentedAt = new Date().toISOString();
-        const trialDays = 60;
+        const { getStoredSaasSettings } = require('./superAdminController');
+        const saasConfig = await getStoredSaasSettings();
+        const trialDays = saasConfig.default_trial_days || 60;
+        const defaultFeatures = Array.isArray(saasConfig.premium_features) ? saasConfig.premium_features : ['scan_presence', 'scan_sortie', 'carte_scolaire', 'saisie_notes', 'bulletins', 'recouvrement', 'chat', 'import_export', 'pre_inscriptions', 'documents'];
 
         const schoolPayload = {
             name: validatedData.name.trim(),
@@ -609,6 +618,7 @@ async function registerSchool(req, res) {
             email: cleanEmail,
             status: 'trial',
             trial_ends_at: new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString(),
+            features: defaultFeatures,
             accepted_terms: validatedData.accepted_terms,
             accepted_privacy_policy: validatedData.accepted_privacy_policy,
             marketing_consent: validatedData.marketing_consent,

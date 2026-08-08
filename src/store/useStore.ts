@@ -409,6 +409,7 @@ export const useStore = create<AppState>()(
               // ⚡ Informations multi-tenant
               schoolSlug: result.user.school_slug || undefined,
               schoolName: result.user.school_name || undefined,
+              features: result.user.features || undefined,
             };
 
             // Déterminer la page de redirection selon le rôle

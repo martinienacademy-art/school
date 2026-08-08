@@ -386,7 +386,32 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const isParent = user?.role === 'parent';
   const isTeacher = user?.role === 'enseignant';
   const baseNavItems = isTeacher ? TEACHER_NAV_ITEMS : (isParent ? PARENT_NAV_ITEMS : NAV_ITEMS);
-  const filteredItems = getFilteredNavItems(user?.role, baseNavItems) as Omit<NavItem, 'badge'>[];
+  let filteredItems = getFilteredNavItems(user?.role, baseNavItems) as Omit<NavItem, 'badge'>[];
+
+  // 🛡️ Filtrage dynamique selon les fonctionnalités SaaS autorisées par le SuperAdmin pour cette école
+  const userFeatures = user?.features;
+  if (userFeatures && Array.isArray(userFeatures) && user?.role !== 'superadmin') {
+    const featureMap: Record<string, string> = {
+      scan_presence: 'scan_presence',
+      scan_sortie: 'scan_sortie',
+      scan_information: 'scan_presence',
+      carte_scolaire: 'carte_scolaire',
+      gestion_academique: 'saisie_notes',
+      espace_pedagogique: 'saisie_notes',
+      saisie_notes: 'saisie_notes',
+      bulletins: 'bulletins',
+      recouvrement: 'recouvrement',
+      chat: 'chat',
+      import_export: 'import_export',
+      pre_inscriptions: 'pre_inscriptions',
+      documents: 'documents'
+    };
+    filteredItems = filteredItems.filter(item => {
+      const requiredFeature = featureMap[item.id];
+      if (!requiredFeature) return true;
+      return userFeatures.includes(requiredFeature);
+    });
+  }
 
   const navItems: NavItem[] = filteredItems.map((item) => ({
     ...item,
