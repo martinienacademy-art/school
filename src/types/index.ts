@@ -209,6 +209,17 @@ export interface Parent {
   created_at?: string;
 }
 
+// ── Salles & Bâtiments (Infrastructure) ────────────────────
+export interface Salle {
+  id: string;
+  nom: string;
+  batiment?: string; // ex: "Bâtiment F" (optionnel/peut être vide)
+  capacite?: number;
+  etage?: string;
+  description?: string;
+  createdAt?: string;
+}
+
 // ── Présences (pointage QR) ──────────────────────────────
 export interface Presence {
   id: string;

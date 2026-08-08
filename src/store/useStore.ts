@@ -127,12 +127,12 @@ export interface AppState {
   receiptCounter: number;
   incrementReceiptCounter: () => string;
 
-  // Classes
-  classes: any[];
-  setClasses: (c: any[]) => void;
-  addClass: (c: any) => Promise<void>;
-  updateClass: (id: string, c: any) => Promise<void>;
-  deleteClass: (id: string) => Promise<void>;
+  // Salles & Bâtiments
+  salles: Salle[];
+  setSalles: (s: Salle[]) => void;
+  addSalle: (s: Omit<Salle, 'id' | 'createdAt'>) => Promise<void>;
+  updateSalle: (id: string, s: Partial<Salle>) => Promise<void>;
+  deleteSalle: (id: string) => Promise<void>;
   getEcolageByClass: (nom: string) => number;
   getCycleByClass: (nom: string) => string;
   getClassesByCycle: (cycle: string) => any[];
@@ -548,6 +548,47 @@ export const useStore = create<AppState>()(
           }
         }
         set({ currentPage: page });
+      },
+
+      // ── Salles & Bâtiments ──────────────────────────────────
+      salles: [],
+      setSalles: (salles) => set({ salles }),
+      addSalle: async (data) => {
+        const id = uuid();
+        const newSalle: Salle = {
+          ...data,
+          id,
+          createdAt: new Date().toISOString()
+        };
+        const updated = [...get().salles, newSalle];
+        set({ salles: updated });
+
+        const u = get().user;
+        if (u) get().addActivityLog(createActivityLog(u.nom, u.role, 'autre', `Ajout de la salle : ${data.nom} ${data.batiment ? '(' + data.batiment + ')' : ''}`));
+
+        const { syncToBackend } = await import('../services/backendSync');
+        await syncToBackend({ salles: updated });
+        set({ lastSyncTimestamp: Date.now() });
+      },
+      updateSalle: async (id, updates) => {
+        const updated = get().salles.map((s) => (s.id === id ? { ...s, ...updates } : s));
+        set({ salles: updated });
+
+        const { syncToBackend } = await import('../services/backendSync');
+        await syncToBackend({ salles: updated });
+        set({ lastSyncTimestamp: Date.now() });
+      },
+      deleteSalle: async (id) => {
+        const target = get().salles.find(s => s.id === id);
+        const updated = get().salles.filter((s) => s.id !== id);
+        set({ salles: updated });
+
+        const u = get().user;
+        if (u && target) get().addActivityLog(createActivityLog(u.nom, u.role, 'autre', `Suppression de la salle : ${target.nom}`));
+
+        const { syncToBackend } = await import('../services/backendSync');
+        await syncToBackend({ salles: updated });
+        set({ lastSyncTimestamp: Date.now() });
       },
 
       // ── Élèves ───────────────────────────────────────────
@@ -1194,6 +1235,10 @@ export const useStore = create<AppState>()(
           if (Array.isArray(data.ressources)) {
             set({ ressources: data.ressources });
             console.log(`📚 [Sync] Ressources: ${data.ressources.length} ressources synchronisées depuis le cloud.`);
+          }
+          if (Array.isArray(data.salles)) {
+            set({ salles: data.salles });
+            console.log(`🏛️ [Sync] Salles: ${data.salles.length} salle(s) synchronisée(s).`);
           }
 
           // Mise à jour du timestamp après succès

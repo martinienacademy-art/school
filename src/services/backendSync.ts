@@ -38,6 +38,7 @@ export async function syncToBackend(store: Partial<AppState>, replace: boolean =
     if (store.classeMatieres !== undefined) payload.classeMatieres = store.classeMatieres;
     if (store.notes !== undefined) payload.notes = store.notes;
     if (store.ressources !== undefined) payload.ressources = store.ressources;
+    if (store.salles !== undefined) payload.salles = store.salles;
 
     const { 
         appName, schoolName, schoolYear, 

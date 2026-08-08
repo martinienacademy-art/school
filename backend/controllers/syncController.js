@@ -29,7 +29,7 @@ async function syncFromFrontend(req, res) {
         return res.status(403).json({ error: 'Compte non associé à un établissement spécifique.' });
     }
 
-    // Helper function pour générer les noms de table dynamiques
+    const { students = [], presences = [], activityLogs = [], appSettings = null, replace = false, matieres = [], classeMatieres = [], notes = [], ressources = [], salles = [] } = req.body;
     const tbl = (name) => `${name}_${schoolSlug}`;
 
     try {
@@ -387,6 +387,28 @@ async function syncFromFrontend(req, res) {
             } catch (ressourcesException) {
                 console.error('❌ [Sync POST] Exception ressources:', ressourcesException);
             }
+        // --- 9. Sync Salles ---
+        if (salles && salles.length > 0) {
+            try {
+                let chunkSize = 500;
+                let sallesOk = 0;
+                for (let i = 0; i < salles.length; i += chunkSize) {
+                    const chunk = salles.slice(i, i + chunkSize).map(s => ({
+                        id: s.id,
+                        nom: s.nom,
+                        batiment: s.batiment || null,
+                        capacite: s.capacite !== undefined ? Number(s.capacite) : null,
+                        etage: s.etage || null,
+                        description: s.description || null,
+                        created_at: s.createdAt || new Date().toISOString()
+                    }));
+                    const { error: chunkErr } = await supabase.from(tbl('salles')).upsert(chunk, { onConflict: 'id' });
+                    if (!chunkErr) sallesOk += chunk.length;
+                }
+                console.log(`✅ [Sync POST] ${sallesOk} salles synchronisées avec succès !`);
+            } catch (sallesException) {
+                console.error('❌ [Sync POST] Exception salles:', sallesException);
+            }
         }
 
         console.log(`🎉 [Sync] Completed: ${students.length} students, etc.`);
@@ -448,6 +470,7 @@ async function syncToFrontend(req, res) {
         const dbClasseMatieres = await fetchTable('classe_matieres');
         const dbNotes = await fetchTable('notes');
         const dbRessources = await fetchTable('ressources');
+        const dbSalles = await fetchTable('salles');
         const announcementReads = await fetchTable('announcement_reads');
         
         const { data: dbClasses } = await supabase.from('school_classes').select('*').eq('school_slug', schoolSlug).order('cycle').order('nom');
@@ -599,6 +622,15 @@ async function syncToFrontend(req, res) {
                 auteurId: r.auteurId,
                 auteurNom: r.auteurNom,
                 dateAjout: r.dateAjout
+            })) : undefined,
+            salles: dbSalles ? dbSalles.map(s => ({
+                id: s.id,
+                nom: s.nom,
+                batiment: s.batiment || undefined,
+                capacite: s.capacite !== undefined ? Number(s.capacite) : undefined,
+                etage: s.etage || undefined,
+                description: s.description || undefined,
+                createdAt: s.created_at
             })) : undefined,
             announcementReads: (announcementReads || []).map(r => ({
                 announcementId: r.announcement_id,

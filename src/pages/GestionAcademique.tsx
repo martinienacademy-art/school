@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { MatiereCategorie } from '../types';
 import { v4 as uuid } from '../utils/uuid';
-import { BookOpen, Plus, Trash2, Settings2, Users, Layers, Library } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Settings2, Users, Layers, Library, DoorOpen } from 'lucide-react';
+import { SallesManager } from '../components/SallesManager';
 
 export const GestionAcademique: React.FC = () => {
     const { 
@@ -12,7 +13,7 @@ export const GestionAcademique: React.FC = () => {
     } = useStore();
 
     const classesList = Array.from(new Set(students.map(s => s.classe))).sort();
-    const [activeTab, setActiveTab] = useState<'matieres' | 'liaisons'>('matieres');
+    const [activeTab, setActiveTab] = useState<'matieres' | 'liaisons' | 'salles'>('matieres');
 
     const [nomMatiere, setNomMatiere] = useState('');
     const [categorie, setCategorie] = useState<MatiereCategorie>('1-MATIERES LITTERAIRES');
@@ -93,6 +94,16 @@ export const GestionAcademique: React.FC = () => {
                     }`}
                 >
                     <Users className="w-4 h-4" /> Assignations & Coefficients
+                </button>
+                <button
+                    onClick={() => setActiveTab('salles')}
+                    className={`px-6 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${
+                        activeTab === 'salles' 
+                        ? 'bg-white dark:bg-slate-700 text-amber-500 shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-700/50'
+                    }`}
+                >
+                    <DoorOpen className="w-4 h-4" /> Salles & Bâtiments
                 </button>
             </div>
 
@@ -341,6 +352,13 @@ export const GestionAcademique: React.FC = () => {
                             )}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* ── TAB: SALLES & BÂTIMENTS ── */}
+            {activeTab === 'salles' && (
+                <div className="animate-fadeIn">
+                    <SallesManager />
                 </div>
             )}
         </div>
