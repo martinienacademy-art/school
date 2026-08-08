@@ -13,7 +13,7 @@ const supabase = createClient(
 
 const SUPERADMIN = {
     nom: 'Super Administrateur',
-    telephone: '0162669883',
+    telephone: 'olamartinien@gmail.com',
     password: 'Mot2p@ss'
 };
 

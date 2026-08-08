@@ -249,7 +249,7 @@ async function login(req, res) {
         const { data: superadmin } = await supabase
             .from('superadmins')
             .select('*')
-            .or(`telephone.eq.${identifier},email.eq.${identifier}`)
+            .or(`telephone.eq."${identifier}",email.eq."${identifier}"`)
             .single();
 
         if (superadmin) {
