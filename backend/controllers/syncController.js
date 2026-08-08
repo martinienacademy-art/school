@@ -13,8 +13,12 @@ async function syncFromFrontend(req, res) {
         return res.status(401).json({ error: 'Authentification requise.' });
     }
 
-    const { students = [], presences = [], activityLogs = [], appSettings = null, replace = false, matieres = [], classeMatieres = [], notes = [], ressources = [] } = req.body;
     const { role, schoolSlug } = req.user;
+
+    // SuperAdmin a un accès global et ne synchronise pas de données d'école spécifiques
+    if (role === 'superadmin') {
+        return res.json({ message: 'Session SuperAdmin globale active.' });
+    }
 
     if (!['admin', 'directeur', 'directeur_general', 'comptable', 'superviseur', 'proviseur', 'censeur'].includes(role)) {
         return res.status(403).json({ error: 'Permission refusée.' });
@@ -409,6 +413,12 @@ async function syncToFrontend(req, res) {
     }
 
     const { role, schoolSlug } = req.user;
+
+    // SuperAdmin a un accès global et ne possède pas de données d'école spécifiques dans /api/sync
+    if (role === 'superadmin') {
+        return res.json({ isSuperAdmin: true, appSettings: null, students: [], presences: [], activityLogs: [] });
+    }
+
     if (!['admin', 'directeur', 'directeur_general', 'comptable', 'superviseur', 'proviseur', 'censeur'].includes(role)) {
         return res.status(403).json({ error: 'Permission refusée.' });
     }

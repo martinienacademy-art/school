@@ -974,7 +974,7 @@ export const useStore = create<AppState>()(
       setLastSyncTimestamp: (t) => set({ lastSyncTimestamp: t }),
       fetchAllFromBackend: async (force = false) => {
         const user = get().user;
-        if (!user) return;
+        if (!user || user.role === 'superadmin') return;
 
         // ── Parents : sync spécifique (annonces, paiements, messages) ──
         if (user.role === 'parent') {
