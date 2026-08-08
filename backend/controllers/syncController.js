@@ -735,4 +735,16 @@ async function deleteStudent(req, res) {
     }
 }
 
-module.exports = { syncFromFrontend, syncToFrontend, clearPresences, clearActivityLogs, clearStudents, deleteMatiere, deleteClasseMatiere, deleteNote, deleteStudent };
+async function deleteSalle(req, res) {
+    if (!req.user || !['admin', 'directeur', 'directeur_general', 'comptable'].includes(req.user.role)) return res.status(403).json({ error: 'Non autorisé.' });
+    try {
+        const { error } = await supabase.from(`salles_${req.user.schoolSlug}`).delete().eq('id', req.params.id);
+        if (error) throw error;
+        return res.json({ success: true, message: 'Salle supprimée.' });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+}
+
+module.exports = { syncFromFrontend, syncToFrontend, clearPresences, clearActivityLogs, clearStudents, deleteMatiere, deleteClasseMatiere, deleteNote, deleteStudent, deleteSalle };
+

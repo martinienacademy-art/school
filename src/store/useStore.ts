@@ -581,15 +581,22 @@ export const useStore = create<AppState>()(
       deleteSalle: async (id) => {
         const target = get().salles.find(s => s.id === id);
         const updated = get().salles.filter((s) => s.id !== id);
-        set({ salles: updated });
+        set({ salles: updated, lastSyncTimestamp: Date.now() });
 
         const u = get().user;
         if (u && target) get().addActivityLog(createActivityLog(u.nom, u.role, 'autre', `Suppression de la salle : ${target.nom}`));
 
-        const { syncToBackend } = await import('../services/backendSync');
-        await syncToBackend({ salles: updated });
-        set({ lastSyncTimestamp: Date.now() });
+        try {
+          const { getAuthHeaders } = await import('../services/apiHelpers');
+          await fetch(`${API_BASE_URL}/sync/salle/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+          });
+        } catch (err) {
+          console.error('Failed to delete salle from cloud:', err);
+        }
       },
+
 
       // ── Élèves ───────────────────────────────────────────
       students: [],
