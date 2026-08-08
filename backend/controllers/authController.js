@@ -249,8 +249,8 @@ async function login(req, res) {
         const { data: superadmin } = await supabase
             .from('superadmins')
             .select('*')
-            .or(`telephone.eq."${identifier}",email.eq."${identifier}"`)
-            .single();
+            .eq('telephone', identifier)
+            .maybeSingle();
 
         if (superadmin) {
             const valid = await bcrypt.compare(password, superadmin.password);
