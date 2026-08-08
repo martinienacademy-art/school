@@ -19,7 +19,9 @@ export const TeacherLogin: React.FC = () => {
 
     // Register states
     const [regEmail, setRegEmail] = useState('');
+    const [regTelephone, setRegTelephone] = useState('');
     const [regPassword, setRegPassword] = useState('');
+    const [regConfirmPassword, setRegConfirmPassword] = useState('');
     const [regNom, setRegNom] = useState('');
     const [regShowPassword, setRegShowPassword] = useState(false);
     const [schools, setSchools] = useState<{ slug: string; name: string }[]>([]);
@@ -59,6 +61,22 @@ export const TeacherLogin: React.FC = () => {
             setError('Veuillez sélectionner votre établissement.');
             return;
         }
+
+        if (regPassword !== regConfirmPassword) {
+            setError('Les mots de passe ne correspondent pas.');
+            return;
+        }
+
+        const hasMinLength = regPassword.length >= 8;
+        const hasUppercase = /[A-Z]/.test(regPassword);
+        const hasNumber = /[0-9]/.test(regPassword);
+        const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(regPassword);
+
+        if (!hasMinLength || !hasUppercase || !hasNumber || !hasSpecialChar) {
+            setError('Le mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et un caractère spécial.');
+            return;
+        }
+
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE_URL}/auth/register-teacher`, {
@@ -67,6 +85,7 @@ export const TeacherLogin: React.FC = () => {
                 body: JSON.stringify({
                     nom: regNom,
                     email: regEmail,
+                    telephone: regTelephone,
                     password: regPassword,
                     school_slug: selectedSchool,
                 }),
@@ -283,7 +302,7 @@ export const TeacherLogin: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-300 mb-2">Adresse e-mail <span className="text-red-400">*</span></label>
+                                <label className="block text-sm font-semibold text-slate-300 mb-2">Adresse Email (Gmail) <span className="text-red-400">*</span></label>
                                 <div className="relative">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <input
@@ -291,8 +310,22 @@ export const TeacherLogin: React.FC = () => {
                                         required
                                         value={regEmail}
                                         onChange={e => setRegEmail(e.target.value)}
-                                        placeholder="professeur@ecole.bj"
+                                        placeholder="professeur@gmail.com"
                                         className="w-full pl-11 pr-4 py-3 bg-slate-800/60 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-300 mb-2">Numéro de Téléphone <span className="text-red-400">*</span></label>
+                                <div className="relative">
+                                    <input
+                                        type="tel"
+                                        required
+                                        value={regTelephone}
+                                        onChange={e => setRegTelephone(e.target.value)}
+                                        placeholder="+229 90000000"
+                                        className="w-full px-4 py-3 bg-slate-800/60 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                                     />
                                 </div>
                             </div>
@@ -304,10 +337,9 @@ export const TeacherLogin: React.FC = () => {
                                     <input
                                         type={regShowPassword ? 'text' : 'password'}
                                         required
-                                        minLength={6}
                                         value={regPassword}
                                         onChange={e => setRegPassword(e.target.value)}
-                                        placeholder="Min. 6 caractères"
+                                        placeholder="Min 8 car, 1 Maj, 1 Chiffre, 1 Spécial"
                                         className="w-full pl-11 pr-12 py-3 bg-slate-800/60 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                                     />
                                     <button type="button" onClick={() => setRegShowPassword(!regShowPassword)}
@@ -315,10 +347,36 @@ export const TeacherLogin: React.FC = () => {
                                         {regShowPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
-                                <p className="mt-1.5 text-xs text-slate-500">
-                                    ℹ️ Votre compte sera actif après validation par votre directeur.
-                                </p>
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-300 mb-2">Confirmer le mot de passe <span className="text-red-400">*</span></label>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        type={regShowPassword ? 'text' : 'password'}
+                                        required
+                                        value={regConfirmPassword}
+                                        onChange={e => setRegConfirmPassword(e.target.value)}
+                                        placeholder="Répéter le mot de passe"
+                                        className="w-full pl-11 pr-4 py-3 bg-slate-800/60 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="w-full text-xs text-slate-400 space-y-1 bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+                                <p className="font-bold text-slate-300">Critères mot de passe professionnel :</p>
+                                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                                  <span className={regPassword.length >= 8 ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>✓ 8+ caractères</span>
+                                  <span className={/[A-Z]/.test(regPassword) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>✓ 1 Majuscule</span>
+                                  <span className={/[0-9]/.test(regPassword) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>✓ 1 Chiffre</span>
+                                  <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(regPassword) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>✓ 1 Spécial</span>
+                                </div>
+                            </div>
+
+                            <p className="mt-1.5 text-xs text-slate-500">
+                                ℹ️ Votre compte sera actif après validation par votre directeur.
+                            </p>
 
                             <button
                                 type="submit"

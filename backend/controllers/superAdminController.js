@@ -5,6 +5,7 @@
 const { supabase } = require('../utils/supabase');
 const Joi = require('joi');
 const crypto = require('crypto');
+const { sendSchoolWelcomeEmail } = require('../utils/emailService');
 
 let LOCAL_SAAS_SETTINGS = {
     price_per_student: 2000,
@@ -161,6 +162,7 @@ const schoolCreateSchema = Joi.object({
     slug: Joi.string().trim().lowercase().required().messages({
         'any.required': 'Le slug de l\'établissement est requis.'
     }),
+    acronym: Joi.string().trim().allow('', null),
     address: Joi.string().allow('', null),
     phone: Joi.string().allow('', null),
     email: Joi.string().email().allow('', null).messages({
@@ -172,8 +174,8 @@ const schoolCreateSchema = Joi.object({
     admin_telephone: Joi.string().trim().required().messages({
         'any.required': 'Le numéro de téléphone du directeur est requis.'
     }),
-    admin_password: Joi.string().min(6).required().messages({
-        'string.min': 'Le mot de passe doit contenir au moins 6 caractères.',
+    admin_password: Joi.string().min(8).required().messages({
+        'string.min': 'Le mot de passe doit contenir au moins 8 caractères.',
         'any.required': 'Le mot de passe est requis.'
     }),
     accepted_terms: Joi.boolean().valid(true).required().messages({
@@ -222,6 +224,7 @@ async function createSchool(req, res) {
         const schoolPayload = {
             name: validatedData.name.trim(),
             slug: cleanSlug,
+            acronym: validatedData.acronym ? validatedData.acronym.trim() : null,
             address: validatedData.address || null,
             phone: validatedData.phone || null,
             email: validatedData.email || null,
@@ -249,6 +252,19 @@ async function createSchool(req, res) {
         // Attendre que la base recharge son schéma (1s par sécurité)
         await new Promise(r => setTimeout(r, 1000));
 
+        // Initialiser les paramètres de l'école (app_settings_[slug]) avec l'acronyme
+        try {
+            await supabase.from(`app_settings_${cleanSlug}`).upsert({
+                id: 1,
+                nom_ecole: validatedData.name.trim(),
+                acronyme: validatedData.acronym ? validatedData.acronym.trim() : '',
+                telephone: validatedData.phone || '',
+                email: validatedData.email || ''
+            });
+        } catch (sInitErr) {
+            console.warn('Notification init settings non bloquante:', sInitErr.message);
+        }
+
         // 3. Créer le compte SchoolAdmin (directeur) dans SA NOUVELLE TABLE
         const bcrypt = require('bcryptjs');
         const hashed = await bcrypt.hash(validatedData.admin_password, 10);
@@ -257,6 +273,7 @@ async function createSchool(req, res) {
         const adminPayload = {
             nom: validatedData.admin_nom.trim(),
             telephone: validatedData.admin_telephone.trim(),
+            email: validatedData.email ? validatedData.email.trim() : null,
             password: hashed,
             role: 'directeur',
             accepted_terms: validatedData.accepted_terms,
@@ -275,6 +292,15 @@ async function createSchool(req, res) {
         if (adminErr) throw adminErr;
 
         console.log(`🏫 Nouvelle école créée: ${school.name} (${school.slug}), Admin: ${adminUser.nom}`);
+
+        if (validatedData.email) {
+            sendSchoolWelcomeEmail({
+                email: validatedData.email.trim(),
+                adminNom: validatedData.admin_nom,
+                schoolName: school.name,
+                schoolSlug: cleanSlug
+            }).catch(e => console.error('Error background email superadmin:', e));
+        }
 
         return res.status(201).json({
             message: `École "${school.name}" créée avec succès.`,

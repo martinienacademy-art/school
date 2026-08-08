@@ -62,6 +62,7 @@ interface GlobalStats {
   total_users: number;
   total_revenue: number;
   price_per_student: number;
+  currency?: string;
 }
 
 // ── Composant Modal Créer École ───────────────────────────────
@@ -72,8 +73,8 @@ interface CreateSchoolModalProps {
 
 const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreated }) => {
   const [form, setForm] = useState({
-    name: '', slug: '', address: '', phone: '', email: '',
-    admin_nom: '', admin_telephone: '', admin_password: '',
+    name: '', slug: '', acronym: '', address: '', phone: '', email: '',
+    admin_nom: '', admin_telephone: '', admin_password: '', admin_password_confirm: '',
     accepted_terms: false,
     accepted_privacy_policy: false,
     marketing_consent: false
@@ -84,7 +85,26 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); setError('');
+    setError('');
+
+    // Valider la correspondance des mots de passe
+    if (form.admin_password !== form.admin_password_confirm) {
+      setError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+
+    // Valider les critères du mot de passe fort (min 8 car, 1 maj, 1 chiffre, 1 char spécial)
+    const hasMinLength = form.admin_password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(form.admin_password);
+    const hasNumber = /[0-9]/.test(form.admin_password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.admin_password);
+
+    if (!hasMinLength || !hasUppercase || !hasNumber || !hasSpecialChar) {
+      setError('Le mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et un caractère spécial.');
+      return;
+    }
+
+    setLoading(true);
     try {
       const res = await apiFetch(`${API_BASE_URL}/superadmin/schools`, {
         method: 'POST',
@@ -125,6 +145,12 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {error && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Infos école */}
           <div>
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Informations de l'école</h3>
@@ -134,6 +160,12 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
                 <input type="text" value={form.name} onChange={e => handleNameChange(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="ex: Complexe Scolaire Excellence" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Acronyme / Sigle (ex: CSMA) *</label>
+                <input type="text" value={form.acronym} onChange={e => setForm(f => ({ ...f, acronym: e.target.value.toUpperCase() }))}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                  placeholder="CSMA" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Slug URL *</label>
@@ -151,16 +183,16 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
                   placeholder="Adresse à Cotonou / Porto-Novo (Bénin)" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Téléphone</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Téléphone de l'école</label>
                 <input type="text" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                   className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="+229 XX XX XX XX" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Email de l'école / Directeur *</label>
                 <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                   className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="contact@ecole.bj" />
+                  placeholder="directeur@ecole.bj (Gmail de connexion)" required />
               </div>
             </div>
           </div>
@@ -176,20 +208,45 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
                   placeholder="M. Jean Dupont" required />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Téléphone (login) *</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Téléphone *</label>
                 <input type="text" value={form.admin_telephone} onChange={e => setForm(f => ({ ...f, admin_telephone: e.target.value }))}
                   className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="90000001" required />
+                  placeholder="+229 90000001" required />
               </div>
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Mot de passe provisoire *</label>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Mot de passe *</label>
                 <div className="relative">
                   <input type={showPassword ? "text" : "password"} value={form.admin_password} onChange={e => setForm(f => ({ ...f, admin_password: e.target.value }))}
                     className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 pr-12 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Minimum 8 caractères" required minLength={6} />
+                    placeholder="Min 8 car, 1 Maj, 1 Chiffre, 1 Spécial" required />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirmer le mot de passe *</label>
+                <div className="relative">
+                  <input type={showPassword ? "text" : "password"} value={form.admin_password_confirm} onChange={e => setForm(f => ({ ...f, admin_password_confirm: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-2.5 pr-12 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Répéter le mot de passe" required />
+                </div>
+              </div>
+              <div className="sm:col-span-2 text-xs text-slate-400 space-y-1 bg-slate-800/60 p-3 rounded-xl border border-slate-700">
+                <p className="font-bold text-slate-300">Exigences mot de passe professionnel :</p>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <span className={form.admin_password.length >= 8 ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
+                    ✓ Minimum 8 caractères
+                  </span>
+                  <span className={/[A-Z]/.test(form.admin_password) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
+                    ✓ Au moins 1 lettre majuscule
+                  </span>
+                  <span className={/[0-9]/.test(form.admin_password) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
+                    ✓ Au moins 1 chiffre (0-9)
+                  </span>
+                  <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.admin_password) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
+                    ✓ Au moins 1 caractère spécial
+                  </span>
                 </div>
               </div>
             </div>

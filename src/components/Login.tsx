@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import { parentApi } from '../services/parentApi';
 import { LinkStudent } from './LinkStudent';
-import { GraduationCap, Lock, User, Phone, CheckCircle, Store, Eye, EyeOff } from 'lucide-react';
+import { GraduationCap, Lock, User, Phone, CheckCircle, Store, Eye, EyeOff, Mail, Building2 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 // ── Images de fond (Mobile uniquement) ──
@@ -14,6 +14,8 @@ import bgImage2 from '../assets/login-bg2.jpg';
 import bgImage3 from '../assets/login-bg3.jpg';
 import bgImage4 from '../assets/login-bg4.jpg';
 import { PrivacyPolicyModal } from './PrivacyPolicyModal';
+import { RegisterSchoolModal } from './RegisterSchoolModal';
+import { validatePassword } from '../utils/passwordUtils';
 
 const BG_IMAGES = [bgImage1, bgImage2, bgImage3, bgImage4];
 const SLIDE_DURATION = 5000;
@@ -23,7 +25,7 @@ const SLIDE_DURATION = 5000;
 const SchoolLogo: React.FC<{ size?: string }> = ({ size = "w-16 h-16" }) => {
   return (
     <div className={`${size} bg-amber-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-amber-500/20`}>
-      <GraduationCap className="w-1/2 h-1/2 text-white" />
+      <GraduationCap className="w-8 h-8 text-white" />
     </div>
   );
 };
@@ -64,11 +66,13 @@ export const Login: React.FC = () => {
   const [isRightPanelActive, setIsRightPanelActive] = useState(false);
   
   // Auth Form States
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(''); // Email de connexion
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [nom, setNom] = useState('');
   const [email, setEmail] = useState('');
+  const [telephone, setTelephone] = useState('');
   const [error, setError] = useState('');
   const [trialExpiredSchool, setTrialExpiredSchool] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -84,25 +88,40 @@ export const Login: React.FC = () => {
   const [schools, setSchools] = useState<{slug: string, name: string, logo_url: string}[]>([]);
   const [selectedSchool, setSelectedSchool] = useState('');
 
+  // NOUVEAU : Inscription Établissement (Directeur)
+  const [isRegisterSchoolOpen, setIsRegisterSchoolOpen] = useState(false);
+
   // NOUVEAU : Mot de passe oublié
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordStatus, setForgotPasswordStatus] = useState<'idle'|'loading'|'success'|'error'>('idle');
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
 
-  useEffect(() => {
-    // Récupérer la liste des écoles
+  const fetchSchoolsList = useCallback(() => {
     fetch(`${API_BASE_URL}/schools`)
       .then(res => res.json())
       .then(data => {
-         if (Array.isArray(data)) setSchools(data);
+        if (Array.isArray(data)) setSchools(data);
       })
       .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetchSchoolsList();
 
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [fetchSchoolsList]);
+
+  const handleSchoolCreated = (slug: string, email: string) => {
+    setIsRegisterSchoolOpen(false);
+    fetchSchoolsList();
+    setSelectedSchool(slug);
+    setUsername(email);
+    setPassword('');
+    setError('');
+  };
 
   const handleAuth = async (e: React.FormEvent, type: 'login' | 'register') => {
     e.preventDefault();
@@ -113,18 +132,32 @@ export const Login: React.FC = () => {
     try {
         if (type === 'login') {
             const ok = await login(username, password, selectedSchool);
-            if (!ok) setError('Identifiants incorrects.');
+            if (!ok) setError('Identifiants incorrects (Vérifiez votre email et mot de passe).');
         } else {
             if (!acceptedTerms || !acceptedPrivacy) {
                 setError("Vous devez accepter les conditions d'utilisation et la politique de confidentialité.");
                 setLoading(false);
                 return;
             }
+
+            if (password !== confirmPassword) {
+                setError("Les mots de passe ne correspondent pas.");
+                setLoading(false);
+                return;
+            }
+
+            const val = validatePassword(password);
+            if (!val.isValid) {
+                setError(val.message || "Le mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et un caractère spécial.");
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             await parentApi.register({
                 nom,
-                email,
-                telephone: username,
+                email: email || username,
+                telephone,
                 password,
                 school_slug: selectedSchool,
                 accepted_terms: acceptedTerms,
@@ -137,10 +170,8 @@ export const Login: React.FC = () => {
         }
     } catch (err: any) {
         const msg: string = err?.message || err?.error || "Une erreur est survenue.";
-        // Essai expiré
         if (msg.startsWith('TRIAL_EXPIRED:')) {
-            const schoolName = msg.split(':')[1] || '';
-            setTrialExpiredSchool(schoolName);
+            setTrialExpiredSchool(msg.replace('TRIAL_EXPIRED:', ''));
         } else {
             setError(msg);
         }
@@ -293,26 +324,42 @@ export const Login: React.FC = () => {
           
           {/* Register Panel */}
           <div className="form-container sign-up-container">
-            <form className="auth-form" onSubmit={(e) => handleAuth(e, 'register')}>
-              <SchoolLogo />
-              <h1 className="text-2xl font-black text-slate-900 tracking-tighter">Créer un compte</h1>
+            <form className="auth-form overflow-y-auto max-h-[85vh] py-4" onSubmit={(e) => handleAuth(e, 'register')}>
+              <SchoolLogo size="w-12 h-12" />
+              <h1 className="text-xl font-black text-slate-900 tracking-tighter">Créer un compte</h1>
               <div className="social-container text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-2">Inscription Parent</div>
               
-              <select className="auth-input mb-4 font-bold text-slate-600 border border-slate-200" value={selectedSchool} onChange={(e) => setSelectedSchool(e.target.value)} required>
+              <select className="auth-input mb-3 font-bold text-slate-600 border border-slate-200 text-xs py-2.5" value={selectedSchool} onChange={(e) => setSelectedSchool(e.target.value)} required>
                   <option value="" disabled>-- Sélectionnez votre établissement --</option>
                   {schools.map(s => <option key={s.slug} value={s.slug}>{s.name}</option>)}
               </select>
 
-              <input type="text" placeholder="Nom complet" className="auth-input" value={nom} onChange={(e) => setNom(e.target.value)} required />
-              <input type="email" placeholder="Adresse e-mail" className="auth-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <input type="tel" placeholder="Téléphone" className="auth-input" value={username} onChange={(e) => setUsername(e.target.value)} required />
-              <div className="relative w-full">
-                <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" className="auth-input pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input type="text" placeholder="Nom complet *" className="auth-input mb-2 text-xs py-2.5" value={nom} onChange={(e) => setNom(e.target.value)} required />
+              <input type="email" placeholder="Adresse Email (Gmail) *" className="auth-input mb-2 text-xs py-2.5" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <input type="tel" placeholder="Numéro de Téléphone *" className="auth-input mb-2 text-xs py-2.5" value={telephone} onChange={(e) => setTelephone(e.target.value)} required />
+              
+              <div className="relative w-full mb-2">
+                <input type={showPassword ? "text" : "password"} placeholder="Mot de passe *" className="auth-input text-xs py-2.5 pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <div className="text-left w-full mt-2 space-y-1.5 max-w-[280px]">
+
+              <div className="relative w-full mb-2">
+                <input type={showPassword ? "text" : "password"} placeholder="Confirmer le mot de passe *" className="auth-input text-xs py-2.5 pr-10" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+              </div>
+
+              <div className="w-full text-[10px] text-slate-500 space-y-1 bg-slate-50 p-2 rounded-xl border border-slate-200 mb-2">
+                <p className="font-bold text-slate-700">Sécurité du mot de passe :</p>
+                <div className="grid grid-cols-2 gap-1 text-[9px]">
+                  <span className={password.length >= 8 ? 'text-emerald-600 font-bold' : 'text-slate-400'}>✓ 8+ caractères</span>
+                  <span className={/[A-Z]/.test(password) ? 'text-emerald-600 font-bold' : 'text-slate-400'}>✓ 1 Majuscule</span>
+                  <span className={/[0-9]/.test(password) ? 'text-emerald-600 font-bold' : 'text-slate-400'}>✓ 1 Chiffre</span>
+                  <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? 'text-emerald-600 font-bold' : 'text-slate-400'}>✓ 1 Spécial</span>
+                </div>
+              </div>
+
+              <div className="text-left w-full mt-1 space-y-1 max-w-[280px]">
                 <p className="text-[10px] font-bold text-slate-700">Confidentialité & Données (loi béninoise / APDP)</p>
                 
                 <label className="flex items-start gap-2 cursor-pointer">
@@ -344,7 +391,7 @@ export const Login: React.FC = () => {
                 </label>
               </div>
               {error && <div className="text-rose-500 text-xs mt-2 font-bold">{error}</div>}
-              <button className="auth-button" type="submit" disabled={loading}>{loading ? 'Chargement...' : "S'inscrire"}</button>
+              <button className="auth-button mt-3" type="submit" disabled={loading}>{loading ? 'Chargement...' : "S'inscrire"}</button>
             </form>
           </div>
 
@@ -361,27 +408,47 @@ export const Login: React.FC = () => {
                   {schools.map(s => <option key={s.slug} value={s.slug}>{s.name}</option>)}
               </select>
 
-              <input type="text" placeholder="Utilisateur / Téléphone" className="auth-input" value={username} onChange={(e) => setUsername(e.target.value)} required />
               <div className="relative w-full">
-                <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" className="auth-input pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <input type="email" placeholder="Adresse Email (Gmail) *" className="auth-input pl-10" value={username} onChange={(e) => setUsername(e.target.value)} required />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+              </div>
+
+              <div className="relative w-full">
+                <input type={showPassword ? "text" : "password"} placeholder="Mot de passe *" className="auth-input pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <div className="text-left w-full mt-2 space-y-1.5 max-w-[280px]">
+
+              <div className="flex justify-between items-center w-full px-1 text-[11px] mt-1 mb-2">
                 <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-slate-400 hover:text-amber-600">Mot de passe oublié ?</button>
-                <button type="button" onClick={() => setIsPrivacyOpen(true)} className="text-slate-400 hover:text-amber-600 block underline cursor-pointer">
-                  Confidentialité & Données
+                <button 
+                  type="button" 
+                  onClick={() => setIsPrivacyOpen(true)}
+                  className="text-slate-400 hover:text-amber-600 underline cursor-pointer"
+                >
+                  Confidentialité & Sécurité
                 </button>
               </div>
+
               {trialExpiredSchool && (
-                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-left">
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-left w-full my-2">
                   <p className="text-amber-800 font-bold text-xs">⏰ Période d'essai expirée</p>
-                  <p className="text-amber-700 text-xs mt-1">"{trialExpiredSchool}" doit régler son abonnement. Contactez l'administrateur de la plateforme.</p>
+                  <p className="text-amber-700 text-xs mt-1">"{trialExpiredSchool}" — Contactez l'administrateur pour régler l'abonnement.</p>
                 </div>
               )}
-              {error && <div className="text-rose-500 text-xs mt-2 font-bold">{error}</div>}
-              <button className="auth-button" type="submit" disabled={loading}>{loading ? 'Connexion...' : 'Se connecter'}</button>
+              {error && <div className="text-rose-500 text-xs italic font-bold my-1">{error}</div>}
+
+              <button className="auth-button" type="submit" disabled={loading}>{loading ? 'Traitement...' : 'Se connecter'}</button>
+              
+              <button 
+                type="button" 
+                onClick={() => setIsRegisterSchoolOpen(true)}
+                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-amber-500/20 active:scale-98 transition-all flex items-center justify-center gap-2 mt-3"
+              >
+                <Building2 className="w-4 h-4 text-white" />
+                <span>Directeur ? Inscrivez votre école</span>
+              </button>
             </form>
           </div>
 
@@ -438,29 +505,56 @@ export const Login: React.FC = () => {
                         </select>
                     </div>
 
-                    {view === 'register' && (
+                    {view === 'register' ? (
                         <>
                             <div className="relative">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
-                                <input type="text" placeholder="Nom complet" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={nom} onChange={(e) => setNom(e.target.value)} required />
+                                <input type="text" placeholder="Nom complet *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={nom} onChange={(e) => setNom(e.target.value)} required />
                             </div>
                             <div className="relative mt-3">
-                                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                <input type="email" placeholder="Adresse e-mail" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                <input type="email" placeholder="Adresse Email (Gmail) *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                            </div>
+                            <div className="relative mt-3">
+                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                <input type="tel" placeholder="Numéro de Téléphone *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={telephone} onChange={(e) => setTelephone(e.target.value)} required />
+                            </div>
+                            <div className="relative mt-3">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                <input type={showPassword ? "text" : "password"} placeholder="Mot de passe *" className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+                            <div className="relative mt-3">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                <input type={showPassword ? "text" : "password"} placeholder="Confirmer le mot de passe *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+                            </div>
+                            <div className="w-full text-[10px] text-slate-500 space-y-1 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 mt-2 text-left">
+                                <p className="font-bold text-slate-700">Sécurité du mot de passe :</p>
+                                <div className="grid grid-cols-2 gap-1 text-[9px]">
+                                  <span className={password.length >= 8 ? 'text-emerald-600 font-bold' : 'text-slate-400'}>✓ 8+ caractères</span>
+                                  <span className={/[A-Z]/.test(password) ? 'text-emerald-600 font-bold' : 'text-slate-400'}>✓ 1 Majuscule</span>
+                                  <span className={/[0-9]/.test(password) ? 'text-emerald-600 font-bold' : 'text-slate-400'}>✓ 1 Chiffre</span>
+                                  <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? 'text-emerald-600 font-bold' : 'text-slate-400'}>✓ 1 Spécial</span>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                <input type="email" placeholder="Adresse Email (Gmail) *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={username} onChange={(e) => setUsername(e.target.value)} required />
+                            </div>
+                            <div className="relative mt-3">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                <input type={showPassword ? "text" : "password"} placeholder="Mot de passe *" className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
                             </div>
                         </>
                     )}
-                    <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
-                        <input type="tel" placeholder="Téléphone" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={username} onChange={(e) => setUsername(e.target.value)} required />
-                    </div>
-                    <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
-                        <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                    </div>
 
                     {view === 'login' ? (
                       <div className="flex justify-between items-center px-1 text-[11px] mt-1">
@@ -522,6 +616,15 @@ export const Login: React.FC = () => {
                     <button type="button" onClick={() => setView(view === 'login' ? 'register' : 'login')} className="w-full py-2 text-amber-600 text-[10px] font-black uppercase tracking-widest mt-2">
                         {view === 'login' ? "Nouveau ? Créer un compte" : "Déjà un compte ? Se connecter"}
                     </button>
+
+                    <button 
+                      type="button" 
+                      onClick={() => setIsRegisterSchoolOpen(true)}
+                      className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 transition-transform flex items-center justify-center gap-2 mt-3"
+                    >
+                      <Building2 className="w-4 h-4 text-white" />
+                      <span>Directeur ? Inscrivez votre école</span>
+                    </button>
                 </form>
             </div>
         </>
@@ -538,8 +641,14 @@ export const Login: React.FC = () => {
         </button>
       </div>
 
-
       <PrivacyPolicyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
+
+      {isRegisterSchoolOpen && (
+        <RegisterSchoolModal 
+          onClose={() => setIsRegisterSchoolOpen(false)} 
+          onSuccess={handleSchoolCreated} 
+        />
+      )}
 
       {/* Forgot Password Modal */}
       {isForgotPasswordOpen && (

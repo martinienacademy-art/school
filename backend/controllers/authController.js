@@ -4,6 +4,7 @@ const { supabase } = require('../utils/supabase');
 const { JWT_SECRET, JWT_EXPIRES } = require('../config');
 const Joi = require('joi');
 const crypto = require('crypto');
+const { sendSchoolWelcomeEmail, sendUserWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
 
 // Joi validation schema for Parent registration
 const parentRegisterSchema = Joi.object({
@@ -17,8 +18,8 @@ const parentRegisterSchema = Joi.object({
     telephone: Joi.string().trim().required().messages({
         'any.required': 'Le numéro de téléphone est requis.'
     }),
-    password: Joi.string().min(6).required().messages({
-        'string.min': 'Le mot de passe doit contenir au moins 6 caractères.',
+    password: Joi.string().min(8).required().messages({
+        'string.min': 'Le mot de passe doit contenir au moins 8 caractères.',
         'any.required': 'Le mot de passe est requis.'
     }),
     school_slug: Joi.string().trim().required().messages({
@@ -69,61 +70,61 @@ async function register(req, res) {
         const { data: existing } = await supabase
             .from(`profiles_${school_slug}`)
             .select('id')
-            .eq('telephone', telephone.trim())
+            .or(`telephone.eq.${telephone},email.eq.${email}`)
             .single();
 
         if (existing) {
-            return res.status(409).json({ error: 'Ce numéro de téléphone est déjà enregistré.' });
+            return res.status(409).json({ error: 'Un compte avec cet e-mail ou ce numéro de téléphone existe déjà.' });
         }
 
-        const hashed = await bcrypt.hash(password, 10);
         const ipHash = getIpHash(req);
+        const consentedAt = new Date().toISOString();
+        const hashed = await bcrypt.hash(password, 10);
 
-        // Mass assignment protection
-        const insertPayload = {
-            nom: nom.trim(),
-            email: email.toLowerCase().trim(),
-            telephone: telephone.trim(),
-            password: hashed,
-            role: 'parent',
-            accepted_terms,
-            accepted_privacy_policy,
-            marketing_consent,
-            consented_at: new Date().toISOString(),
-            signup_ip_hash: ipHash,
-            parent_photo_authorization
-        };
-
-        const { data: parent, error } = await supabase
+        const { data: user, error } = await supabase
             .from(`profiles_${school_slug}`)
-            .insert(insertPayload)
-            .select()
+            .insert({
+                nom: nom.trim(),
+                email: email.trim().toLowerCase(),
+                telephone,
+                password: hashed,
+                role: 'parent',
+                accepted_terms,
+                accepted_privacy_policy,
+                marketing_consent,
+                parent_photo_authorization,
+                consented_at: consentedAt,
+                signup_ip_hash: ipHash
+            })
+            .select('id, nom, email, telephone, role')
             .single();
 
         if (error) throw error;
 
+        // Créer un token JWT
         const token = jwt.sign(
-            { id: parent.id, nom: parent.nom, role: parent.role, schoolSlug: school_slug },
+            { id: user.id, nom: user.nom, role: user.role, schoolSlug: school_slug },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES }
         );
 
-        // On met le token dans un cookie HttpOnly sécurisé
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
-        });
+        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+        sendUserWelcomeEmail({
+            email: user.email,
+            nom: user.nom,
+            role: 'parent',
+            schoolName: school_slug
+        }).catch(e => console.error('Error background email parent:', e));
 
         return res.status(201).json({
-            message: 'Compte créé avec succès.',
-            token, // On le garde pour compatibilité temporaire si besoin, mais le frontend doit utiliser credentials: true
-            user: { id: parent.id, nom: parent.nom, telephone: parent.telephone, role: parent.role, schoolSlug: school_slug },
+            message: 'Inscription réussie.',
+            token,
+            user: { ...user, schoolSlug: school_slug }
         });
     } catch (err) {
-        console.error('Register Error:', err.message);
-        return res.status(500).json({ error: 'Erreur lors de la création du compte : ' + err.message });
+        console.error('Parent Register Error:', err.message);
+        return res.status(500).json({ error: 'Erreur lors de l\'inscription: ' + err.message });
     }
 }
 
@@ -136,8 +137,9 @@ const teacherRegisterSchema = Joi.object({
         'any.required': 'L\'adresse e-mail est requise.',
         'string.email': 'L\'adresse e-mail est invalide.'
     }),
-    password: Joi.string().min(6).required().messages({
-        'string.min': 'Le mot de passe doit contenir au moins 6 caractères.',
+    telephone: Joi.string().trim().allow('', null),
+    password: Joi.string().min(8).required().messages({
+        'string.min': 'Le mot de passe doit contenir au moins 8 caractères.',
         'any.required': 'Le mot de passe est requis.'
     }),
     school_slug: Joi.string().trim().required().messages({
@@ -212,6 +214,13 @@ async function registerTeacher(req, res) {
             sameSite: 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
+
+        sendUserWelcomeEmail({
+            email: cleanEmail,
+            nom: validatedData.nom,
+            role: 'enseignant',
+            schoolName: school_slug
+        }).catch(e => console.error('Error background email teacher:', e));
 
         return res.status(201).json({
             message: 'Compte Enseignant créé avec succès.',
@@ -532,6 +541,153 @@ async function resetPassword(req, res) {
     }
 }
 
+// ── Public Self-Service Register (Directeurs & Écoles) ─────────
+const schoolRegisterSchema = Joi.object({
+    name: Joi.string().trim().required().messages({
+        'any.required': 'Le nom de l\'établissement est requis.'
+    }),
+    slug: Joi.string().trim().lowercase().required().messages({
+        'any.required': 'Le slug de l\'établissement est requis.'
+    }),
+    acronym: Joi.string().trim().allow('', null),
+    address: Joi.string().allow('', null),
+    phone: Joi.string().allow('', null),
+    email: Joi.string().email().required().messages({
+        'any.required': 'L\'adresse e-mail est requise.',
+        'string.email': 'L\'adresse e-mail est invalide.'
+    }),
+    admin_nom: Joi.string().trim().required().messages({
+        'any.required': 'Le nom du directeur est requis.'
+    }),
+    admin_telephone: Joi.string().trim().required().messages({
+        'any.required': 'Le numéro de téléphone du directeur est requis.'
+    }),
+    admin_password: Joi.string().min(8).required().messages({
+        'string.min': 'Le mot de passe doit contenir au moins 8 caractères.',
+        'any.required': 'Le mot de passe est requis.'
+    }),
+    accepted_terms: Joi.boolean().valid(true).required().messages({
+        'any.only': 'Vous devez accepter les conditions générales d\'utilisation.'
+    }),
+    accepted_privacy_policy: Joi.boolean().valid(true).required().messages({
+        'any.only': 'Vous devez accepter la politique de confidentialité.'
+    }),
+    marketing_consent: Joi.boolean().default(false)
+});
+
+async function registerSchool(req, res) {
+    const { value: validatedData, error: validationError } = schoolRegisterSchema.validate(req.body, { abortEarly: false });
+    if (validationError) {
+        return res.status(400).json({ error: validationError.details.map(d => d.message).join(', ') });
+    }
+
+    const cleanSlug = validatedData.slug.toLowerCase().trim();
+    const cleanEmail = validatedData.email.toLowerCase().trim();
+    const cleanPhone = validatedData.admin_telephone.replace(/\s+/g, '').trim();
+
+    try {
+        const { data: existing } = await supabase
+            .from('schools')
+            .select('id')
+            .eq('slug', cleanSlug)
+            .single();
+
+        if (existing) {
+            return res.status(409).json({ error: `Le code/slug "${cleanSlug}" est déjà utilisé par un autre établissement.` });
+        }
+
+        const ipHash = getIpHash(req);
+        const consentedAt = new Date().toISOString();
+        const trialDays = 60;
+
+        const schoolPayload = {
+            name: validatedData.name.trim(),
+            slug: cleanSlug,
+            acronym: validatedData.acronym ? validatedData.acronym.trim() : null,
+            address: validatedData.address || null,
+            phone: validatedData.phone || cleanPhone,
+            email: cleanEmail,
+            status: 'trial',
+            trial_ends_at: new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString(),
+            accepted_terms: validatedData.accepted_terms,
+            accepted_privacy_policy: validatedData.accepted_privacy_policy,
+            marketing_consent: validatedData.marketing_consent,
+            consented_at: consentedAt,
+            signup_ip_hash: ipHash
+        };
+
+        const { data: school, error: schoolErr } = await supabase
+            .from('schools')
+            .insert(schoolPayload)
+            .select()
+            .single();
+
+        if (schoolErr) throw schoolErr;
+
+        const { error: rpcErr } = await supabase.rpc('create_school_tables', { school_slug: cleanSlug });
+        if (rpcErr) console.warn('Warning create_school_tables:', rpcErr.message);
+
+        await new Promise(r => setTimeout(r, 1000));
+
+        try {
+            await supabase.from(`app_settings_${cleanSlug}`).upsert({
+                id: 1,
+                nom_ecole: validatedData.name.trim(),
+                acronyme: validatedData.acronym ? validatedData.acronym.trim() : '',
+                telephone: validatedData.phone || cleanPhone,
+                email: cleanEmail
+            });
+        } catch (sErr) {
+            console.warn('Non-blocking app_settings init warning:', sErr.message);
+        }
+
+        const hashed = await bcrypt.hash(validatedData.admin_password, 10);
+        const adminPayload = {
+            nom: validatedData.admin_nom.trim(),
+            telephone: cleanPhone,
+            email: cleanEmail,
+            password: hashed,
+            role: 'directeur',
+            accepted_terms: validatedData.accepted_terms,
+            accepted_privacy_policy: validatedData.accepted_privacy_policy,
+            marketing_consent: validatedData.marketing_consent,
+            consented_at: consentedAt,
+            signup_ip_hash: ipHash
+        };
+
+        const { data: adminUser, error: adminErr } = await supabase
+            .from(`profiles_${cleanSlug}`)
+            .insert(adminPayload)
+            .select('id, nom, telephone, email, role')
+            .single();
+
+        if (adminErr) throw adminErr;
+
+        console.log(`🏫 Nouvelle école inscrite par Directeur : ${school.name} (${school.slug}), Admin: ${adminUser.nom}`);
+
+        // Envoi automatique de l'email SMTP de bienvenue
+        sendSchoolWelcomeEmail({
+            email: cleanEmail,
+            adminNom: validatedData.admin_nom,
+            schoolName: school.name,
+            schoolSlug: cleanSlug
+        }).catch(e => console.error('Error background email:', e));
+
+        return res.status(201).json({
+            message: `Félicitations ! L'établissement "${school.name}" a été créé avec succès.`,
+            school: {
+                name: school.name,
+                slug: cleanSlug,
+                email: cleanEmail,
+                admin_nom: adminUser.nom
+            }
+        });
+    } catch (err) {
+        console.error('registerSchool Error:', err.message);
+        return res.status(500).json({ error: 'Erreur lors de la création de l\'établissement: ' + err.message });
+    }
+}
+
 // ── Logout ────────────────────────────────────────────────────
 async function logout(req, res) {
     res.clearCookie('token');
@@ -539,4 +695,4 @@ async function logout(req, res) {
 }
 
 // ── Export ────────────────────────────────────────────────────
-module.exports = { register, registerTeacher, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword };
+module.exports = { register, registerTeacher, registerSchool, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword };
