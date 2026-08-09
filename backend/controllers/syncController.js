@@ -387,6 +387,8 @@ async function syncFromFrontend(req, res) {
             } catch (ressourcesException) {
                 console.error('❌ [Sync POST] Exception ressources:', ressourcesException);
             }
+        }
+
         // --- 9. Sync Salles ---
         if (salles && salles.length > 0) {
             try {
