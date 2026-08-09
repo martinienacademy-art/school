@@ -47,7 +47,7 @@ export const importExcel = (file: File, existingStudents?: Student[]): Promise<S
           const ecoleProvenance = String(row[7] || '').trim();
           
           // Validate classe - support various naming conventions
-          const allClasses = useStore.getState().classes.map(c => c.nom);
+          const allClasses = (useStore.getState().classes || []).map((c: any) => c.nom);
           
           const classeNormalized = classe.toUpperCase().trim()
             .replace(/È/g, 'E')
@@ -70,7 +70,7 @@ export const importExcel = (file: File, existingStudents?: Student[]): Promise<S
           };
           
           const validClasse = classeAliases[classeNormalized] || 
-            allClasses.find(c => c.toLowerCase() === classe.toLowerCase()) || 
+            allClasses.find((c: any) => c.toLowerCase() === classe.toLowerCase()) || 
             classe;
           
           const key = `${nom.toLowerCase()}|${prenom.toLowerCase()}|${validClasse.toLowerCase()}`;

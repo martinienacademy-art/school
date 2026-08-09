@@ -144,7 +144,7 @@ export const Recouvrement: React.FC = () => {
                             onChange={(e) => setFilterClass(e.target.value)}
                         >
                             <option value="">Toutes les classes</option>
-                            {classesConfig.map(c => (
+                            {classesConfig.map((c: any) => (
                                 <option key={c.name} value={c.name}>{c.name}</option>
                             ))}
                         </select>

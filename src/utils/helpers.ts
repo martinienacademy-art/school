@@ -83,9 +83,9 @@ export const calculateDashboardStats = (students: Student[]): DashboardStats => 
 };
 
 export const calculateClassStats = (students: Student[]): ClassStats[] => {
-  const allClasses = CLASS_CONFIG.map(c => c.name);
+  const allClasses = CLASS_CONFIG.map((c: any) => c.name);
   
-  return allClasses.map(classe => {
+  return allClasses.map((classe: string) => {
     const classStudents = students.filter(s => s.classe === classe);
     const ecolageTotal = classStudents.reduce((sum, s) => sum + s.ecolage, 0);
     const paye = classStudents.reduce((sum, s) => sum + s.dejaPaye, 0);
@@ -105,7 +105,7 @@ export const calculateClassStats = (students: Student[]): ClassStats[] => {
       restant,
       tauxRecouvrement: ecolageTotal > 0 ? Math.round((paye / ecolageTotal) * 100) : 0
     };
-  }).filter(c => c.effectif > 0);
+  }).filter((c: any) => c.effectif > 0);
 };
 
 export const generateWhatsAppLink = (phone: string, message: string): string => {

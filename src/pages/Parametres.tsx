@@ -31,11 +31,11 @@ export const Parametres: React.FC = () => {
   const [localAdresse, setLocalAdresse] = useState(settings?.adressePhysique || '');
   const [localEmail, setLocalEmail] = useState(settings?.emailOfficiel || '');
   const [localSiteWeb, setLocalSiteWeb] = useState(settings?.siteWeb || '');
-  const [localDesc, setLocalDesc] = useState(settings?.description || '');
+  const [localDesc] = useState(settings?.description || '');
   const [localAgrement, setLocalAgrement] = useState(settings?.agrement || '');
   const [localDevise, setLocalDevise] = useState(settings?.devise || '');
-  const [localRepublique, setLocalRepublique] = useState(settings?.republique || '');
-  const [localMinistere, setLocalMinistere] = useState(settings?.ministere || '');
+  const [localRepublique] = useState(settings?.republique || '');
+  const [localMinistere] = useState(settings?.ministere || '');
   const [localMap, setLocalMap] = useState(settings?.localisationMap || '');
   const [localFb, setLocalFb] = useState(settings?.facebook || '');
   const [localTw, setLocalTw] = useState(settings?.twitter || '');

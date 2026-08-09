@@ -3,11 +3,9 @@
 // ============================================================
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
-import { API_BASE_URL } from '../../config';
-import { getAuthHeaders, parseResponse } from '../../services/apiHelpers';
 import {
     GraduationCap, BookOpen, Users, Award, LogOut, Bell,
-    Calendar, ChevronRight, Edit3, FileText, Sun, Moon,
+    Edit3, FileText,
     TrendingUp, ClipboardList, MessageSquare, Settings
 } from 'lucide-react';
 
@@ -43,7 +41,6 @@ export const TeacherDashboard: React.FC = () => {
     const logout = useStore(s => s.logout);
     const setCurrentPage = useStore(s => s.setCurrentPage);
 
-    const [darkMode] = useState(true); // Always dark for teacher portal
     const [currentTime, setCurrentTime] = useState(new Date());
 
     // Stats placeholder — à remplacer avec de vraies données API

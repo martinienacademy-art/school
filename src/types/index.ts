@@ -420,3 +420,38 @@ export interface RessourcePedagogique {
   dateAjout: string; // ISO string
 }
 
+// ── MODULE 4 : EMPLOI DU TEMPS & SÉANCES RÉCURRENTES ───────────
+export type SeanceType = 'Cours' | 'TD' | 'Examen' | 'TP';
+export type SeanceStatut = 'Planifiée' | 'Effectuée' | 'Suspendue' | 'Annulée';
+export type RecurrenceFrequence = 'Quotidienne' | 'Hebdomadaire' | 'Mensuelle' | 'Personnalisée';
+
+export interface CreneauHoraire {
+  id: string;
+  jour: string; // ex: 'Lundi', 'Mardi', etc.
+  heureDebut: string; // ex: '08:00'
+  heureFin: string; // ex: '10:00'
+  salle: string; // ex: 'Salle 12'
+}
+
+export interface Seance {
+  id: string;
+  anneeAcademique: string;
+  sousSysteme?: string;
+  classe: string;
+  matiereId?: string;
+  matiereNom: string;
+  enseignant: string;
+  salle: string;
+  type: SeanceType;
+  statut: SeanceStatut;
+  date: string; // YYYY-MM-DD
+  heureDebut: string; // HH:mm
+  heureFin: string; // HH:mm
+  jour: string; // ex: 'Lundi'
+  creneauId?: string;
+  isRecurrent?: boolean;
+  frequence?: RecurrenceFrequence;
+  createdAt?: string;
+}
+
+

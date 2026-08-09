@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useStore } from '../store/useStore';
 
-const COLORS = {
+const _COLORS = {
     primary: [0, 0, 0],         // Pure black
     secondary: [60, 60, 60],    // Dark gray
     muted: [100, 100, 100],     // Gray
@@ -29,7 +29,7 @@ export const generateRapportMensuelPDF = (
     schoolInfo: { name: string, logo: string | null, stamp: string | null }
 ): void => {
     // Force standard WinAnsiEncoding by avoiding weird non-breaking spaces or rare characters
-    const cleanText = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, (m) => {
+    const _cleanText = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, (m) => {
         // Optionnel: On peut garder les accents si jspdf les gère, 
         // mais pour être "Ultra Safe" contre les &&&, on peut normaliser.
         // Ici on va tenter de garder le texte propre.
@@ -51,7 +51,7 @@ export const generateRapportMensuelPDF = (
 
     // --- HELPER WRAPPERS ---
     const setPrimary = () => doc.setTextColor(0, 0, 0);
-    const setSecondary = () => doc.setTextColor(60, 60, 60);
+    const _setSecondary = () => doc.setTextColor(60, 60, 60);
 
     // --- 0. BRANDING & HEADER (4-Column Layout - SATURATED) ---
     let y = 15;

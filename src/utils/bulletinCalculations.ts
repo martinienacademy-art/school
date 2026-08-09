@@ -215,7 +215,7 @@ export const calculerBulletinsClasse = (
 
     // --- 3. Calcul des moyennes annuelles cumulées et Historique ---
     const periodesAnterieures = getPeriodesAntérieures(periode);
-    const toutesLesPeriodes = [...periodesAnterieures, periode];
+    const _toutesLesPeriodes = [...periodesAnterieures, periode];
 
     // Initialiser periodesDetails pour chaque bulletin
     bulletinsBruts.forEach(b => {

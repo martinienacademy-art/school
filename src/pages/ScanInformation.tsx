@@ -6,7 +6,7 @@ import { useStore } from '../store/useStore';
 import { Html5Qrcode } from "html5-qrcode";
 import {
     Camera, Search, AlertTriangle, UserCircle,
-    X, Wallet, Info, ShieldCheck, ChevronRight, Scan, CreditCard
+    X, Wallet, ShieldCheck, ChevronRight, Scan, CreditCard
 } from 'lucide-react';
 import { playSuccessSound, playErrorSound, unlockAudio } from '../utils/audio';
 

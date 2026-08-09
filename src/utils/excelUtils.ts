@@ -79,7 +79,7 @@ export const parseExcelFile = (file: File): Promise<Student[]> => {
               dejaPaye,
               restant,
               recu,
-              cycle: useStore.getState().getCycleByClass(classe),
+              cycle: useStore.getState().getCycleByClass(classe) as any,
               status: restant === 0 ? 'Soldé' : (dejaPaye > 0 ? 'Partiel' : 'Non soldé'),
               historiquesPaiements: initialPayment ? [initialPayment] : [],
               paiements: initialPayment ? [initialPayment] : [],

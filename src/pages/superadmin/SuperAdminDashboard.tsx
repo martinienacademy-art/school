@@ -2,22 +2,18 @@
 // SUPER ADMIN DASHBOARD — Tableau de bord propriétaire SaaS
 // ============================================================
 import React, { useState, useEffect, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
 import {
   Building2, Users, AlertTriangle,
   Plus, Check, X, Clock, RefreshCw, ToggleLeft, ToggleRight,
   Globe, Phone, Mail, MapPin, Wallet, Star, Trash2, ExternalLink, Eye, EyeOff,
-  CreditCard, Settings, Calendar, Sliders, Zap, CheckCircle2, ShieldCheck
+  CreditCard, Settings, Sliders, Zap, CheckCircle2, ShieldCheck
 } from 'lucide-react';
 import { School } from '../../types';
 import { API_BASE_URL } from '../../config';
 import { useStore } from '../../store/useStore';
 
 // ── Helpers ──────────────────────────────────────────────────
-
-function getAuthHeaders() {
-  // Auth is handled via HttpOnly cookie set at login.
-  return { 'Content-Type': 'application/json' };
-}
 
 function apiFetch(url: string, options: RequestInit = {}) {
   return fetch(url, { ...options, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(options.headers as any) } });

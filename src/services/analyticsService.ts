@@ -169,7 +169,7 @@ export function computeProjection(students: Student[]): ProjectionResult {
  */
 export function computeClassComparison(students: Student[]): ClassFinanceRow[] {
   const rows: ClassFinanceRow[] = CLASS_CONFIG
-    .map((config) => {
+    .map((config: any) => {
       const classeStudents = students.filter((s) => s.classe === config.name);
       if (classeStudents.length === 0) return null;
 
@@ -192,7 +192,7 @@ export function computeClassComparison(students: Student[]): ClassFinanceRow[] {
         soldes,
       } satisfies ClassFinanceRow;
     })
-    .filter((r): r is ClassFinanceRow => r !== null);
+    .filter((r: any): r is ClassFinanceRow => r !== null);
 
   // Trier du meilleur taux au plus faible
   return rows.sort((a, b) => b.taux - a.taux);

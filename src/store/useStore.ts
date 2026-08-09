@@ -3,7 +3,7 @@
 // ============================================================
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Student, User, AppPage, Payment, Parent, AppSettings, Presence, ActivityLog, CycleSchedule, Announcement, AnnouncementRead, Matiere, ClasseMatiere, Note, PeriodeType, Teacher, RessourcePedagogique } from '../types';
+import { Student, User, AppPage, Payment, Parent, AppSettings, Presence, ActivityLog, CycleSchedule, Announcement, AnnouncementRead, Matiere, ClasseMatiere, Note, PeriodeType, Teacher, RessourcePedagogique, Salle, Seance } from '../types';
 import { API_BASE_URL } from '../config';
 import { getEcolage, getCycle } from '../data/classConfig';
 import { v4 as uuid } from '../utils/uuid';
@@ -133,6 +133,14 @@ export interface AppState {
   addSalle: (s: Omit<Salle, 'id' | 'createdAt'>) => Promise<void>;
   updateSalle: (id: string, s: Partial<Salle>) => Promise<void>;
   deleteSalle: (id: string) => Promise<void>;
+
+  // Séances & Emploi du Temps
+  seances: Seance[];
+  setSeances: (s: Seance[]) => void;
+  addSeance: (s: Seance) => void;
+  addSeancesBatch: (newSeances: Seance[]) => Promise<void>;
+  updateSeance: (id: string, s: Partial<Seance>) => Promise<void>;
+  deleteSeance: (id: string) => Promise<void>;
   getEcolageByClass: (nom: string) => number;
   getCycleByClass: (nom: string) => string;
   getClassesByCycle: (cycle: string) => any[];
@@ -214,6 +222,13 @@ export interface AppState {
   setRessources: (r: RessourcePedagogique[]) => void;
   addRessource: (r: RessourcePedagogique) => void;
   deleteRessource: (id: string) => void;
+
+  // Classes
+  classes: any[];
+  setClasses: (c: any[]) => void;
+  addClass: (c: any) => Promise<void>;
+  updateClass: (id: string, c: any) => Promise<void>;
+  deleteClass: (id: string) => Promise<void>;
 }
 
 // Authentification gérée par Supabase
@@ -595,6 +610,33 @@ export const useStore = create<AppState>()(
         } catch (err) {
           console.error('Failed to delete salle from cloud:', err);
         }
+      },
+
+      // ── Séances & Emploi du Temps ────────────────────────────
+      seances: [],
+      setSeances: (seances) => set({ seances }),
+      addSeance: (s) => get().addSeancesBatch([s]),
+      addSeancesBatch: async (newSeances) => {
+        const updated = [...get().seances, ...newSeances];
+        set({ seances: updated });
+        const u = get().user;
+        if (u) get().addActivityLog(createActivityLog(u.nom, u.role, 'autre', `Ajout de ${newSeances.length} séance(s) d'emploi du temps`));
+        const { syncToBackend } = await import('../services/backendSync');
+        await syncToBackend({ seances: updated });
+        set({ lastSyncTimestamp: Date.now() });
+      },
+      updateSeance: async (id, updates) => {
+        const updated = get().seances.map((s) => (s.id === id ? { ...s, ...updates } : s));
+        set({ seances: updated });
+        const { syncToBackend } = await import('../services/backendSync');
+        await syncToBackend({ seances: updated });
+        set({ lastSyncTimestamp: Date.now() });
+      },
+      deleteSeance: async (id) => {
+        const updated = get().seances.filter((s) => s.id !== id);
+        set({ seances: updated, lastSyncTimestamp: Date.now() });
+        const { syncToBackend } = await import('../services/backendSync');
+        await syncToBackend({ seances: updated });
       },
 
 
@@ -1246,6 +1288,10 @@ export const useStore = create<AppState>()(
           if (Array.isArray(data.salles)) {
             set({ salles: data.salles });
             console.log(`🏛️ [Sync] Salles: ${data.salles.length} salle(s) synchronisée(s).`);
+          }
+          if (Array.isArray(data.seances)) {
+            set({ seances: data.seances });
+            console.log(`📅 [Sync] Séances: ${data.seances.length} séance(s) synchronisée(s).`);
           }
 
           // Mise à jour du timestamp après succès

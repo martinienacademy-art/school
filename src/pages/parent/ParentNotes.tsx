@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { parentApi } from '../../services/parentApi';
 import { 
-    GraduationCap, BookOpen, Clock, FileText, 
-    ChevronRight, AlertCircle, Loader2, Search,
-    Filter, Calendar
+    GraduationCap, BookOpen, FileText, 
+    Search, Calendar
 } from 'lucide-react';
 import { PeriodeType } from '../../types';
 

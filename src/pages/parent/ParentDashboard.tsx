@@ -69,7 +69,7 @@ export const ParentDashboard: React.FC = () => {
     // État des annonces
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [showAnnouncementList, setShowAnnouncementList] = useState(false);
-    const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('default');
+    const [, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('default');
     
     // Accès au store global pour les lectures
     const rawReads = useStore(s => s.announcementReads);
