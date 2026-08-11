@@ -178,6 +178,7 @@ const schoolCreateSchema = Joi.object({
         'string.min': 'Le mot de passe doit contenir au moins 8 caractères.',
         'any.required': 'Le mot de passe est requis.'
     }),
+    admin_password_confirm: Joi.any().strip(),
     accepted_terms: Joi.boolean().valid(true).required().messages({
         'any.only': 'Vous devez accepter les conditions générales d\'utilisation.'
     }),
