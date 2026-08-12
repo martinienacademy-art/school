@@ -22,6 +22,7 @@ const NAV_ITEMS: Omit<NavItem, 'badge'>[] = [
   { id: 'dashboard',            label: 'Tableau de bord',   icon: <LayoutDashboard className="w-[18px] h-[18px]" /> },
   { id: 'pre_inscriptions',     label: 'Pré-inscriptions',  icon: <UserPlus className="w-[18px] h-[18px]" /> },
   { id: 'eleves',               label: 'Élèves',            icon: <Users className="w-[18px] h-[18px]" /> },
+  { id: 'discipline',           label: 'Discipline',        icon: <Shield className="w-[18px] h-[18px]" /> },
   { id: 'parents_list',         label: 'Parents',           icon: <Users className="w-[18px] h-[18px]" /> },
   { id: 'paiements',            label: 'Paiements',         icon: <CreditCard className="w-[18px] h-[18px]" /> },
   { id: 'recouvrement',         label: 'Recouvrement',      icon: <Target className="w-[18px] h-[18px]" /> },
@@ -68,6 +69,7 @@ const NAV_GROUPS: Record<string, string> = {
   dashboard: 'Principal',
   pre_inscriptions: 'Gestion',
   eleves: 'Gestion',
+  discipline: 'Gestion',
   parents_list: 'Gestion',
   paiements: 'Finance',
   recouvrement: 'Finance',
@@ -404,6 +406,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       chat: 'chat',
       import_export: 'import_export',
       pre_inscriptions: 'pre_inscriptions',
+      discipline: 'discipline',
       documents: 'documents'
     };
     filteredItems = filteredItems.filter(item => {

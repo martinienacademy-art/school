@@ -49,6 +49,7 @@ app.use('/api/announcements', authenticateToken, requireSchool, require('./route
 app.use('/api/personnel', authenticateToken, requireSchool, require('./routes/personnel'));
 app.use('/api/classes', authenticateToken, requireSchool, require('./routes/classes'));
 app.use('/api/email', authenticateToken, requireSchool, require('./routes/email'));
+app.use('/api/discipline', authenticateToken, requireSchool, require('./routes/discipline'));
 app.use('/api/superadmin', authenticateToken, require('./routes/superAdmin')); // 👑 Routes propriétaire SaaS
 
 // Route publique pour lister les écoles dans le login

@@ -293,6 +293,7 @@ export type AppPage =
   | 'documents'
   | 'parametres'
   | 'recouvrement'
+  | 'discipline'
   | 'scan_presence'
   | 'scan_sortie'
   | 'scan_information'
