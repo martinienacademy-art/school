@@ -608,6 +608,7 @@ async function updateSchoolFeaturesAndBilling(req, res) {
 }
 
 module.exports = {
+    getStoredSaasSettings,
     getAllSchools,
     createSchool,
     updateSchoolStatus,
