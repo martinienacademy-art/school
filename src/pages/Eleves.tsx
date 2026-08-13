@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { Student } from '../types';
 import { generateRecuPDF } from '../utils/pdfGenerator';
-import { generateNextSequence } from '../utils/idGenerator';
+import { generateNextSequence, generateDynamicMatricule } from '../utils/idGenerator';
 import { uploadStudentPhoto, deleteStudentPhoto } from '../services/photoService';
 import {
   Search, Plus, Trash2, Edit2, FileText,
@@ -45,6 +45,9 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
     return receipts.filter(Boolean);
   }, [allStudents]);
 
+  const allMatricules = useMemo(() => allStudents.map(s => s.matricule || '').filter(Boolean), [allStudents]);
+  const settings = useStore((s: any) => s.settings);
+
   const storeClasses = useStore((s: any) => s.classes) || [];
   const classConfigList = storeClasses.map((c: any) => ({ name: c.nom, cycle: c.cycle, niveau: c.niveau || '', ecolage: c.ecolage }));
 
@@ -65,6 +68,7 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
   const [form, setForm] = useState({
     nom: student?.nom ?? '',
     prenom: student?.prenom ?? '',
+    matricule: student?.matricule ?? (!student ? generateDynamicMatricule(settings?.matriculeFormatEtudiant || '{YY}{ACRONYME}{SEQ}', allMatricules, settings?.acronyme || 'ECOLE', 'ELV') : ''),
     matriculeNational: student?.matriculeNational ?? '',
     classe: student?.classe ?? (classConfigList[0]?.name || ''),
     telephone: student?.telephone ?? '+229',
@@ -165,7 +169,7 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
                     className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
                     value={form.nationalite} 
                     onChange={(e) => setForm({ ...form, nationalite: e.target.value })} 
-                    placeholder="Ex: Togolaise" 
+                    placeholder="Ex: Béninoise" 
                   />
                 </div>
                 <div>
@@ -699,6 +703,7 @@ export const Eleves: React.FC = () => {
                         <div>
                           <p className="font-black text-base text-slate-900 dark:text-white tracking-tight">{s.prenom} {s.nom}</p>
                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 flex items-center gap-1">
+                            <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400 font-mono">{s.matricule || 'N/A'}</span>
                             <span className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400">{s.sexe === 'M' ? 'Garçon' : 'Fille'}</span>
                             {s.redoublant && <span className="bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded">Redoublant</span>}
                           </p>

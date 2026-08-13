@@ -4,10 +4,9 @@ export interface MatiereLigneResultat {
     matiere: Matiere;
     professeur: string;
     coef: number;
-    noteClasse: number | null;
-    noteDevoir: number | null;
-    moyenneClasseMatiere: number | null;
-    noteCompo: number | null;
+    moyenneInterro: number | null;
+    noteDev1: number | null;
+    noteDev2: number | null;
     moyenneMatiere: number | null;
     totalPoints: number | null;
     appreciation: string;
@@ -123,21 +122,23 @@ export const calculerBulletinsClasse = (
 
             const n = notes.find(x => x.eleveId === eleve.id && x.matiereId === cm.matiereId && x.periode === periode);
             
-            const nc = n?.noteClasse ?? null;
-            const nd = n?.noteDevoir ?? null;
-            const nc_compo = n?.noteCompo ?? null;
+            const ni1 = n?.noteInt1 ?? null;
+            const ni2 = n?.noteInt2 ?? null;
+            const ni3 = n?.noteInt3 ?? null;
+            const nd1 = n?.noteDev1 ?? null;
+            const nd2 = n?.noteDev2 ?? null;
 
             let avgMatiere: number | null = null;
-            let moyClasseMat: number | null = null;
+            let moyInterro: number | null = null;
             
-            // Calculer "Moyenne de classe" : (cl. + dev.) / 2
-            const notesEvaluations = [nc, nd].filter(x => x !== null) as number[];
-            if (notesEvaluations.length > 0) {
-                moyClasseMat = notesEvaluations.reduce((a,b) => a+b, 0) / notesEvaluations.length;
+            // Calculer Moyenne Interrogation
+            const notesInterros = [ni1, ni2, ni3].filter(x => x !== null) as number[];
+            if (notesInterros.length > 0) {
+                moyInterro = notesInterros.reduce((a,b) => a+b, 0) / notesInterros.length;
             }
 
-            // Calculer "Moyenne Matière" : (moyClasseMat + compo) / 2
-            const paramPourMoyenne = [moyClasseMat, nc_compo].filter(x => x !== null) as number[];
+            // Calculer "Moyenne Matière" : (moyInterro + dev1 + dev2) / count
+            const paramPourMoyenne = [moyInterro, nd1, nd2].filter(x => x !== null) as number[];
             if (paramPourMoyenne.length > 0) {
                 avgMatiere = paramPourMoyenne.reduce((a,b) => a+b, 0) / paramPourMoyenne.length;
                 matricesMoyennesMatieres[eleve.id][mat.id] = avgMatiere;
@@ -154,10 +155,9 @@ export const calculerBulletinsClasse = (
                 matiere: mat,
                 professeur: cm.professeur || '',
                 coef: cm.coefficient,
-                noteClasse: nc,
-                noteDevoir: nd,
-                moyenneClasseMatiere: moyClasseMat ? parseFloat(moyClasseMat.toFixed(2)) : null,
-                noteCompo: nc_compo,
+                moyenneInterro: moyInterro ? parseFloat(moyInterro.toFixed(2)) : null,
+                noteDev1: nd1,
+                noteDev2: nd2,
                 moyenneMatiere: avgMatiere ? parseFloat(avgMatiere.toFixed(2)) : null,
                 totalPoints: pts ? parseFloat(pts.toFixed(2)) : null,
                 appreciation: avgMatiere !== null ? getAppreciation(avgMatiere) : '',
@@ -232,15 +232,17 @@ export const calculerBulletinsClasse = (
                 configsMatiere.forEach(cm => {
                     const n = notes.find(x => x.eleveId === e.id && x.matiereId === cm.matiereId && x.periode === p);
                     if (n) {
-                        const nc = n.noteClasse ?? null;
-                        const nd = n.noteDevoir ?? null;
-                        const nc_compo = n.noteCompo ?? null;
+                        const ni1 = n.noteInt1 ?? null;
+                        const ni2 = n.noteInt2 ?? null;
+                        const ni3 = n.noteInt3 ?? null;
+                        const nd1 = n.noteDev1 ?? null;
+                        const nd2 = n.noteDev2 ?? null;
                         
-                        let moyClasseMat = null;
-                        const evalNotes = [nc, nd].filter(x => x !== null) as number[];
-                        if(evalNotes.length > 0) moyClasseMat = evalNotes.reduce((a,v) => a+v, 0) / evalNotes.length;
+                        let moyInterro = null;
+                        const interros = [ni1, ni2, ni3].filter(x => x !== null) as number[];
+                        if(interros.length > 0) moyInterro = interros.reduce((a,v) => a+v, 0) / interros.length;
 
-                        const finalNotes = [moyClasseMat, nc_compo].filter(x => x !== null) as number[];
+                        const finalNotes = [moyInterro, nd1, nd2].filter(x => x !== null) as number[];
                         if (finalNotes.length > 0) {
                             const avg = finalNotes.reduce((a, v) => a + v, 0) / finalNotes.length;
                             totalPts += avg * cm.coefficient;

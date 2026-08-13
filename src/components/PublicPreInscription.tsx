@@ -24,6 +24,7 @@ export const PublicPreInscription: React.FC<PublicPreInscriptionProps> = ({ scho
     parentNom: '',
     parentTelephone: '+229',
     parentEmail: '',
+    photoUrl: '',
   });
 
   const [schoolData, setSchoolData] = useState<{name: string, logo: string | null}>({ name: 'Chargement...', logo: null });
@@ -45,6 +46,22 @@ export const PublicPreInscription: React.FC<PublicPreInscriptionProps> = ({ scho
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setError("La photo ne doit pas dépasser 2 Mo");
+        return;
+      }
+      setError(null);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, photoUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const nextStep = () => {
@@ -166,6 +183,24 @@ export const PublicPreInscription: React.FC<PublicPreInscriptionProps> = ({ scho
                   <div className="space-y-1">
                     <label className="text-xs text-slate-300 font-medium">Matricule National (Optionnel)</label>
                     <input type="text" name="matriculeNational" value={formData.matriculeNational} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition uppercase placeholder:normal-case" placeholder="Ex: BEN-2026-XXXXX" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 font-medium">Photo d'identité (Optionnel)</label>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-xl bg-slate-900/50 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                        {formData.photoUrl ? (
+                          <img src={formData.photoUrl} alt="Photo" className="w-full h-full object-cover" />
+                        ) : (
+                          <User size={24} className="text-slate-500" />
+                        )}
+                      </div>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handlePhotoUpload}
+                        className="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition file:cursor-pointer" 
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">

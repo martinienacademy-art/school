@@ -8,6 +8,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 const { supabase } = require('./utils/supabase');
 
 const { PORT } = require('./config');
@@ -19,9 +20,27 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 // ── Application Express ───────────────────────────────────────
 const app = express();
 
-// Middleware globaux
+// Middleware globaux de sécurité
+app.use(helmet()); // Protège contre les failles web classiques
+app.disable('x-powered-by'); // Ne pas exposer le fait qu'on utilise Express
+
+// CORS strict
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: true, // Echo the requested origin, permet les credentials en toute sécurité
+    origin: function (origin, callback) {
+        // En développement local ou requêtes sans origine (Postman), on peut autoriser.
+        // En prod, origin DOIT être dans allowedOrigins.
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Non autorisé par CORS'));
+        }
+    },
     credentials: true,
 }));
 app.use(cookieParser());

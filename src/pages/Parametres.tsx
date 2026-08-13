@@ -51,6 +51,11 @@ export const Parametres: React.FC = () => {
   const [smtpSenderName, setSmtpSenderName] = useState(settings?.smtpSenderName || '');
   const [isTestingSmtp, setIsTestingSmtp] = useState(false);
 
+  // Configuration des Matricules
+  const [localMatriculeEtudiant, setLocalMatriculeEtudiant] = useState(settings?.matriculeFormatEtudiant || '{YY}{ACRONYME}{SEQ}');
+  const [localMatriculeEnseignant, setLocalMatriculeEnseignant] = useState(settings?.matriculeFormatEnseignant || '{ACRONYME}{YY}{SEQ}');
+  const [localMatriculePersonnel, setLocalMatriculePersonnel] = useState(settings?.matriculeFormatPersonnel || '{ACRONYME}PERS{YY}{SEQ}');
+
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -227,7 +232,10 @@ export const Parametres: React.FC = () => {
       smtpPass,
       smtpSecurity,
       smtpSenderEmail,
-      smtpSenderName
+      smtpSenderName,
+      matriculeFormatEtudiant: localMatriculeEtudiant,
+      matriculeFormatEnseignant: localMatriculeEnseignant,
+      matriculeFormatPersonnel: localMatriculePersonnel
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -523,6 +531,45 @@ export const Parametres: React.FC = () => {
                             onChange={(e) => setLocalRap(e.target.value)}
                         />
                     </div>
+                    </div>
+                </div>
+
+                {/* --- CONFIGURATION DES MATRICULES --- */}
+                <div className="pt-6 border-t border-slate-100 dark:border-slate-800/60">
+                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Database className="w-3.5 h-3.5 text-indigo-500" /> Format des Matricules Dynamiques
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                        Variables disponibles : <strong>{'{YY}'}</strong> (Année en cours), <strong>{'{ACRONYME}'}</strong> (Acronyme de l'école), <strong>{'{SEQ}'}</strong> (Compteur de l'année), <strong>{'{STATUT}'}</strong> (Type de personnel).
+                    </p>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-2">Format Élève</label>
+                            <input
+                                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                value={localMatriculeEtudiant}
+                                onChange={(e) => setLocalMatriculeEtudiant(e.target.value)}
+                                placeholder="Ex: {YY}{ACRONYME}{SEQ}"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-2">Format Enseignant</label>
+                            <input
+                                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                value={localMatriculeEnseignant}
+                                onChange={(e) => setLocalMatriculeEnseignant(e.target.value)}
+                                placeholder="Ex: {ACRONYME}{YY}{SEQ}"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-2">Format Personnel</label>
+                            <input
+                                className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                                value={localMatriculePersonnel}
+                                onChange={(e) => setLocalMatriculePersonnel(e.target.value)}
+                                placeholder="Ex: {ACRONYME}PERS{YY}{SEQ}"
+                            />
+                        </div>
                     </div>
                 </div>
 

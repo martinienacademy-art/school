@@ -82,10 +82,10 @@ const drawOfficialHeader = (
     });
   } else {
     doc.setFontSize(10);
-    doc.text('RÉPUBLIQUE TOGOLAISE', centerX - 35, y, { align: 'center' });
+    doc.text('RÉPUBLIQUE DU BÉNIN', centerX - 35, y, { align: 'center' });
     doc.setFont('times', 'italic');
     doc.setFontSize(8);
-    doc.text('Travail - Liberté - Patrie', centerX - 35, y + 5, { align: 'center' });
+    doc.text('Fraternité - Justice - Travail', centerX - 35, y + 5, { align: 'center' });
     doc.setLineWidth(0.3);
     doc.line(centerX - 42, y + 7, centerX - 28, y + 7);
     doc.setFont('times', 'bold');
@@ -105,8 +105,8 @@ const drawOfficialHeader = (
   doc.text('Travail-Rigueur-Succès', centerX + 35, y + 7, { align: 'center' });
   doc.setFont('times', 'bold');
   doc.setFontSize(10);
-  doc.text('Tél: +228 90 17 79 66 / 99 41 40 47', centerX + 35, y + 14, { align: 'center' });
-  doc.text('BP: 80159 Apéssito - TOGO', centerX + 35, y + 19, { align: 'center' });
+  doc.text('Tél: +229 90 17 79 66 / 99 41 40 47', centerX + 35, y + 14, { align: 'center' });
+  doc.text('BP: 80159 Cotonou - BÉNIN', centerX + 35, y + 19, { align: 'center' });
 
   // 3. LOGO (Extrême Droite - Réduit et poussé)
   if (schoolLogo) {

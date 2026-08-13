@@ -263,6 +263,9 @@ async function syncFromFrontend(req, res) {
                     smtp_security: appSettings.smtpSecurity || 'TLS',
                     smtp_sender_email: appSettings.smtpSenderEmail || '',
                     smtp_sender_name: appSettings.smtpSenderName || '',
+                    matricule_format_etudiant: appSettings.matriculeFormatEtudiant || '{YY}{ACRONYME}{SEQ}',
+                    matricule_format_enseignant: appSettings.matriculeFormatEnseignant || '{ACRONYME}{YY}{SEQ}',
+                    matricule_format_personnel: appSettings.matriculeFormatPersonnel || '{ACRONYME}PERS{YY}{SEQ}',
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' });
                 if (settingsErr) {
@@ -576,7 +579,10 @@ async function syncToFrontend(req, res) {
                 smtpPass: sData.smtp_pass,
                 smtpSecurity: sData.smtp_security,
                 smtpSenderEmail: sData.smtp_sender_email,
-                smtpSenderName: sData.smtp_sender_name
+                smtpSenderName: sData.smtp_sender_name,
+                matriculeFormatEtudiant: sData.matricule_format_etudiant || '{YY}{ACRONYME}{SEQ}',
+                matriculeFormatEnseignant: sData.matricule_format_enseignant || '{ACRONYME}{YY}{SEQ}',
+                matriculeFormatPersonnel: sData.matricule_format_personnel || '{ACRONYME}PERS{YY}{SEQ}'
             } : null,
             announcements: (announcements || []).map(a => ({
                 id: a.id,

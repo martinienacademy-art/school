@@ -75,6 +75,10 @@ export interface AppState {
   setMessageRemerciement: (m: string) => void;
   messageRappel: string;
   setMessageRappel: (m: string) => void;
+  matriculeFormatEtudiant?: string;
+  matriculeFormatEnseignant?: string;
+  matriculeFormatPersonnel?: string;
+
   updateAllSettings: (settings: {
     appName?: string,
     schoolName?: string,
@@ -83,6 +87,9 @@ export interface AppState {
     schoolStamp?: string | null,
     messageRemerciement?: string,
     messageRappel?: string,
+    matriculeFormatEtudiant?: string,
+    matriculeFormatEnseignant?: string,
+    matriculeFormatPersonnel?: string,
     officialHeader?: string | null,
     tranches?: any[],
     acronyme?: string,
@@ -800,6 +807,9 @@ export const useStore = create<AppState>()(
       messageRappel:
         "Nous vous rappelons cordialement que le règlement du solde de scolarité est attendu. Veuillez régulariser votre situation dans les meilleurs délais.",
       setMessageRappel: (m) => set({ messageRappel: m }),
+      matriculeFormatEtudiant: '{YY}{ACRONYME}{SEQ}',
+      matriculeFormatEnseignant: '{ACRONYME}{YY}{SEQ}',
+      matriculeFormatPersonnel: '{ACRONYME}PERS{YY}{SEQ}',
 
       updateAllSettings: async (newSettings) => {
         console.log('💾 [Store] Saving all settings to cloud...', Object.keys(newSettings));

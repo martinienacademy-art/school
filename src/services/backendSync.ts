@@ -45,11 +45,12 @@ export async function syncToBackend(store: Partial<AppState>, replace: boolean =
         appName, schoolName, schoolYear, 
         messageRemerciement, messageRappel, 
         officialHeader,
+        matriculeFormatEtudiant, matriculeFormatEnseignant, matriculeFormatPersonnel,
         schoolLogo, schoolStamp, cycleSchedules, tranches 
     } = store;
     
     // Si l'un des paramètres de configuration est fourni, on envoie appSettings
-    if (appName !== undefined || schoolName !== undefined || schoolLogo !== undefined || schoolStamp !== undefined || cycleSchedules !== undefined || tranches !== undefined || officialHeader !== undefined) {
+    if (appName !== undefined || schoolName !== undefined || schoolLogo !== undefined || schoolStamp !== undefined || cycleSchedules !== undefined || tranches !== undefined || officialHeader !== undefined || matriculeFormatEtudiant !== undefined) {
         payload.appSettings = {
             appName,
             schoolName,
@@ -57,6 +58,9 @@ export async function syncToBackend(store: Partial<AppState>, replace: boolean =
             messageRemerciement,
             messageRappel,
             officialHeader,
+            matriculeFormatEtudiant,
+            matriculeFormatEnseignant,
+            matriculeFormatPersonnel,
             schoolLogo,
             schoolStamp,
             cycleSchedules,

@@ -12,6 +12,7 @@ export interface Student {
   id: string;
   nom: string;
   prenom: string;
+  matricule?: string; // Matricule interne de l'école
   matriculeNational?: string;
   classe: string;
   telephone: string;
@@ -141,6 +142,9 @@ export interface AppSettings extends AdminSettings {
   smtpSecurity?: string;
   smtpSenderEmail?: string;
   smtpSenderName?: string;
+  watermarkUrl?: string;
+  watermarkSize?: number;
+  watermarkOpacity?: number;
 }
 
 export interface DashboardStats {
@@ -342,6 +346,7 @@ export interface PreInscription {
     parentNom: string;
     parentTelephone: string;
     parentEmail: string;
+    photoUrl?: string;
   };
   created_at: string;
 }
@@ -396,9 +401,11 @@ export interface Note {
   eleveId: string;
   matiereId: string;
   periode: PeriodeType;
-  noteClasse: number | null; // ex: Interrogations (sur 20)
-  noteDevoir: number | null; // ex: Devoirs surveillés
-  noteCompo: number | null;  // ex: Composition
+  noteInt1: number | null; // Interrogation 1
+  noteInt2: number | null; // Interrogation 2
+  noteInt3: number | null; // Interrogation 3
+  noteDev1: number | null; // Devoir 1
+  noteDev2: number | null; // Devoir 2
 }
 
 // ── MODULE 3 : ESPACE PÉDAGOGIQUE (BIBLIOTHÈQUE) ────────────────

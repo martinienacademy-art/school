@@ -27,10 +27,19 @@ interface CarteProps {
     schoolYear: string;
     schoolLogo: string | null;
     photoUrl?: string | null;
+    dateNaissance?: string;
+    nomDirecteur: string;
+    watermarkUrl: string | null;
+    showTableNumber?: boolean;
+    studentTableNumber?: string;
+    wmSize?: number;
+    wmOpacity?: number;
 }
 
 const CarteEleve: React.FC<CarteProps> = ({
     nom, prenom, classe, id, telephone, schoolName, schoolYear, schoolLogo, photoUrl,
+    dateNaissance, dateExpiration, nomDirecteur, watermarkUrl, showTableNumber,
+    studentTableNumber, wmSize = 180, wmOpacity = 0.35
 }) => {
     const nomComplet = `${prenom} ${nom}`.toUpperCase();
 
@@ -48,24 +57,24 @@ const CarteEleve: React.FC<CarteProps> = ({
             <div style={{ position: 'absolute', inset: 0, opacity: 0.03, backgroundImage: 'radial-gradient(#0F172A 1px, transparent 0)', backgroundSize: '10px 10px' }} />
             
             {/* Logo en filigrane (Watermark) */}
-            {schoolLogo && (
+            {(watermarkUrl || schoolLogo) && (
                 <div style={{
                     position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                    width: 140, height: 140, opacity: 0.22, zIndex: 2, pointerEvents: 'none'
+                    width: wmSize, height: wmSize, opacity: wmOpacity, zIndex: 2, pointerEvents: 'none'
                 }}>
-                    <img src={schoolLogo} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'grayscale(1)' }} />
+                    <img src={watermarkUrl || schoolLogo || ''} style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'grayscale(1)' }} />
                 </div>
             )}
-            {/* Header (Bannière économe en encre) */}
+            {/* Header */}
             <div style={{
-                position: 'absolute', top: 0, left: 0, width: '100%', height: 49,
-                background: 'white', borderBottom: '2.5px solid #EAB308', 
+                position: 'absolute', top: 0, left: 0, width: '100%', height: 42,
+                background: 'white',
                 display: 'flex', alignItems: 'center', padding: '0 15px', zIndex: 10
             }}>
-            <div style={{ width: 44, height: 38, background: '#0F172A', borderRadius: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 3 }}>
-                   {schoolLogo ? <img src={schoolLogo} style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain' }} /> : <span style={{ color:'white', fontWeight:900, fontSize:10 }}>ID</span>}
+                <div style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {schoolLogo ? <img src={schoolLogo} style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain' }} /> : <span style={{ color:'#0F172A', fontWeight:900, fontSize:10 }}>ID</span>}
                 </div>
-                <div style={{ marginLeft: 12 }}>
+                <div style={{ marginLeft: 8 }}>
                     <h2 style={{ color: '#0F172A', margin: 0, fontSize: 11, fontWeight: 900, textTransform: 'uppercase', lineHeight: 1 }}>{schoolName}</h2>
                     <p style={{ color: '#EAB308', margin: '2px 0 0 0', fontSize: 7, fontWeight: 700 }}>
                         OFFICIEL {schoolYear} <span style={{ color: '#64748B', fontWeight: 600 }}>· CARTES Scolaire</span>
@@ -73,10 +82,22 @@ const CarteEleve: React.FC<CarteProps> = ({
                 </div>
             </div>
 
-            {/* 3. Photo Passeport (Position fixée au mm près) */}
+            {/* Drapeau Bénin (Officiel) */}
             <div style={{
-                position: 'absolute', top: 64, left: 48, // PhotoX=13mm -> 48px
-                width: 68, height: 82, // 18x22mm
+                position: 'absolute', top: 42, left: 0, width: '100%', height: 5,
+                display: 'flex', zIndex: 10
+            }}>
+                <div style={{ width: '33.33%', height: '100%', background: '#008751' }} />
+                <div style={{ width: '66.67%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ width: '100%', height: '50%', background: '#FCD116' }} />
+                    <div style={{ width: '100%', height: '50%', background: '#E8112D' }} />
+                </div>
+            </div>
+
+            {/* Photo Passeport */}
+            <div style={{
+                position: 'absolute', top: 52, left: 15,
+                width: 60, height: 75,
                 borderRadius: 0, overflow: 'hidden',
                 border: '1.5px solid #0F172A',
                 background: '#F1F5F9', zIndex: 10
@@ -88,59 +109,79 @@ const CarteEleve: React.FC<CarteProps> = ({
                          <User size={24} />
                     </div>
                 )}
-                {/* Sceau de sécurité photo */}
-                <div style={{ position: 'absolute', bottom: 4, right: 4, width: 10, height: 10, background: '#EAB308', borderRadius: '50%', border: '1.5px solid white' }} />
+                <div style={{ position: 'absolute', bottom: 3, right: 3, width: 8, height: 8, background: '#EAB308', borderRadius: '50%', border: '1.5px solid white' }} />
             </div>
 
-            {/* 4. Texte (Identité) */}
+            {/* Informations Identité */}
             <div style={{
-                position: 'absolute', top: 64, left: 126, width: 95, // infoStartX=34mm -> 126px
-                display: 'flex', flexDirection: 'column', zIndex: 10
+                position: 'absolute', top: 52, left: 82, width: 150,
+                display: 'flex', flexDirection: 'column', gap: 2, zIndex: 10
             }}>
-                <p style={{ fontSize: 6, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: 2 }}>Nom & Prénoms</p>
-                <h3 style={{
-                    color: '#0F172A', margin: 0, marginBottom: 12, fontWeight: 900, 
-                    fontSize: nomComplet.length > 20 ? 11 : 13,
-                    lineHeight: 1.1, textTransform: 'uppercase'
-                }}>
-                    {nomComplet}
-                </h3>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div>
-                        <p style={{ fontSize: 6, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: 1 }}>Classe</p>
-                        <span style={{
-                            background: '#0F172A', color: 'white', fontSize: 11, fontWeight: 900, 
-                            padding: '3px 12px', borderRadius: 0, display: 'inline-block'
-                        }}>
-                            {classe}
-                        </span>
-                    </div>
-                    <div>
-                        <p style={{ fontSize: 6, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: 1 }}>Contact</p>
-                        <span style={{ fontSize: 9, fontWeight: 900, color: '#0F172A' }}>{telephone || '71517633'}</span>
-                    </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: 7, fontWeight: 800, color: '#0F172A', width: 45 }}>NOM</span>
+                    <span style={{ fontSize: 9, fontWeight: 900, color: '#0F172A', textTransform: 'uppercase' }}>{nom}</span>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: 7, fontWeight: 800, color: '#0F172A', width: 45 }}>PRÉNOM</span>
+                    <span style={{ fontSize: 9, fontWeight: 900, color: '#0F172A', textTransform: 'uppercase' }}>{prenom}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: 7, fontWeight: 800, color: '#0F172A', width: 45 }}>MATRICULE</span>
+                    <span style={{ fontSize: 8, fontWeight: 800, color: '#64748B' }}>{matricule || 'NON DEFINI'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: 7, fontWeight: 800, color: '#0F172A', width: 45 }}>NAISSANCE</span>
+                    <span style={{ fontSize: 8, fontWeight: 800, color: '#0F172A' }}>{dateNaissance ? `NÉ(E) LE ${dateNaissance}` : '-'}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
+                    <span style={{ fontSize: 7, fontWeight: 800, color: '#0F172A', width: 45 }}>CLASSE</span>
+                    <span style={{ fontSize: 9, fontWeight: 900, color: '#0F172A' }}>{classe}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ fontSize: 7, fontWeight: 800, color: '#0F172A', width: 45 }}>EXPIRATION</span>
+                    <span style={{ fontSize: 8, fontWeight: 900, color: '#E8112D' }}>{dateExpiration}</span>
+                </div>
+                {showTableNumber && (
+                    <div style={{ display: 'flex', alignItems: 'center', marginTop: 2 }}>
+                        <span style={{ fontSize: 7, fontWeight: 800, color: '#0F172A', width: 45 }}>N° DE TABLE</span>
+                        <span style={{ fontSize: 8, fontWeight: 800, color: '#0F172A' }}>{studentTableNumber || '.....................'}</span>
+                    </div>
+                )}
             </div>
 
-            {/* 5. QR Code (Position fixée) */}
+            {/* QR Code */}
             <div style={{
-                position: 'absolute', top: 68, left: 226, // qrX=60mm -> 222px
-                width: 79, height: 79, background: 'white', borderRadius: 0, padding: 5,
+                position: 'absolute', top: 52, left: 236,
+                width: 72, height: 72, background: 'white', borderRadius: 0, padding: 4,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 border: '1px solid #E2E8F0', zIndex: 10
             }}>
-                <QRCodeCanvas value={id} size={60} level="H" bgColor="#FFFFFF" fgColor="#0F172A" />
-                <p style={{ fontSize: 5, color: '#94A3B8', marginTop: 4, fontWeight: 900, textTransform: 'uppercase' }}>Scan Sécurisé</p>
+                <QRCodeCanvas value={id} size={54} level="H" bgColor="#FFFFFF" fgColor="#0F172A" />
+                <p style={{ fontSize: 4.5, color: '#94A3B8', marginTop: 3, fontWeight: 900, textTransform: 'uppercase' }}>Scan Sécurisé</p>
             </div>
 
-            {/* Footer (Pied de page économe) */}
+            {/* Signature & Cachet Zone */}
             <div style={{
-                position: 'absolute', bottom: 0, left: 0, width: '100%', height: 26,
+                position: 'absolute', bottom: 30, left: 15, right: 15,
+                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+                zIndex: 10
+            }}>
+                <div style={{ width: 140, borderBottom: '1px dashed #CBD5E1', paddingBottom: 2, textAlign: 'center' }}>
+                    <p style={{ fontSize: 6, color: '#64748B', fontWeight: 600, margin: 0 }}>Signature et cachet du chef</p>
+                    <p style={{ fontSize: 7, color: '#0F172A', fontWeight: 800, margin: 0, marginTop: 1 }}>{nomDirecteur}</p>
+                </div>
+                <div style={{ width: 50, height: 50, borderRadius: '50%', border: '1px dashed #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+                    <span style={{ fontSize: 6, color: '#94A3B8', transform: 'rotate(-15deg)' }}>Cachet</span>
+                </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+                position: 'absolute', bottom: 0, left: 0, width: '100%', height: 20,
                 background: '#000000', borderTop: '1.5px solid #EAB308', zIndex: 11, 
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-                <p style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: 700, margin: 0, textAlign: 'center', padding: '0 10px' }}>
+                <p style={{ color: '#FFFFFF', fontSize: 7, fontWeight: 700, margin: 0, textAlign: 'center', padding: '0 10px' }}>
                     Si cette carte ne vous appartient pas, veuillez la retourner à l'administration.
                 </p>
             </div>
@@ -216,10 +257,17 @@ const resizeLogoForPDF = (src: string, size: number): Promise<string> => {
 // GÉNÉRATION PDF — 8 cartes par page A4 (2 colonnes × 4 lignes)
 // ============================================================
 const generateCartesPDF = async (
-    students: Array<{ id: string; nom: string; prenom: string; classe: string; telephone: string; photoUrl?: string }>,
+    students: Array<{ id: string; matricule?: string; nom: string; prenom: string; classe: string; telephone: string; photoUrl?: string; dateNaissance?: string }>,
     schoolName: string,
     schoolYear: string,
     schoolLogo: string | null,
+    dateExpiration: string,
+    nomDirecteur: string,
+    watermarkUrl: string | null,
+    showTableNumber: boolean,
+    tableNumbers: Record<string, string>,
+    wmSize: number,
+    wmOpacity: number,
     onProgress: (n: number) => void,
 ): Promise<void> => {
     if (!students.length) {
@@ -269,98 +317,77 @@ const generateCartesPDF = async (
         doc.setLineWidth(0.2);
         doc.rect(x, y, cardW, cardH, 'S');
 
-        // Guilloche subtile (Lignes en zigzag légères)
+        // Guilloche subtile
         doc.setDrawColor(241, 245, 249);
         doc.setLineWidth(0.05);
         for(let i=0; i<cardH; i+=4) {
             doc.line(x, y+i, x+cardW, y+i+2);
         }
 
-        // Ligne de bannière d'en-tête (Or)
-        doc.setDrawColor(234, 179, 8);
-        doc.setLineWidth(0.6);
-        doc.line(x, y + bannerH, x + cardW, y + bannerH);
-
         // ── Logo filigrane (Watermark) ────────────────────────
         if (logoData) {
-            const wmSize = 45;
+            const pdfWmSize = (wmSize / 180) * 55; // 55mm is base for 180px
             doc.saveGraphicsState();
             // @ts-ignore
-            doc.setGState(new doc.GState({ opacity: 0.22 }));
-            doc.addImage(logoData, 'PNG', x + (cardW - wmSize)/2, y + (cardH - wmSize)/2, wmSize, wmSize);
+            doc.setGState(new doc.GState({ opacity: wmOpacity }));
+            doc.addImage(logoData, 'PNG', x + (cardW - pdfWmSize)/2, y + (cardH - pdfWmSize)/2, pdfWmSize, pdfWmSize);
             doc.restoreGraphicsState();
         }
 
-        // ── Logo Frame ────────────────────────────────────
-        const logoMM_W = 12;
-        const logoMM_H = 10;
+        // ── Header (Logo à gauche) ────────────────────────────────────
+        const headerH = 11;
+        const logoMM_W = 9;
+        const logoMM_H = 9;
         const logoX   = x + 4;
-        const logoY   = y + (bannerH - logoMM_H) / 2;
-
-        doc.setFillColor(255, 255, 255);
-        doc.roundedRect(logoX - 0.5, logoY - 0.5, logoMM_W + 1, logoMM_H + 1, 1, 1, 'F');
-        doc.setDrawColor(234, 179, 8);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(logoX - 0.5, logoY - 0.5, logoMM_W + 1, logoMM_H + 1, 1, 1, 'S');
+        const logoY   = y + (headerH - logoMM_H) / 2;
 
         if (logoData) {
             doc.addImage(logoData, 'PNG', logoX, logoY, logoMM_W, logoMM_H);
         } else {
             doc.setFillColor(15, 23, 42);
-            doc.roundedRect(logoX, logoY, logoMM_W, logoMM_H, 1, 1, 'F');
+            doc.rect(logoX, logoY, logoMM_W, logoMM_H, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(4);
             doc.setFont('helvetica', 'bold');
-            doc.text('ID', logoX + logoMM_W / 2, logoY + 6, { align: 'center' });
+            doc.text('ID', logoX + logoMM_W / 2, logoY + 5.5, { align: 'center' });
         }
 
-        // ── Titre établissement (Texte sombre pour fond blanc) ─────────────
-        const txtX      = logoX + logoMM_W + 4;
-        const maxNameW  = cardW - logoMM_W - 10;
-        doc.setTextColor(15, 23, 42); // Bleu nuit (clair)
-        doc.setFontSize(7);
+        // ── Titre établissement ─────────────
+        const txtX      = logoX + logoMM_W + 3;
+        doc.setTextColor(15, 23, 42); 
+        doc.setFontSize(7.5);
         doc.setFont('helvetica', 'bold');
         const schoolLine = (schoolName || 'ÉCOLE').toUpperCase();
         doc.text(schoolLine, txtX, y + 5);
         
-        doc.setFontSize(4.5);
-        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(4);
         doc.setTextColor(234, 179, 8);
         doc.text(`OFFICIEL ${schoolYear}`, txtX, y + 8.5);
         
-        doc.setTextColor(148, 163, 184);
+        doc.setTextColor(100, 116, 139);
         doc.setFont('helvetica', 'normal');
-        doc.text(' • IDENTITÉ SCOLAIRE', txtX + doc.getTextWidth(`OFFICIEL ${schoolYear}`) + 1, y + 8.5);
+        doc.text(' • CARTES SCOLAIRE', txtX + doc.getTextWidth(`OFFICIEL ${schoolYear}`) + 1, y + 8.5);
 
-        // ── QR Code Frame ─────────────────────────────────
-        const qrMM    = 21;
-        const qrX     = x + cardW - qrMM - 4;
-        const qrY     = y + bannerH + 5;
-        const qrPad   = 1.5;
-
-        // Conteneur blanc
-        doc.setFillColor(255, 255, 255);
-        doc.rect(qrX - qrPad, qrY - qrPad, qrMM + qrPad * 2, qrMM + qrPad * 2, 'F');
-        
-        doc.setDrawColor(226, 232, 240);
-        doc.setLineWidth(0.2);
-        doc.rect(qrX - qrPad, qrY - qrPad, qrMM + qrPad * 2, qrMM + qrPad * 2, 'S');
-
-        const qrDataURL = await buildQRDataURL(student.id);
-        doc.addImage(qrDataURL, 'PNG', qrX, qrY, qrMM, qrMM, undefined, 'NONE');
-
-        doc.setTextColor(148, 163, 184);
-        doc.setFontSize(3.5);
-        doc.setFont('helvetica', 'bold');
-        doc.text("SCAN SÉCURISÉ", qrX + qrMM / 2, qrY + qrMM + 3, { align: 'center' });
+        // ── Drapeau Bénin ────────────────────────────────────
+        const flagY = y + headerH;
+        const flagH = 1.3;
+        // Vert
+        doc.setFillColor(0, 135, 81);
+        doc.rect(x, flagY, cardW / 3, flagH, 'F');
+        // Jaune
+        doc.setFillColor(252, 209, 22);
+        doc.rect(x + cardW / 3, flagY, cardW / 3, flagH, 'F');
+        // Rouge
+        doc.setFillColor(232, 17, 45);
+        doc.rect(x + (cardW * 2) / 3, flagY, cardW / 3, flagH, 'F');
 
         // ── Photo passeport ──────────────────────────────
-        const photoOffsetX = 13; 
-        const photoW = 18;
-        const photoH = 22;
-        const photoY = y + bannerH + 4;
+        const photoOffsetX = 4; 
+        const photoW = 16;
+        const photoH = 20;
+        const photoY = flagY + flagH + 1.5;
 
-        // Cadre photo (90°)
+        // Cadre photo
         doc.setFillColor(241, 245, 249);
         doc.rect(x + photoOffsetX, photoY, photoW, photoH, 'F');
         doc.setDrawColor(15, 23, 42);
@@ -378,50 +405,92 @@ const generateCartesPDF = async (
             }
         }
 
-        // ── Sceau de sécurité photo
         doc.setFillColor(234, 179, 8);
-        doc.circle(x + photoOffsetX + photoW - 2, photoY + photoH - 2, 1.5, 'F');
+        doc.circle(x + photoOffsetX + photoW - 1.5, photoY + photoH - 1.5, 1, 'F');
         doc.setDrawColor(255, 255, 255);
         doc.setLineWidth(0.1);
-        doc.circle(x + photoOffsetX + photoW - 2, photoY + photoH - 2, 1.5, 'S');
+        doc.circle(x + photoOffsetX + photoW - 1.5, photoY + photoH - 1.5, 1, 'S');
 
-        // ── Infos Élève : Nom ────────────────────────────
-        const infoStartX = x + photoOffsetX + photoW + 4;
-        const nameMaxW   = cardW - qrMM - photoW - 19;
-        const fullName   = `${student.prenom} ${student.nom}`.toUpperCase();
+        // ── Infos Identité ────────────────────────────
+        const infoStartX = x + photoOffsetX + photoW + 5;
+        let infoY = photoY + 2;
+
+        const drawRow = (label: string, value: string, valueColor: number[], fontSize = 5.5, fontStyle = 'bold') => {
+            doc.setTextColor(15, 23, 42);
+            doc.setFontSize(4.5);
+            doc.setFont('helvetica', 'bold');
+            doc.text(label, infoStartX, infoY);
+            
+            doc.setTextColor(valueColor[0], valueColor[1], valueColor[2]);
+            doc.setFontSize(fontSize);
+            doc.setFont('helvetica', fontStyle);
+            doc.text(value, infoStartX + 14, infoY);
+            infoY += 3.5;
+        };
+
+        drawRow('NOM', student.nom.toUpperCase(), [15, 23, 42], 6);
+        drawRow('PRÉNOM', student.prenom.toUpperCase(), [15, 23, 42], 6);
+        drawRow('MATRICULE', student.matricule || 'NON DEFINI', [100, 116, 139], 5);
+        drawRow('NAISSANCE', student.dateNaissance ? `NÉ(E) LE ${student.dateNaissance}` : '-', [15, 23, 42], 5);
+        drawRow('CLASSE', student.classe, [15, 23, 42], 6);
+        drawRow('EXPIRATION', dateExpiration, [232, 17, 45], 5.5);
+
+        if (showTableNumber) {
+            const studentTableNum = tableNumbers[student.id] || '.....................';
+            drawRow('N° DE TABLE', studentTableNum, [15, 23, 42], 5.5);
+        }
+
+        // ── QR Code Frame ─────────────────────────────────
+        const qrMM    = 19;
+        const qrX     = x + cardW - qrMM - 3;
+        const qrY     = photoY;
+        const qrPad   = 1;
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(qrX - qrPad, qrY - qrPad, qrMM + qrPad * 2, qrMM + qrPad * 2, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.2);
+        doc.rect(qrX - qrPad, qrY - qrPad, qrMM + qrPad * 2, qrMM + qrPad * 2, 'S');
+
+        const qrDataURL = await buildQRDataURL(student.id);
+        doc.addImage(qrDataURL, 'PNG', qrX, qrY, qrMM, qrMM, undefined, 'NONE');
+
+        doc.setTextColor(148, 163, 184);
+        doc.setFontSize(3.5);
+        doc.setFont('helvetica', 'bold');
+        doc.text("SCAN SÉCURISÉ", qrX + qrMM / 2, qrY + qrMM + 2, { align: 'center' });
+
+        // ── Signature & Cachet ────────────────────────────
+        const sigY = y + cardH - 12;
         
+        // Ligne pointillée
+        doc.setDrawColor(203, 213, 225);
+        doc.setLineWidth(0.2);
+        doc.setLineDashPattern([1, 1], 0);
+        doc.line(x + 4, sigY, x + 40, sigY);
+        doc.setLineDashPattern([], 0); // reset
+
         doc.setTextColor(100, 116, 139);
         doc.setFontSize(4);
-        doc.setFont('helvetica', 'bold');
-        doc.text("NOM & PRÉNOMS", infoStartX, photoY + 1);
-
-        doc.setTextColor(15, 23, 42);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(fullName.length > 20 ? 8 : 9);
-        const nameLines = doc.splitTextToSize(fullName, nameMaxW);
-        doc.text(nameLines, infoStartX, photoY + 5);
-
-        // ── Tags (Classe & Contact) ─────────────────────────────────
-        const tagY = photoY + 13;
+        doc.setFont('helvetica', 'normal');
+        doc.text("Signature et cachet du chef", x + 22, sigY + 2, { align: 'center' });
         
-        doc.setTextColor(100, 116, 139);
-        doc.setFontSize(3.5);
-        doc.text("CLASSE", infoStartX, tagY);
-        
-        doc.setFillColor(15, 23, 42);
-        doc.rect(infoStartX, tagY + 1, 22, 5.5, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'bold');
-        doc.text(student.classe, infoStartX + 11, tagY + 5.1, { align: 'center' });
-
-        const phoneY = tagY + 10;
-        doc.setTextColor(100, 116, 139);
-        doc.setFontSize(3.5);
-        doc.text("CONTACT", infoStartX, phoneY);
         doc.setTextColor(15, 23, 42);
-        doc.setFontSize(5);
-        doc.text(student.telephone || '71517633', infoStartX, phoneY + 4);
+        doc.setFontSize(4.5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(nomDirecteur, x + 22, sigY + 5, { align: 'center' });
+
+        // Cercle Cachet
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.2);
+        doc.setLineDashPattern([0.5, 0.5], 0);
+        doc.circle(x + cardW - 20, sigY + 2, 6, 'S');
+        doc.setLineDashPattern([], 0);
+        
+        doc.setTextColor(148, 163, 184);
+        doc.setFontSize(4);
+        doc.setFont('helvetica', 'normal');
+        doc.text("Cachet", x + cardW - 20, sigY + 2.5, { align: 'center', angle: -15 });
 
         // ── Pied de page ──────────────────────────
         const footerH = 7;
@@ -473,6 +542,18 @@ export const CarteScolaire: React.FC = () => {
     const [generating,      setGenerating]      = useState(false);
     const [progress,        setProgress]        = useState(0);
     const [error,           setError]           = useState<string | null>(null);
+    const [dateExpiration,  setDateExpiration]  = useState('13/07/2026');
+    const [nomDirecteur,    setNomDirecteur]    = useState('M. LE DIRECTEUR');
+
+    const settings = useStore(s => s.settings);
+    const updateSettings = useStore(s => s.updateSettings);
+
+    const watermarkUrl = settings?.watermarkUrl || null;
+    const watermarkSize = settings?.watermarkSize || 180;
+    const watermarkOpacity = settings?.watermarkOpacity ?? 0.35;
+
+    const [showTableNumber, setShowTableNumber] = useState(false);
+    const [tableNumbers,    setTableNumbers]    = useState<Record<string, string>>({});
 
     const classes = [...new Set(students.map(s => s.classe))].sort();
 
@@ -489,7 +570,7 @@ export const CarteScolaire: React.FC = () => {
         setProgress(0);
         setError(null);
         try {
-            await generateCartesPDF(list, schoolName, schoolYear, schoolLogo, setProgress);
+            await generateCartesPDF(list, schoolName, schoolYear, schoolLogo, dateExpiration, nomDirecteur, watermarkUrl, showTableNumber, tableNumbers, watermarkSize, watermarkOpacity, setProgress);
         } catch (err) {
             console.error('[CarteScolaire] Erreur génération PDF:', err);
             setError(err instanceof Error ? err.message : 'Erreur lors de la génération du PDF');
@@ -571,17 +652,39 @@ export const CarteScolaire: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                        <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                        <select
-                            value={selectedClasse}
-                            onChange={e => setSelectedClasse(e.target.value)}
-                            className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl text-sm bg-white appearance-none focus:ring-2 focus:ring-indigo-500 outline-none sm:w-44"
-                        >
-                            <option value="">Toutes les classes</option>
-                            {classes.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
+                    </div>
+                    </div>
+                    <div className="flex flex-col gap-2 w-full md:w-[220px]">
+                        <input type="text" placeholder="Date expiration" value={dateExpiration} onChange={e => setDateExpiration(e.target.value)} className="w-full px-4 py-2 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none font-medium" />
+                        <input type="text" placeholder="Nom directeur" value={nomDirecteur} onChange={e => setNomDirecteur(e.target.value)} className="w-full px-4 py-2 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none font-medium" />
+                        
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                            <label className="flex items-center gap-2 cursor-pointer w-full text-sm text-slate-700 hover:text-slate-900 transition-colors">
+                                <span className="truncate flex-1 font-bold">{watermarkUrl ? 'Filigrane OK' : 'Custom Filigrane'}</span>
+                                <input type="file" accept="image/*" className="hidden" onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        const reader = new FileReader();
+                                        reader.onload = () => updateSettings({ ...settings, watermarkUrl: reader.result as string });
+                                        reader.readAsDataURL(file);
+                                    }
+                                }} />
+                            </label>
+                            
+                            <div>
+                                <label className="text-xs font-semibold text-slate-500 mb-1 block">Taille ({watermarkSize}px)</label>
+                                <input type="range" min="50" max="300" value={watermarkSize} onChange={e => updateSettings({ ...settings, watermarkSize: Number(e.target.value) })} className="w-full accent-indigo-600" />
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-slate-500 mb-1 block">Opacité ({Math.round(watermarkOpacity * 100)}%)</label>
+                                <input type="range" min="0" max="1" step="0.05" value={watermarkOpacity} onChange={e => updateSettings({ ...settings, watermarkOpacity: Number(e.target.value) })} className="w-full accent-indigo-600" />
+                            </div>
+                        </div>
+
+                        <label className="flex items-center gap-2 cursor-pointer w-full px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors mt-1">
+                            <input type="checkbox" checked={showTableNumber} onChange={e => setShowTableNumber(e.target.checked)} className="rounded text-indigo-600 focus:ring-indigo-500" />
+                            <span className="font-bold text-[13px]">Afficher N° de Table</span>
+                        </label>
                     </div>
                     <button
                         onClick={handleGenerateAll}
@@ -687,6 +790,14 @@ export const CarteScolaire: React.FC = () => {
                                             telephone={s.telephone}
                                             schoolName={schoolName} schoolYear={schoolYear} schoolLogo={schoolLogo}
                                             photoUrl={s.photoUrl}
+                                            dateNaissance={s.dateNaissance}
+                                            dateExpiration={dateExpiration}
+                                            nomDirecteur={nomDirecteur}
+                                            watermarkUrl={watermarkUrl}
+                                            showTableNumber={showTableNumber}
+                                            studentTableNumber={tableNumbers[s.id]}
+                                            wmSize={watermarkSize}
+                                            wmOpacity={watermarkOpacity}
                                         />
                                     </div>
                                 </div>
@@ -747,9 +858,21 @@ export const CarteScolaire: React.FC = () => {
                                     <p className="text-[15px] font-bold text-slate-900 truncate group-hover:text-slate-700 transition-colors">{s.prenom} {s.nom}</p>
                                     <p className="text-xs font-bold text-slate-400 mt-1">{s.classe}</p>
                                 </div>
-                                <div className="w-10 h-10 rounded-[14px] flex items-center justify-center bg-white group-hover:bg-slate-50 shadow-sm transition-colors shrink-0">
-                                    <CreditCard className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                                </div>
+                                {showTableNumber ? (
+                                    <div onClick={e => e.stopPropagation()}>
+                                        <input
+                                            type="text"
+                                            placeholder="N° Table"
+                                            value={tableNumbers[s.id] || ''}
+                                            onChange={e => setTableNumbers(prev => ({ ...prev, [s.id]: e.target.value }))}
+                                            className="w-24 px-3 py-2 text-sm text-center bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-bold"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="w-10 h-10 rounded-[14px] flex items-center justify-center bg-white group-hover:bg-slate-50 shadow-sm transition-colors shrink-0">
+                                        <CreditCard className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                                    </div>
+                                )}
                             </button>
                         ))}
                         {filtered.length === 0 && (

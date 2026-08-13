@@ -5,10 +5,10 @@ import { Plus, Search, Edit2, Trash2, Download, Upload, FileText, X } from 'luci
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { generateNextSequence } from '../utils/idGenerator';
+import { generateDynamicMatricule } from '../utils/idGenerator';
 
 export default function Enseignants() {
-  const { teachers, addTeacher, updateTeacher, deleteTeacher, importTeachers } = useStore();
+  const { teachers, addTeacher, updateTeacher, deleteTeacher, importTeachers, settings } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
@@ -34,7 +34,9 @@ export default function Enseignants() {
     } else {
       setEditingTeacher(null);
       const allMatricules = teachers?.map(t => t.matricule || '') || [];
-      const autoMatricule = generateNextSequence('M', allMatricules, 6);
+      const acronyme = settings?.acronyme || 'ECOLE';
+      const format = settings?.matriculeFormatEnseignant || '{ACRONYME}{YY}{SEQ}';
+      const autoMatricule = generateDynamicMatricule(format, allMatricules, acronyme, 'ENS');
       
       setFormData({
         ide: '', nom: '', prenom: '', email: '', matricule: autoMatricule,

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { BulletinTogoPDF } from '../components/pdf/BulletinTogoPDF';
+import { BulletinBeninPDF } from '../components/pdf/BulletinBeninPDF';
 import { calculerBulletinsClasse, BulletinEleveResultat } from '../utils/bulletinCalculations';
 import { useReactToPrint } from 'react-to-print';
 import { FileSpreadsheet, Printer, Users, Award, ShieldCheck } from 'lucide-react';
@@ -135,16 +135,16 @@ export const Bulletins: React.FC = () => {
             {/* DIV INVISIBLE CONTENANT TOUS LES BULLETINS POUR IMPRESSION */}
             <div className="hidden">
                 <div ref={printRef} className="print-container">
-                    {bulletinsCalcules.map((b) => (
+                    {bulletinsCalcules.map((b, i) => (
                         <div key={b.eleve.id} className="page-break w-[210mm] h-[297mm] overflow-hidden bg-white mx-auto box-border" style={{ pageBreakAfter: 'always' }}>
-                            <BulletinTogoPDF
+                            <BulletinBeninPDF
                                 data={b}
-                                schoolName={schoolName}
+                                schoolName={schoolName || 'Mon École'}
                                 schoolLogo={schoolLogo}
                                 schoolStamp={schoolStamp}
-                                schoolYear={schoolYear}
-                                studentPhoto={b.eleve.photoUrl || null}
+                                schoolYear={schoolYear || '2026-2027'}
                                 officialHeader={officialHeader}
+                                studentPhoto={b.eleve.photoUrl || null}
                             />
                         </div>
                     ))}

@@ -28,6 +28,7 @@ export const PreInscriptions: React.FC = () => {
       ecoleProvenance: '',
       dejaPaye: 0,
       recu: '',
+      photoUrl: req.data?.photoUrl || '',
     });
 
     // Mettre à jour le statut
@@ -108,8 +109,19 @@ export const PreInscriptions: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-slate-800 dark:text-white">{req.data?.nom} {req.data?.prenom}</div>
-                    <div className="text-xs text-slate-500">{req.data?.sexe} - Né(e) le {req.data?.dateNaissance}</div>
+                    <div className="flex items-center gap-3">
+                      {req.data?.photoUrl ? (
+                        <img src={req.data.photoUrl} alt="Photo" className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                          {req.data?.prenom?.charAt(0)}{req.data?.nom?.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-sm font-semibold text-slate-800 dark:text-white">{req.data?.nom} {req.data?.prenom}</div>
+                        <div className="text-xs text-slate-500">{req.data?.sexe} - Né(e) le {req.data?.dateNaissance}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-600">

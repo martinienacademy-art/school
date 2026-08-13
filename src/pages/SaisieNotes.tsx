@@ -58,16 +58,18 @@ export const SaisieNotes: React.FC = () => {
         classStudents.forEach(student => {
             const existing = currentNotes.find(n => n.eleveId === student.id && n.matiereId === selectedMatiereId && n.periode === currentPeriode);
             newDrafts[student.id] = {
-                noteClasse: existing?.noteClasse?.toString() || '',
-                noteDevoir: existing?.noteDevoir?.toString() || '',
-                noteCompo: existing?.noteCompo?.toString() || ''
+                noteInt1: existing?.noteInt1?.toString() || '',
+                noteInt2: existing?.noteInt2?.toString() || '',
+                noteInt3: existing?.noteInt3?.toString() || '',
+                noteDev1: existing?.noteDev1?.toString() || '',
+                noteDev2: existing?.noteDev2?.toString() || ''
             };
         });
         setDraftNotes(newDrafts);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedClasse, selectedMatiereId, currentPeriode]); // Retiré classStudents pour éviter les resets intempestifs
 
-    const handleNoteChange = (studentId: string, field: 'noteClasse' | 'noteDevoir' | 'noteCompo', value: string) => {
+    const handleNoteChange = (studentId: string, field: 'noteInt1' | 'noteInt2' | 'noteInt3' | 'noteDev1' | 'noteDev2', value: string) => {
         // Validation basique (on autorise chiffres, point, virgule)
         const cleanedValue = value.replace(',', '.');
         if (cleanedValue !== '' && !/^\d*\.?\d*$/.test(cleanedValue)) return;
@@ -97,19 +99,22 @@ export const SaisieNotes: React.FC = () => {
                     n.periode === currentPeriode
                 );
 
-                const nC = draft.noteClasse === '' ? null : parseFloat(draft.noteClasse);
-                const nD = draft.noteDevoir === '' ? null : parseFloat(draft.noteDevoir);
-                const nCp = draft.noteCompo === '' ? null : parseFloat(draft.noteCompo);
+                const nI1 = draft.noteInt1 === '' ? null : parseFloat(draft.noteInt1);
+                const nI2 = draft.noteInt2 === '' ? null : parseFloat(draft.noteInt2);
+                const nI3 = draft.noteInt3 === '' ? null : parseFloat(draft.noteInt3);
+                const nD1 = draft.noteDev1 === '' ? null : parseFloat(draft.noteDev1);
+                const nD2 = draft.noteDev2 === '' ? null : parseFloat(draft.noteDev2);
 
                 batch.push({
-                    // Réutiliser l'UUID existant ou en créer un nouveau seulement si nécessaire
                     id: existingNote ? existingNote.id : uuid(),
                     eleveId: student.id,
                     matiereId: selectedMatiereId,
                     periode: currentPeriode,
-                    noteClasse: isNaN(nC as any) ? null : nC,
-                    noteDevoir: isNaN(nD as any) ? null : nD,
-                    noteCompo: isNaN(nCp as any) ? null : nCp,
+                    noteInt1: isNaN(nI1 as any) ? null : nI1,
+                    noteInt2: isNaN(nI2 as any) ? null : nI2,
+                    noteInt3: isNaN(nI3 as any) ? null : nI3,
+                    noteDev1: isNaN(nD1 as any) ? null : nD1,
+                    noteDev2: isNaN(nD2 as any) ? null : nD2,
                 });
             }
         });
@@ -229,9 +234,11 @@ export const SaisieNotes: React.FC = () => {
                                 <tr className="bg-white border-b border-gray-200 text-sm">
                                     <th className="p-4 font-bold text-gray-600 w-16">N°</th>
                                     <th className="p-4 font-bold text-gray-600">Nom & Prénom(s)</th>
-                                    <th className="p-4 font-bold text-blue-600 w-40 text-center">Interro. (/20)</th>
-                                    <th className="p-4 font-bold text-indigo-600 w-40 text-center">Devoir (/20)</th>
-                                    <th className="p-4 font-bold text-purple-600 w-40 text-center">Compo. (/20)</th>
+                                    <th className="p-4 font-bold text-blue-600 w-24 text-center">INT 1</th>
+                                    <th className="p-4 font-bold text-blue-600 w-24 text-center">INT 2</th>
+                                    <th className="p-4 font-bold text-blue-600 w-24 text-center">INT 3</th>
+                                    <th className="p-4 font-bold text-indigo-600 w-24 text-center">DEV 1</th>
+                                    <th className="p-4 font-bold text-indigo-600 w-24 text-center">DEV 2</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -245,9 +252,9 @@ export const SaisieNotes: React.FC = () => {
                                             <input
                                                 type="number"
                                                 min="0" max="20" step="0.5"
-                                                className="w-20 px-3 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-semibold"
-                                                value={draftNotes[student.id]?.noteClasse ?? ''}
-                                                onChange={(e) => handleNoteChange(student.id, 'noteClasse', e.target.value)}
+                                                className="w-16 px-2 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-semibold"
+                                                value={draftNotes[student.id]?.noteInt1 ?? ''}
+                                                onChange={(e) => handleNoteChange(student.id, 'noteInt1', e.target.value)}
                                                 placeholder="--"
                                             />
                                         </td>
@@ -255,9 +262,9 @@ export const SaisieNotes: React.FC = () => {
                                             <input
                                                 type="number"
                                                 min="0" max="20" step="0.5"
-                                                className="w-20 px-3 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-semibold"
-                                                value={draftNotes[student.id]?.noteDevoir ?? ''}
-                                                onChange={(e) => handleNoteChange(student.id, 'noteDevoir', e.target.value)}
+                                                className="w-16 px-2 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-semibold"
+                                                value={draftNotes[student.id]?.noteInt2 ?? ''}
+                                                onChange={(e) => handleNoteChange(student.id, 'noteInt2', e.target.value)}
                                                 placeholder="--"
                                             />
                                         </td>
@@ -265,9 +272,29 @@ export const SaisieNotes: React.FC = () => {
                                             <input
                                                 type="number"
                                                 min="0" max="20" step="0.5"
-                                                className="w-20 px-3 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-semibold"
-                                                value={draftNotes[student.id]?.noteCompo ?? ''}
-                                                onChange={(e) => handleNoteChange(student.id, 'noteCompo', e.target.value)}
+                                                className="w-16 px-2 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-semibold"
+                                                value={draftNotes[student.id]?.noteInt3 ?? ''}
+                                                onChange={(e) => handleNoteChange(student.id, 'noteInt3', e.target.value)}
+                                                placeholder="--"
+                                            />
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <input
+                                                type="number"
+                                                min="0" max="20" step="0.5"
+                                                className="w-16 px-2 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-semibold"
+                                                value={draftNotes[student.id]?.noteDev1 ?? ''}
+                                                onChange={(e) => handleNoteChange(student.id, 'noteDev1', e.target.value)}
+                                                placeholder="--"
+                                            />
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <input
+                                                type="number"
+                                                min="0" max="20" step="0.5"
+                                                className="w-16 px-2 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-semibold"
+                                                value={draftNotes[student.id]?.noteDev2 ?? ''}
+                                                onChange={(e) => handleNoteChange(student.id, 'noteDev2', e.target.value)}
                                                 placeholder="--"
                                             />
                                         </td>
