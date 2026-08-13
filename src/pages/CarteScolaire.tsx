@@ -652,8 +652,6 @@ export const CarteScolaire: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    </div>
-                    </div>
                     <div className="flex flex-col gap-2 w-full md:w-[220px]">
                         <input type="text" placeholder="Date expiration" value={dateExpiration} onChange={e => setDateExpiration(e.target.value)} className="w-full px-4 py-2 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none font-medium" />
                         <input type="text" placeholder="Nom directeur" value={nomDirecteur} onChange={e => setNomDirecteur(e.target.value)} className="w-full px-4 py-2 text-sm bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-100 outline-none font-medium" />
