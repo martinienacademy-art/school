@@ -613,7 +613,6 @@ async function registerSchool(req, res) {
         const schoolPayload = {
             name: validatedData.name.trim(),
             slug: cleanSlug,
-            acronym: validatedData.acronym ? validatedData.acronym.trim() : null,
             address: validatedData.address || null,
             phone: validatedData.phone || cleanPhone,
             email: cleanEmail,
