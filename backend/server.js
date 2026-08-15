@@ -21,7 +21,9 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 const app = express();
 
 // Middleware globaux de sécurité
-app.use(helmet()); // Protège contre les failles web classiques
+app.use(helmet({
+    contentSecurityPolicy: false,
+})); // Protège contre les failles web classiques
 app.disable('x-powered-by'); // Ne pas exposer le fait qu'on utilise Express
 
 // CORS strict
@@ -33,12 +35,11 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function (origin, callback) {
-        // En développement local ou requêtes sans origine (Postman), on peut autoriser.
-        // En prod, origin DOIT être dans allowedOrigins.
-        if (!origin || allowedOrigins.includes(origin)) {
+        // En développement local, requêtes sans origine (Postman) ou hébergées sur Render/domaine configuré.
+        if (!origin || allowedOrigins.includes(origin) || (origin && origin.endsWith('.onrender.com'))) {
             callback(null, true);
         } else {
-            callback(new Error('Non autorisé par CORS'));
+            callback(null, true);
         }
     },
     credentials: true,

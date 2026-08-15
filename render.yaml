@@ -19,3 +19,5 @@ services:
         value: "10000"
       - key: TZ
         value: Africa/Porto-Novo
+      - key: FRONTEND_URL
+        value: https://school-7hns.onrender.com
