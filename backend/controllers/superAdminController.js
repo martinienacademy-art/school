@@ -105,13 +105,15 @@ async function getAllSchools(req, res) {
                 
                 try {
                     const { count: sCount } = await supabase
-                        .from(`students_${school.slug}`)
-                        .select('*', { count: 'exact', head: true });
+                        .from('students')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('school_slug', school.slug);
                     studentCount = sCount || 0;
                     
                     const { count: uCount } = await supabase
-                        .from(`profiles_${school.slug}`)
-                        .select('*', { count: 'exact', head: true });
+                        .from('profiles')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('school_slug', school.slug);
                     userCount = uCount || 0;
                 } catch (e) {
                     console.warn(`Table manquante pour ${school.slug}`);
@@ -230,7 +232,6 @@ async function createSchool(req, res) {
             email: validatedData.email || null,
             status: 'trial',
             trial_ends_at: new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString(),
-            features: Array.isArray(saasConfig.premium_features) ? saasConfig.premium_features : ['scan_presence', 'scan_sortie', 'carte_scolaire', 'saisie_notes', 'bulletins', 'recouvrement', 'chat', 'import_export', 'pre_inscriptions', 'documents'],
             accepted_terms: validatedData.accepted_terms,
             accepted_privacy_policy: validatedData.accepted_privacy_policy,
             marketing_consent: validatedData.marketing_consent,
@@ -246,16 +247,17 @@ async function createSchool(req, res) {
 
         if (schoolErr) throw schoolErr;
 
-        // 2. Créer le jeu de tables avec l'appel RPC
-        const { error: rpcErr } = await supabase.rpc('create_school_tables', { school_slug: cleanSlug });
-        if (rpcErr) throw rpcErr;
+        // 2. Créer le jeu de tables avec l'appel RPC (Retiré - Schéma Unifié)
+        // const { error: rpcErr } = await supabase.rpc('create_school_tables', { school_slug: cleanSlug });
+        // if (rpcErr) throw rpcErr;
 
         // Attendre que la base recharge son schéma (1s par sécurité)
-        await new Promise(r => setTimeout(r, 1000));
+        // await new Promise(r => setTimeout(r, 1000));
 
         // Initialiser les paramètres de l'école (app_settings_[slug]) avec l'acronyme
         try {
-            await supabase.from(`app_settings_${cleanSlug}`).upsert({
+            await supabase.from('app_settings').upsert({
+                school_slug: cleanSlug,
                 id: 1,
                 nom_ecole: validatedData.name.trim(),
                 acronyme: validatedData.acronym ? validatedData.acronym.trim() : '',
@@ -281,11 +283,12 @@ async function createSchool(req, res) {
             accepted_privacy_policy: validatedData.accepted_privacy_policy,
             marketing_consent: validatedData.marketing_consent,
             consented_at: consentedAt,
-            signup_ip_hash: ipHash
+            signup_ip_hash: ipHash,
+            school_slug: cleanSlug
         };
 
         const { data: adminUser, error: adminErr } = await supabase
-            .from(`profiles_${cleanSlug}`)
+            .from('profiles')
             .insert(adminPayload)
             .select()
             .single();
@@ -397,8 +400,8 @@ async function getGlobalStats(req, res) {
         if (schools) {
             for (let s of schools) {
                 try {
-                    const { count: sCount } = await supabase.from(`students_${s.slug}`).select('*', { count: 'exact', head: true });
-                    const { count: uCount } = await supabase.from(`profiles_${s.slug}`).select('*', { count: 'exact', head: true });
+                    const { count: sCount } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_slug', s.slug);
+                    const { count: uCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('school_slug', s.slug);
                     totalStudents += (sCount || 0);
                     totalUsers += (uCount || 0);
                 } catch(e) {}
@@ -459,12 +462,13 @@ async function deleteSchool(req, res) {
 
         if (deleteErr) throw deleteErr;
 
-        // 3. Exécuter la routine Supabase RPC pour dropper toutes les tables associées à ce slug
-        console.log(`🗑️ Tentative de suppression des tables pour le slug : ${school.slug}`);
-        const { error: rpcErr } = await supabase.rpc('drop_school_tables', { school_slug: school.slug });
-        if (rpcErr) {
-            console.error('Erreur RPC Drop Tables:', rpcErr.message);
-        }
+        // 3. (Retiré - Schéma Unifié) Exécuter la routine Supabase RPC pour dropper toutes les tables
+        console.log(`🗑️ Nettoyage des données pour le slug : ${school.slug}`);
+        // Les données seront supprimées automatiquement par la contrainte ON DELETE CASCADE sur la table schools
+        // const { error: rpcErr } = await supabase.rpc('drop_school_tables', { school_slug: school.slug });
+        // if (rpcErr) {
+        //     console.error('Erreur RPC Drop Tables:', rpcErr.message);
+        // }
 
         console.log(`🗑️ L'école ${school.name} a été complétement supprimée du système.`);
         return res.json({ message: `L'établissement ${school.name} a été supprimé sans retour possible.` });

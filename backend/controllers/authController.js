@@ -68,8 +68,9 @@ async function register(req, res) {
 
         // Vérifier si existant
         const { data: existing } = await supabase
-            .from(`profiles_${school_slug}`)
+            .from('profiles')
             .select('id')
+            .eq('school_slug', school_slug)
             .or(`telephone.eq.${telephone},email.eq.${email}`)
             .single();
 
@@ -82,8 +83,9 @@ async function register(req, res) {
         const hashed = await bcrypt.hash(password, 10);
 
         const { data: user, error } = await supabase
-            .from(`profiles_${school_slug}`)
+            .from('profiles')
             .insert({
+                school_slug: school_slug,
                 nom: nom.trim(),
                 email: email.trim().toLowerCase(),
                 telephone,
@@ -172,8 +174,9 @@ async function registerTeacher(req, res) {
         }
 
         const { data: existing } = await supabase
-            .from(`profiles_${school_slug}`)
+            .from('profiles')
             .select('id')
+            .eq('school_slug', school_slug)
             .eq('email', cleanEmail)
             .single();
 
@@ -195,7 +198,7 @@ async function registerTeacher(req, res) {
         };
 
         const { data: teacher, error } = await supabase
-            .from(`profiles_${school_slug}`)
+            .from('profiles')
             .insert(insertPayload)
             .select()
             .single();
@@ -297,8 +300,9 @@ async function login(req, res) {
 
         // ── 3. Chercher l'utilisateur dans la table de l'établissement ──
         const { data: user, error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .select('*')
+            .eq('school_slug', schoolSlug)
             .or(`telephone.eq.${identifier},email.eq.${identifier}`)
             .single();
 
@@ -320,7 +324,7 @@ async function login(req, res) {
         );
 
         // Update last login de façon asynchrone
-        supabase.from(`profiles_${schoolSlug}`).update({ last_login: new Date().toISOString() }).eq('id', user.id).then(() => {});
+        supabase.from('profiles').update({ last_login: new Date().toISOString() }).eq('school_slug', schoolSlug).eq('id', user.id).then(() => {});
 
         const defaultAllFeatures = ['scan_presence', 'scan_sortie', 'carte_scolaire', 'saisie_notes', 'bulletins', 'recouvrement', 'chat', 'import_export', 'pre_inscriptions', 'documents'];
         const activeFeatures = Array.isArray(school.features) && school.features.length > 0 ? school.features : defaultAllFeatures;
@@ -358,8 +362,9 @@ async function deleteSelfAccount(req, res) {
 
     try {
         const { error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .delete()
+            .eq('school_slug', schoolSlug)
             .eq('id', id);
 
         if (error) throw error;
@@ -467,7 +472,7 @@ async function forgotPassword(req, res) {
                 tableFound = 'parents';
             } else if (schoolSlug) {
                 // Chercher dans profiles de l'école (Staff)
-                let { data: staff } = await supabase.from(`profiles_${schoolSlug}`).select('id, email, nom').eq('email', email).single();
+                let { data: staff } = await supabase.from('profiles').select('id, email, nom').eq('school_slug', schoolSlug).eq('email', email).single();
                 if (staff) {
                     userFound = staff;
                     tableFound = `profiles_${schoolSlug}`;
@@ -618,7 +623,6 @@ async function registerSchool(req, res) {
             email: cleanEmail,
             status: 'trial',
             trial_ends_at: new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString(),
-            features: defaultFeatures,
             accepted_terms: validatedData.accepted_terms,
             accepted_privacy_policy: validatedData.accepted_privacy_policy,
             marketing_consent: validatedData.marketing_consent,
@@ -634,13 +638,11 @@ async function registerSchool(req, res) {
 
         if (schoolErr) throw schoolErr;
 
-        const { error: rpcErr } = await supabase.rpc('create_school_tables', { school_slug: cleanSlug });
-        if (rpcErr) console.warn('Warning create_school_tables:', rpcErr.message);
-
-        await new Promise(r => setTimeout(r, 1000));
+        // RPC create_school_tables removed - using unified schema
 
         try {
-            await supabase.from(`app_settings_${cleanSlug}`).upsert({
+            await supabase.from('app_settings').upsert({
+                school_slug: cleanSlug,
                 id: 1,
                 nom_ecole: validatedData.name.trim(),
                 acronyme: validatedData.acronym ? validatedData.acronym.trim() : '',
@@ -666,8 +668,8 @@ async function registerSchool(req, res) {
         };
 
         const { data: adminUser, error: adminErr } = await supabase
-            .from(`profiles_${cleanSlug}`)
-            .insert(adminPayload)
+            .from('profiles')
+            .insert({ ...adminPayload, school_slug: cleanSlug })
             .select('id, nom, telephone, email, role')
             .single();
 

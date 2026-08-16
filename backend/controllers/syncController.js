@@ -30,17 +30,17 @@ async function syncFromFrontend(req, res) {
     }
 
     const { students = [], presences = [], activityLogs = [], appSettings = null, replace = false, matieres = [], classeMatieres = [], notes = [], ressources = [], salles = [] } = req.body;
-    const tbl = (name) => `${name}_${schoolSlug}`;
+    const tbl = (name) => name;
 
     try {
         if (replace) {
             console.log('🧹 [Sync] Mode Remplacer activé : Nettoyage universel de la base locale...');
             
-            await supabase.from(tbl('presences')).delete().neq('id', '00000000-0000-0000-0000-000000000000');
-            await supabase.from(tbl('parent_student')).delete().neq('student_id', '00000000-0000-0000-0000-000000000000');
-            await supabase.from(tbl('payments')).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            await supabase.from(tbl('presences')).delete().eq('school_slug', schoolSlug).eq('school_slug', schoolSlug).neq('id', '00000000-0000-0000-0000-000000000000');
+            await supabase.from(tbl('parent_student')).delete().eq('school_slug', schoolSlug).eq('school_slug', schoolSlug).neq('student_id', '00000000-0000-0000-0000-000000000000');
+            await supabase.from(tbl('payments')).delete().eq('school_slug', schoolSlug).eq('school_slug', schoolSlug).neq('id', '00000000-0000-0000-0000-000000000000');
             
-            const { error: err4 } = await supabase.from(tbl('students')).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            const { error: err4 } = await supabase.from(tbl('students')).delete().eq('school_slug', schoolSlug).eq('school_slug', schoolSlug).neq('id', '00000000-0000-0000-0000-000000000000');
             if (err4) throw new Error('Le serveur Supabase refuse la suppression : ' + err4.message);
 
             console.log('✨ [Sync] Base de données cloud remise à zéro (école uniquement).');
@@ -73,7 +73,7 @@ async function syncFromFrontend(req, res) {
             const uniqueStudents = Array.from(uniqueStudentsMap.values());
 
             const studentData = uniqueStudents.map(s => ({
-                id: s.id,
+                school_slug: schoolSlug, id: s.id,
                 nom: s.nom,
                 prenom: s.prenom || '',
                 classe: s.classe || 'Inconnue',
@@ -111,8 +111,8 @@ async function syncFromFrontend(req, res) {
                 if (Array.isArray(s.historiquesPaiements)) {
                     s.historiquesPaiements.forEach(p => {
                         allPayments.push({
-                            id: p.id,
-                            student_id: s.id,
+                            school_slug: schoolSlug, id: p.id,
+                            student_school_slug: schoolSlug, id: s.id,
                             montant: p.montant,
                             date: p.date,
                             recu: p.recu || null,
@@ -133,7 +133,7 @@ async function syncFromFrontend(req, res) {
                 try {
                     // Récupérer les IDs des paiements déjà existants pour éviter les doublons de notif
                     const paymentIds = allPayments.map(p => p.id);
-                    const { data: existingPayments } = await supabase.from(tbl('payments')).select('id').in('id', paymentIds);
+                    const { data: existingPayments } = await supabase.from(tbl('payments')).select('id').eq('school_slug', schoolSlug).in('id', paymentIds);
                     const existingIds = new Set((existingPayments || []).map(p => p.id));
 
                     for (const s of students) {
@@ -145,7 +145,7 @@ async function syncFromFrontend(req, res) {
                             const studentName = (s.prenom || s.nom || 'votre enfant').split(' ')[0];
                             const msg = `💰 Paiement reçu : ${lastP.montant.toLocaleString()} FCFA pour ${studentName}. Nouveau reste : ${s.restant.toLocaleString()} FCFA. Merci !`;
                             
-                            const { data: links } = await supabase.from(tbl('parent_student')).select('parent_id').eq('student_id', s.id);
+                            const { data: links } = await supabase.from(tbl('parent_student')).select('parent_id').eq('school_slug', schoolSlug).eq('student_id', s.id);
                             if (links && links.length > 0) {
                                 for (const link of links) {
                                     sendPushNotification(link.parent_id, schoolSlug, '📦 Reçu de paiement', msg, 'payment').catch(() => {});
@@ -162,8 +162,8 @@ async function syncFromFrontend(req, res) {
         // --- 3. Sync Presences ---
         if (presences.length > 0) {
             const presenceData = presences.map(p => ({
-                id: p.id,
-                student_id: p.eleveId,
+                school_slug: schoolSlug, id: p.id,
+                student_school_slug: schoolSlug, id: p.eleveId,
                 eleve_nom: p.eleveNom,
                 eleve_prenom: p.elevePrenom,
                 eleve_classe: p.eleveClasse,
@@ -180,7 +180,7 @@ async function syncFromFrontend(req, res) {
             (async () => {
                 try {
                     const presenceIds = presences.map(p => p.id);
-                    const { data: existingPres } = await supabase.from(tbl('presences')).select('id').in('id', presenceIds);
+                    const { data: existingPres } = await supabase.from(tbl('presences')).select('id').eq('school_slug', schoolSlug).in('id', presenceIds);
                     const existingIds = new Set((existingPres || []).map(p => p.id));
 
                     for (const p of presences) {
@@ -190,7 +190,7 @@ async function syncFromFrontend(req, res) {
                         const action = (p.statut || 'Entrée').toLowerCase() === 'entrée' ? 'est ARRIVÉ(E)' : 'est SORTI(E)';
                         const msg = `🔔 ${studentName} ${action} de l'établissement à ${p.heure}.`;
                         
-                        const { data: links } = await supabase.from(tbl('parent_student')).select('parent_id').eq('student_id', p.eleveId);
+                        const { data: links } = await supabase.from(tbl('parent_student')).select('parent_id').eq('school_slug', schoolSlug).eq('student_id', p.eleveId);
                         if (links && links.length > 0) {
                             for (const link of links) {
                                 sendPushNotification(link.parent_id, schoolSlug, '📍 Pointage École', msg, 'presence').catch(() => {});
@@ -206,7 +206,7 @@ async function syncFromFrontend(req, res) {
         // --- 4. Sync Activity Logs ---
         if (activityLogs.length > 0) {
             const logData = activityLogs.map(l => ({
-                id: l.id,
+                school_slug: schoolSlug, id: l.id,
                 utilisateur: l.utilisateur,
                 utilisateur_role: l.utilisateurRole,
                 action: l.action,
@@ -231,7 +231,7 @@ async function syncFromFrontend(req, res) {
             });
             try {
                 const { error: settingsErr } = await supabase.from(tbl('app_settings')).upsert({
-                    id: 'global_settings',
+                    school_slug: schoolSlug, id: 'global_settings',
                     app_name: appSettings.appName,
                     school_name: appSettings.schoolName,
                     school_year: appSettings.schoolYear,
@@ -282,7 +282,7 @@ async function syncFromFrontend(req, res) {
         if (matieres && matieres.length > 0) {
             try {
                 const matieresData = matieres.map(m => ({
-                    id: m.id,
+                    school_slug: schoolSlug, id: m.id,
                     nom: m.nom,
                     categorie: m.categorie
                 }));
@@ -300,9 +300,9 @@ async function syncFromFrontend(req, res) {
         if (classeMatieres && classeMatieres.length > 0) {
             try {
                 const cmData = classeMatieres.map(cm => ({
-                    id: cm.id,
+                    school_slug: schoolSlug, id: cm.id,
                     classe: cm.classe,
-                    matiere_id: cm.matiereId,
+                    matiere_school_slug: schoolSlug, id: cm.matiereId,
                     professeur: cm.professeur || '',
                     coefficient: cm.coefficient || 1
                 }));
@@ -324,9 +324,9 @@ async function syncFromFrontend(req, res) {
                 let notesErr = null;
                 for (let i = 0; i < notes.length; i += chunkSize) {
                     const chunk = notes.slice(i, i + chunkSize).map(n => ({
-                        id: n.id,
-                        eleve_id: n.eleveId,
-                        matiere_id: n.matiereId,
+                        school_slug: schoolSlug, id: n.id,
+                        eleve_school_slug: schoolSlug, id: n.eleveId,
+                        matiere_school_slug: schoolSlug, id: n.matiereId,
                         periode: n.periode,
                         note_classe: n.noteClasse,
                         note_devoir: n.noteDevoir,
@@ -358,7 +358,7 @@ async function syncFromFrontend(req, res) {
                 let ressourcesErr = null;
                 for (let i = 0; i < ressources.length; i += chunkSize) {
                     const chunk = ressources.slice(i, i + chunkSize).map(r => ({
-                        id: r.id,
+                        school_slug: schoolSlug, id: r.id,
                         titre: r.titre,
                         type: r.type,
                         anneeAcademique: r.anneeAcademique,
@@ -399,7 +399,7 @@ async function syncFromFrontend(req, res) {
                 let sallesOk = 0;
                 for (let i = 0; i < salles.length; i += chunkSize) {
                     const chunk = salles.slice(i, i + chunkSize).map(s => ({
-                        id: s.id,
+                        school_slug: schoolSlug, id: s.id,
                         nom: s.nom,
                         batiment: s.batiment || null,
                         capacite: s.capacite !== undefined ? Number(s.capacite) : null,
@@ -454,11 +454,11 @@ async function syncToFrontend(req, res) {
         return res.status(403).json({ error: 'Compte non associé à un établissement.' });
     }
 
-    const tbl = (name) => `${name}_${schoolSlug}`;
+    const tbl = (name) => name;
 
     try {
         const fetchTable = async (name, orderField = null, ascending = false) => {
-            let q = supabase.from(tbl(name)).select('*');
+            let q = supabase.from(tbl(name)).select('*').eq('school_slug', schoolSlug);
             if (orderField) q = q.order(orderField, { ascending });
             const { data, error } = await q;
             if (error && error.code !== '42P01') throw error;
@@ -480,7 +480,7 @@ async function syncToFrontend(req, res) {
         
         const { data: dbClasses } = await supabase.from('school_classes').select('*').eq('school_slug', schoolSlug).order('cycle').order('nom');
 
-        const { data: appSettings, error: settingsError } = await supabase.from(tbl('app_settings')).select('*').single();
+        const { data: appSettings, error: settingsError } = await supabase.from(tbl('app_settings')).select('*').eq('school_slug', schoolSlug).single();
         console.log('🎨 [Sync GET] appSettings from DB:', {
             found: !!appSettings,
             error: settingsError?.message || null,
@@ -516,7 +516,7 @@ async function syncToFrontend(req, res) {
             const s = studentMap.get(p.student_id);
             if (s) {
                 s.historiquesPaiements.push({
-                    id: p.id,
+                    school_slug: schoolSlug, id: p.id,
                     studentId: p.student_id,
                     montant: p.montant,
                     date: p.date,
@@ -530,7 +530,7 @@ async function syncToFrontend(req, res) {
         return res.json({
             students: Array.from(studentMap.values()),
             presences: presences.map(pr => ({
-                id: pr.id,
+                school_slug: schoolSlug, id: pr.id,
                 eleveId: pr.student_id,
                 eleveNom: pr.eleve_nom,
                 elevePrenom: pr.eleve_prenom,
@@ -540,7 +540,7 @@ async function syncToFrontend(req, res) {
                 statut: pr.statut
             })),
             activityLogs: logs.map(l => ({
-                id: l.id,
+                school_slug: schoolSlug, id: l.id,
                 utilisateur: l.utilisateur,
                 utilisateurRole: l.utilisateur_role,
                 action: l.action,
@@ -585,7 +585,7 @@ async function syncToFrontend(req, res) {
                 matriculeFormatPersonnel: sData.matricule_format_personnel || '{ACRONYME}PERS{YY}{SEQ}'
             } : null,
             announcements: (announcements || []).map(a => ({
-                id: a.id,
+                school_slug: schoolSlug, id: a.id,
                 titre: a.titre,
                 message: a.message,
                 cible: a.cible,
@@ -595,19 +595,19 @@ async function syncToFrontend(req, res) {
                 date: a.created_at ? a.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
             })),
             matieres: dbMatieres ? dbMatieres.map(m => ({
-                id: m.id,
+                school_slug: schoolSlug, id: m.id,
                 nom: m.nom,
                 categorie: m.categorie
             })) : undefined,
             classeMatieres: dbClasseMatieres ? dbClasseMatieres.map(cm => ({
-                id: cm.id,
+                school_slug: schoolSlug, id: cm.id,
                 classe: cm.classe,
                 matiereId: cm.matiere_id,
                 professeur: cm.professeur,
                 coefficient: cm.coefficient
             })) : undefined,
             notes: dbNotes ? dbNotes.map(n => ({
-                id: n.id,
+                school_slug: schoolSlug, id: n.id,
                 eleveId: n.eleve_id,
                 matiereId: n.matiere_id,
                 periode: n.periode,
@@ -616,7 +616,7 @@ async function syncToFrontend(req, res) {
                 noteCompo: n.note_compo !== undefined ? Number(n.note_compo) : null
             })) : undefined,
             ressources: dbRessources ? dbRessources.map(r => ({
-                id: r.id,
+                school_slug: schoolSlug, id: r.id,
                 titre: r.titre,
                 type: r.type,
                 anneeAcademique: r.anneeAcademique,
@@ -632,7 +632,7 @@ async function syncToFrontend(req, res) {
                 dateAjout: r.dateAjout
             })) : undefined,
             salles: dbSalles ? dbSalles.map(s => ({
-                id: s.id,
+                school_slug: schoolSlug, id: s.id,
                 nom: s.nom,
                 batiment: s.batiment || undefined,
                 capacite: s.capacite !== undefined ? Number(s.capacite) : undefined,
@@ -657,7 +657,7 @@ async function syncToFrontend(req, res) {
 async function clearPresences(req, res) {
     if (!req.user || !['admin', 'directeur', 'directeur_general', 'comptable'].includes(req.user.role)) return res.status(403).json({ error: 'Action non autorisée.' });
     try {
-        const { error } = await supabase.from(`presences_${req.user.schoolSlug}`).delete().neq('id', '00000000-0000-0000-0000-000000000000'); 
+        const { error } = await supabase.from('presences').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).neq('id', '00000000-0000-0000-0000-000000000000'); 
         if (error) throw error;
         return res.json({ message: 'Historique des présences vidé.' });
     } catch (err) {
@@ -668,7 +668,7 @@ async function clearPresences(req, res) {
 async function clearActivityLogs(req, res) {
     if (!req.user || !['admin', 'directeur', 'directeur_general', 'comptable'].includes(req.user.role)) return res.status(403).json({ error: 'Action non autorisée.' });
     try {
-        const { error } = await supabase.from(`activity_logs_${req.user.schoolSlug}`).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        const { error } = await supabase.from('activity_logs').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).neq('id', '00000000-0000-0000-0000-000000000000');
         if (error) throw error;
         return res.json({ message: 'Logs d\'activité vidés.' });
     } catch (err) {
@@ -681,7 +681,7 @@ async function clearStudents(req, res) {
     const schoolSlug = req.user.schoolSlug;
     try {
         const safeDelete = async (table, filterCol, filterVal) => {
-            const { error } = await supabase.from(`${table}_${schoolSlug}`).delete().neq(filterCol, filterVal);
+            const { error } = await supabase.from(table).delete().eq('school_slug', schoolSlug).eq('school_slug', schoolSlug).neq(filterCol, filterVal);
             if (error && error.code !== '42P01') throw error;
         };
 
@@ -698,7 +698,7 @@ async function clearStudents(req, res) {
 async function deleteMatiere(req, res) {
     if (!req.user || !['admin', 'directeur', 'directeur_general', 'comptable'].includes(req.user.role)) return res.status(403).json({ error: 'Non autorisé.' });
     try {
-        const { error } = await supabase.from(`matieres_${req.user.schoolSlug}`).delete().eq('id', req.params.id);
+        const { error } = await supabase.from('matieres').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('id', req.params.id);
         if (error) throw error;
         return res.json({ success: true, message: 'Matière supprimée.' });
     } catch (err) {
@@ -709,7 +709,7 @@ async function deleteMatiere(req, res) {
 async function deleteClasseMatiere(req, res) {
     if (!req.user || !['admin', 'directeur', 'directeur_general', 'comptable'].includes(req.user.role)) return res.status(403).json({ error: 'Non autorisé.' });
     try {
-        const { error } = await supabase.from(`classe_matieres_${req.user.schoolSlug}`).delete().eq('id', req.params.id);
+        const { error } = await supabase.from('classe_matieres').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('id', req.params.id);
         if (error) throw error;
         return res.json({ success: true, message: 'Liaison classe-matière supprimée.' });
     } catch (err) {
@@ -720,7 +720,7 @@ async function deleteClasseMatiere(req, res) {
 async function deleteNote(req, res) {
     if (!req.user || !['admin', 'directeur', 'directeur_general', 'comptable'].includes(req.user.role)) return res.status(403).json({ error: 'Non autorisé.' });
     try {
-        const { error } = await supabase.from(`notes_${req.user.schoolSlug}`).delete().eq('id', req.params.id);
+        const { error } = await supabase.from('notes').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('id', req.params.id);
         if (error) throw error;
         return res.json({ success: true, message: 'Note supprimée.' });
     } catch (err) {
@@ -731,11 +731,11 @@ async function deleteNote(req, res) {
 async function deleteStudent(req, res) {
     if (!req.user || !['admin', 'directeur', 'directeur_general', 'comptable'].includes(req.user.role)) return res.status(403).json({ error: 'Non autorisé.' });
     try {
-        await supabase.from(`parent_student_${req.user.schoolSlug}`).delete().eq('student_id', req.params.id);
-        await supabase.from(`payments_${req.user.schoolSlug}`).delete().eq('student_id', req.params.id);
-        await supabase.from(`presences_${req.user.schoolSlug}`).delete().eq('student_id', req.params.id);
-        await supabase.from(`notes_${req.user.schoolSlug}`).delete().eq('eleve_id', req.params.id);
-        const { error } = await supabase.from(`students_${req.user.schoolSlug}`).delete().eq('id', req.params.id);
+        await supabase.from('parent_student').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('student_id', req.params.id);
+        await supabase.from('payments').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('student_id', req.params.id);
+        await supabase.from('presences').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('student_id', req.params.id);
+        await supabase.from('notes').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('eleve_id', req.params.id);
+        const { error } = await supabase.from('students').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('id', req.params.id);
         if (error) throw error;
         return res.json({ success: true, message: 'Élève supprimé.' });
     } catch (err) {
@@ -746,7 +746,7 @@ async function deleteStudent(req, res) {
 async function deleteSalle(req, res) {
     if (!req.user || !['admin', 'directeur', 'directeur_general', 'comptable'].includes(req.user.role)) return res.status(403).json({ error: 'Non autorisé.' });
     try {
-        const { error } = await supabase.from(`salles_${req.user.schoolSlug}`).delete().eq('id', req.params.id);
+        const { error } = await supabase.from('salles').delete().eq('school_slug', req.user.schoolSlug || schoolSlug).eq('school_slug', schoolSlug).eq('id', req.params.id);
         if (error) throw error;
         return res.json({ success: true, message: 'Salle supprimée.' });
     } catch (err) {
