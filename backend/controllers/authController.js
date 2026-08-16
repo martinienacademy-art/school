@@ -612,7 +612,7 @@ async function registerSchool(req, res) {
         const consentedAt = new Date().toISOString();
         const { getStoredSaasSettings } = require('./superAdminController');
         const saasConfig = await getStoredSaasSettings();
-        const trialDays = saasConfig.default_trial_days || 60;
+        const trialDays = saasConfig.default_trial_days || 30;
         const defaultFeatures = Array.isArray(saasConfig.premium_features) ? saasConfig.premium_features : ['scan_presence', 'scan_sortie', 'carte_scolaire', 'saisie_notes', 'bulletins', 'recouvrement', 'chat', 'import_export', 'pre_inscriptions', 'documents'];
 
         const schoolPayload = {

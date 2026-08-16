@@ -9,7 +9,7 @@ const { sendSchoolWelcomeEmail } = require('../utils/emailService');
 
 let LOCAL_SAAS_SETTINGS = {
     price_per_student: 2000,
-    default_trial_days: 60,
+    default_trial_days: 30,
     currency: 'FCFA',
     premium_features: ['scan_presence', 'scan_sortie', 'scan_information', 'carte_scolaire', 'gestion_academique', 'bulletins', 'recouvrement', 'chat', 'import_export']
 };
@@ -24,7 +24,7 @@ async function getStoredSaasSettings() {
         if (data && !error) {
             LOCAL_SAAS_SETTINGS = {
                 price_per_student: Number(data.price_per_student) || 2000,
-                default_trial_days: Number(data.default_trial_days) || 60,
+                default_trial_days: Number(data.default_trial_days) || 30,
                 currency: data.currency || 'FCFA',
                 premium_features: Array.isArray(data.premium_features) ? data.premium_features : LOCAL_SAAS_SETTINGS.premium_features
             };
@@ -60,7 +60,7 @@ async function updateSaaSConfig(req, res) {
         if (data && !error) {
             LOCAL_SAAS_SETTINGS = {
                 price_per_student: Number(data.price_per_student) || 2000,
-                default_trial_days: Number(data.default_trial_days) || 60,
+                default_trial_days: Number(data.default_trial_days) || 30,
                 currency: data.currency || 'FCFA',
                 premium_features: Array.isArray(data.premium_features) ? data.premium_features : LOCAL_SAAS_SETTINGS.premium_features
             };
@@ -221,7 +221,7 @@ async function createSchool(req, res) {
         const ipHash = getIpHash(req);
         const consentedAt = new Date().toISOString();
         const saasConfig = await getStoredSaasSettings();
-        const trialDays = saasConfig.default_trial_days || 60;
+        const trialDays = saasConfig.default_trial_days || 30;
 
         // 1. Créer l'école (Mass assignment protection)
         const schoolPayload = {

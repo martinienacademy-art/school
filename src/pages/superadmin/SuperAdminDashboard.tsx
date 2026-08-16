@@ -133,7 +133,7 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div>
             <h2 className="text-xl font-black text-white">Créer un nouvel établissement</h2>
-            <p className="text-slate-400 text-sm">L'école bénéficiera de 2 mois d'essai gratuit</p>
+            <p className="text-slate-400 text-sm">L'école bénéficiera de 1 mois d'essai gratuit</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white">
             <X className="w-5 h-5" />

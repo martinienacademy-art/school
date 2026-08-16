@@ -40,7 +40,7 @@ async function sendSchoolWelcomeEmail({ email, adminNom, schoolName, schoolSlug 
           <h2 style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 0;">Félicitations, ${adminNom} ! 🎉</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #475569;">
             Votre établissement <strong>${schoolName}</strong> a été créé avec succès sur la plateforme GestioSchool. 
-            Votre période d'essai gratuit de <strong>60 jours</strong> est désormais active.
+            Votre période d'essai gratuit de <strong>30 jours</strong> est désormais active.
           </p>
 
           <div style="background-color: #f8fafc; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 0 12px 12px 0;">

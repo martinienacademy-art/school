@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS public.schools (
 CREATE TABLE IF NOT EXISTS public.saas_settings (
     id SERIAL PRIMARY KEY,
     price_per_student NUMERIC DEFAULT 2000,
-    default_trial_days INTEGER DEFAULT 60,
+    default_trial_days INTEGER DEFAULT 30,
     currency VARCHAR(10) DEFAULT 'FCFA',
     premium_features JSONB,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())

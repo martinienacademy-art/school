@@ -139,7 +139,7 @@ export const RegisterSchoolModal: React.FC<RegisterSchoolModalProps> = ({ onClos
                 </div>
                 <div>
                   <h2 className="text-lg font-black tracking-tight">Inscrire mon établissement</h2>
-                  <p className="text-white/80 text-xs font-medium">60 jours d'essai gratuit • Sans engagement</p>
+                  <p className="text-white/80 text-xs font-medium">30 jours d'essai gratuit • Sans engagement</p>
                 </div>
               </div>
               <button 
