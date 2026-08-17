@@ -1,5 +1,5 @@
 -- ============================================================
--- SCHÉMA UNIFIÉ MULTI-TENANT POUR EDUFINANCE
+-- SCHÉMA UNIFIÉ MULTI-TENANT POUR MASTERFLOW
 -- ============================================================
 -- Ce script remplace l'ancienne architecture qui créait une 
 -- table par école (ex: profiles_monecole) par un schéma

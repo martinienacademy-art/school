@@ -38,7 +38,7 @@ async function sendPushNotification(userId, schoolSlug, title, body, type = 'gen
 
         // Récupérer le token Web Push depuis la table de l'école
         let { data: profile, error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .select('push_token')
             .eq('id', userId)
             .single();
@@ -89,7 +89,7 @@ async function sendPushNotification(userId, schoolSlug, title, body, type = 'gen
             console.log(`🗑️ [Push] Token expiré pour ${userId}, suppression...`);
             // Nettoyer le token expiré
             if (schoolSlug) {
-                await supabase.from(`profiles_${schoolSlug}`).update({ push_token: null }).eq('id', userId);
+                await supabase.from('profiles').update({ push_token: null }).eq('id', userId);
             } else {
                 await supabase.from('profiles').update({ push_token: null }).eq('id', userId);
             }
@@ -107,7 +107,7 @@ async function sendPushNotification(userId, schoolSlug, title, body, type = 'gen
 async function broadcastPushToSchool(schoolSlug, title, body, type = 'announcement') {
     try {
         const { data: parents, error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .select('id, push_token')
             .eq('role', 'parent')
             .not('push_token', 'is', null);

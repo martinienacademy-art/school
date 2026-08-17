@@ -380,7 +380,7 @@ async function updatePushToken(req, res) {
     const { id, role, schoolSlug } = req.user;
     const { push_token } = req.body;
     
-    const table = role === 'superadmin' ? 'superadmins' : `profiles_${schoolSlug}`;
+    const table = role === 'superadmin' ? 'superadmins' : 'profiles';
 
     try {
         console.log(`📲 Tentative de mise à jour du push_token pour l'utilisateur ${id}`);
@@ -413,7 +413,7 @@ async function changePassword(req, res) {
         if (role === 'superadmin') {
             table = 'superadmins';
         } else {
-            table = `profiles_${schoolSlug}`;
+            table = 'profiles';
         }
 
         const { data: user, error } = await supabase
@@ -475,7 +475,7 @@ async function forgotPassword(req, res) {
                 let { data: staff } = await supabase.from('profiles').select('id, email, nom').eq('school_slug', schoolSlug).eq('email', email).single();
                 if (staff) {
                     userFound = staff;
-                    tableFound = `profiles_${schoolSlug}`;
+                    tableFound = 'profiles';
                 }
             }
         }

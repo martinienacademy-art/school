@@ -30,8 +30,8 @@ export const RegisterSchoolModal: React.FC<RegisterSchoolModalProps> = ({ onClos
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleNameChange = (name: string) => {
-    const slug = name
+  const updateSlug = (n: string, a: string) => {
+    const base = `${n} ${a}`
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -39,7 +39,18 @@ export const RegisterSchoolModal: React.FC<RegisterSchoolModalProps> = ({ onClos
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .trim();
+    return base.replace(/-+$/, ''); // Remove trailing dash
+  };
+
+  const handleNameChange = (name: string) => {
+    const slug = updateSlug(name, form.acronym);
     setForm((f) => ({ ...f, name, slug }));
+  };
+
+  const handleAcronymChange = (acronym: string) => {
+    const uppercaseAcronym = acronym.toUpperCase();
+    const slug = updateSlug(form.name, uppercaseAcronym);
+    setForm((f) => ({ ...f, acronym: uppercaseAcronym, slug }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,7 +192,7 @@ export const RegisterSchoolModal: React.FC<RegisterSchoolModalProps> = ({ onClos
                 <input 
                   type="text" 
                   value={form.acronym} 
-                  onChange={e => setForm(f => ({ ...f, acronym: e.target.value.toUpperCase() }))}
+                  onChange={e => handleAcronymChange(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase"
                   placeholder="CSMA" 
                   required 

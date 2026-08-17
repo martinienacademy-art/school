@@ -122,7 +122,7 @@ export const TeacherLogin: React.FC = () => {
                         <div className="w-10 h-10 bg-white/15 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/10">
                             <GraduationCap className="w-5 h-5 text-white" />
                         </div>
-                        <span className="text-white font-black text-xl tracking-tight">GestioSchool</span>
+                        <span className="text-white font-black text-xl tracking-tight">MasterFlow</span>
                     </div>
                     <p className="text-blue-200/60 text-xs font-medium uppercase tracking-widest">Portail Enseignant</p>
                 </div>
@@ -148,7 +148,7 @@ export const TeacherLogin: React.FC = () => {
 
                 <div className="relative z-10">
                     <p className="text-blue-200/40 text-xs font-medium">
-                        © {new Date().getFullYear()} GestioSchool • Tous droits réservés
+                        © {new Date().getFullYear()} MasterFlow • Tous droits réservés
                     </p>
                 </div>
             </div>
@@ -160,7 +160,7 @@ export const TeacherLogin: React.FC = () => {
                     <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
                         <GraduationCap className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-white font-black text-lg">GestioSchool</span>
+                    <span className="text-white font-black text-lg">MasterFlow</span>
                 </div>
 
                 <div className="w-full max-w-md">

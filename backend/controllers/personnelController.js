@@ -11,8 +11,9 @@ async function getPersonnel(req, res) {
 
     try {
         const { data: personnel, error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .select('*')
+            .eq('school_slug', schoolSlug)
             .in('role', ['admin', 'superviseur', 'surveillant', 'comptable', 'censeur']);
 
         if (error) throw error;
@@ -43,8 +44,9 @@ async function createPersonnel(req, res) {
     try {
         // Vérifier si le téléphone est déjà utilisé
         const { data: existing } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .select('id')
+            .eq('school_slug', schoolSlug)
             .eq('telephone', telephone.trim())
             .single();
 
@@ -55,8 +57,9 @@ async function createPersonnel(req, res) {
         const hashed = await bcrypt.hash(password, 10);
 
         const { data: personnel, error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .insert({
+                school_slug: schoolSlug,
                 nom: nom.trim(),
                 telephone: telephone.trim(),
                 password: hashed,
@@ -88,7 +91,7 @@ async function deletePersonnel(req, res) {
 
     try {
         const { error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .delete()
             .eq('id', id);
 

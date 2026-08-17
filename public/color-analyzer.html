@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <img id="logo" src="/logo-masterflow.png" style="display:none;" />
+  <canvas id="canvas"></canvas>
+  <div id="output"></div>
+  <script>
+    window.onload = () => {
+      const img = document.getElementById('logo');
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      
+      const colors = {};
+      for(let i=0; i<data.length; i+=4) {
+        if(data[i+3] < 128) continue; // ignore transparent
+        const hex = rgbToHex(data[i], data[i+1], data[i+2]);
+        colors[hex] = (colors[hex] || 0) + 1;
+      }
+      
+      const sorted = Object.entries(colors).sort((a,b) => b[1] - a[1]).slice(0, 20);
+      document.getElementById('output').innerText = JSON.stringify(sorted);
+    };
+    
+    function rgbToHex(r, g, b) {
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+  </script>
+</body>
+</html>

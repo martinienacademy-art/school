@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useStore } from '../store/useStore';
 import { parentApi } from '../services/parentApi';
 import { LinkStudent } from './LinkStudent';
-import { GraduationCap, Lock, User, Phone, CheckCircle, Store, Eye, EyeOff, Mail, Building2 } from 'lucide-react';
+import { GraduationCap, Lock, User, Phone, CheckCircle, Store, Eye, EyeOff, Mail, Building2, Star } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 // ── Images de fond (Mobile uniquement) ──
@@ -22,11 +22,9 @@ const SLIDE_DURATION = 5000;
 
 // ── COMPOSANTS PARTAGÉS ──────────────────────────────────────
 
-const SchoolLogo: React.FC<{ size?: string }> = ({ size = "w-16 h-16" }) => {
+const SchoolLogo: React.FC<{ className?: string, size?: string }> = ({ className = "h-20 w-auto mix-blend-multiply", size }) => {
   return (
-    <div className={`${size} bg-amber-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-amber-500/20`}>
-      <GraduationCap className="w-8 h-8 text-white" />
-    </div>
+    <img src="/logo-masterflow.png" alt="MasterFlow Logo" className={`mb-6 drop-shadow-md object-contain ${className} ${size || ''}`} />
   );
 };
 
@@ -50,7 +48,7 @@ const BackgroundSlideshow: React.FC = () => {
             style={{ backgroundImage: `url(${img})` }}
           />
         ))}
-        <div className="absolute inset-0 z-[1] bg-slate-900/40 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 z-[1] bg-[#0055CC]/40 backdrop-blur-[2px]" />
       </div>
     );
 };
@@ -59,7 +57,7 @@ const BackgroundSlideshow: React.FC = () => {
 
 export const Login: React.FC = () => {
   const login = useStore((s) => s.login);
-  const appName = "GestioSchool";
+  const appName = "MasterFlow";
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [view, setView] = useState<'login' | 'register' | 'link'>('login');
@@ -215,7 +213,7 @@ export const Login: React.FC = () => {
                 }} />
                 <button 
                   onClick={async () => await login(username, password, selectedSchool)}
-                  className="w-full mt-4 py-3 text-slate-400 text-xs font-bold hover:text-amber-600 transition"
+                  className="w-full mt-4 py-3 text-slate-400 text-xs font-bold hover:text-[#1479E8] transition"
                 >
                   Passer cette étape pour le moment
                 </button>
@@ -264,7 +262,7 @@ export const Login: React.FC = () => {
         .auth-container.right-panel-active .overlay-container { transform: translateX(-100%); }
 
         .overlay {
-          background: linear-gradient(135deg, #fbbf24 0%, #eab308 100%);
+          background: #0055CC;
           color: #FFFFFF; position: relative; left: -100%; height: 100%; width: 200%;
           transform: translateX(0); transition: transform 0.6s cubic-bezier(0.7, 0, 0.3, 1);
         }
@@ -287,15 +285,20 @@ export const Login: React.FC = () => {
 
         .auth-input {
           background-color: #f8fafc; border: 1px solid #f1f5f9; padding: 12px 15px; margin: 8px 0;
-          width: 100%; border-radius: 12px; font-size: 14px; focus:outline-none focus:ring-2 focus:ring-amber-400;
+          width: 100%; border-radius: 12px; font-size: 14px; outline: none; transition: all 0.3s ease;
+        }
+        .auth-input:focus {
+          border-color: #1479E8;
+          box-shadow: 0 0 0 2px rgba(20, 121, 232, 0.3);
         }
 
         .auth-button {
-          border-radius: 12px; border: 1px solid #eab308; background-color: #eab308; color: #FFFFFF;
+          border-radius: 12px; border: 1px solid #1479E8; background-color: #1479E8; color: #FFFFFF;
           font-size: 12px; font-weight: bold; padding: 12px 45px; letter-spacing: 1px;
-          text-transform: uppercase; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; margin-top: 15px;
+          text-transform: uppercase; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; margin-top: 15px; box-shadow: 0 4px 14px 0 rgba(20, 121, 232, 0.39);
         }
-        .auth-button:active { transform: scale(0.95); }
+        .auth-button:hover { background-color: rgba(20, 121, 232, 0.9); border-color: rgba(20, 121, 232, 0.9); transform: scale(1.05); box-shadow: 0 10px 15px -3px rgba(20, 121, 232, 0.3); }
+        .auth-button:active { transform: scale(0.95); box-shadow: none; }
         .auth-button.ghost { background-color: transparent; border-color: #FFFFFF; }
 
         .social-container { margin: 15px 0; }
@@ -340,7 +343,7 @@ export const Login: React.FC = () => {
               
               <div className="relative w-full mb-2">
                 <input type={showPassword ? "text" : "password"} placeholder="Mot de passe *" className="auth-input text-xs py-2.5 pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1479E8] p-1">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -363,28 +366,28 @@ export const Login: React.FC = () => {
                 <p className="text-[10px] font-bold text-slate-700">Confidentialité & Données (loi béninoise / APDP)</p>
                 
                 <label className="flex items-start gap-2 cursor-pointer">
-                  <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" required />
+                  <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 accent-[#1479E8] rounded scale-90" required />
                   <span className="text-[9px] text-slate-500 leading-tight">
                     J'accepte les <span className="font-bold text-slate-700">CGU</span> de l'application de mon établissement. <span className="text-rose-500">*</span>
                   </span>
                 </label>
 
                 <label className="flex items-start gap-2 cursor-pointer">
-                  <input type="checkbox" checked={acceptedPrivacy} onChange={(e) => setAcceptedPrivacy(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" required />
+                  <input type="checkbox" checked={acceptedPrivacy} onChange={(e) => setAcceptedPrivacy(e.target.checked)} className="mt-0.5 accent-[#1479E8] rounded scale-90" required />
                   <span className="text-[9px] text-slate-500 leading-tight">
                     J'autorise le traitement des <span className="font-bold text-slate-700">données de scolarité/présences</span> de mon enfant. <span className="text-rose-500">*</span>
                   </span>
                 </label>
 
                 <label className="flex items-start gap-2 cursor-pointer">
-                  <input type="checkbox" checked={parentPhotoAuth} onChange={(e) => setParentPhotoAuth(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" />
+                  <input type="checkbox" checked={parentPhotoAuth} onChange={(e) => setParentPhotoAuth(e.target.checked)} className="mt-0.5 accent-[#1479E8] rounded scale-90" />
                   <span className="text-[9px] text-slate-500 leading-tight">
                     <span className="font-bold text-slate-700">Droit à l'image</span> : J'autorise l'affichage de la photo de mon enfant. <span className="text-slate-400">(Optionnel)</span>
                   </span>
                 </label>
 
                 <label className="flex items-start gap-2 cursor-pointer">
-                  <input type="checkbox" checked={marketingConsent} onChange={(e) => setMarketingConsent(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" />
+                  <input type="checkbox" checked={marketingConsent} onChange={(e) => setMarketingConsent(e.target.checked)} className="mt-0.5 accent-[#1479E8] rounded scale-90" />
                   <span className="text-[9px] text-slate-500 leading-tight">
                     J'accepte de recevoir des actus et conseils d'YZO. <span className="text-slate-400">(Optionnel)</span>
                   </span>
@@ -409,23 +412,23 @@ export const Login: React.FC = () => {
               </select>
 
               <div className="relative w-full">
-                <input type="email" placeholder="Adresse Email (Gmail) *" className="auth-input pl-10" value={username} onChange={(e) => setUsername(e.target.value)} required />
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                <input type="email" placeholder="Adresse Email (Gmail) *" className="auth-input pl-4" value={username} onChange={(e) => setUsername(e.target.value)} required />
+                
               </div>
 
               <div className="relative w-full">
                 <input type={showPassword ? "text" : "password"} placeholder="Mot de passe *" className="auth-input pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1479E8] p-1">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
 
               <div className="flex justify-between items-center w-full px-1 text-[11px] mt-1 mb-2">
-                <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-slate-400 hover:text-amber-600">Mot de passe oublié ?</button>
+                <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-slate-400 hover:text-[#1479E8]">Mot de passe oublié ?</button>
                 <button 
                   type="button" 
                   onClick={() => setIsPrivacyOpen(true)}
-                  className="text-slate-400 hover:text-amber-600 underline cursor-pointer"
+                  className="text-slate-400 hover:text-[#1479E8] underline cursor-pointer"
                 >
                   Confidentialité & Sécurité
                 </button>
@@ -444,7 +447,7 @@ export const Login: React.FC = () => {
               <button 
                 type="button" 
                 onClick={() => setIsRegisterSchoolOpen(true)}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-amber-500/20 active:scale-98 transition-all flex items-center justify-center gap-2 mt-3"
+                className="w-full py-2.5 bg-gradient-to-r from-[#1479E8] to-[#1479E8]/90 hover:from-[#1479E8] hover:to-amber-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-[#1479E8]/30 active:scale-98 transition-all flex items-center justify-center gap-2 mt-3"
               >
                 <Building2 className="w-4 h-4 text-white" />
                 <span>Directeur ? Inscrivez votre école</span>
@@ -465,7 +468,9 @@ export const Login: React.FC = () => {
                 <button className="auth-button ghost hover:bg-white/10" onClick={() => setIsRightPanelActive(false)}>Se connecter</button>
               </div>
               <div className="overlay-panel overlay-right">
-                <h1 className="text-4xl font-black tracking-tighter mb-4 animate-in slide-in-from-right duration-700">Bonjour, Parent ! 🌟</h1>
+                <h1 className="text-4xl font-black tracking-tighter mb-4 animate-in slide-in-from-right duration-700 flex items-center justify-center gap-3">
+                  <Star className="w-10 h-10 text-[#F5A623] fill-[#F5A623] drop-shadow-md" /> Bonjour, Parent !
+                </h1>
                 <p className="text-sm opacity-90 leading-relaxed mb-6 max-w-[300px]">Plongez au cœur de l'éducation de votre enfant. Suivez chaque instant de sa réussite avec nous.</p>
                 <div className="flex flex-col gap-2 mb-8 text-left w-full max-w-[280px]">
                   <div className="flex items-center gap-2 text-xs font-bold"><div className="w-1.5 h-1.5 bg-white rounded-full"/> Suivi des notes en temps réel</div>
@@ -489,14 +494,14 @@ export const Login: React.FC = () => {
                     <h1 className="text-3xl font-black text-slate-900 tracking-tighter text-center">
                         {view === 'login' ? 'Bienvenue !' : 'Rejoignez-nous'}
                     </h1>
-                    <p className="text-[10px] text-amber-600 font-extrabold uppercase tracking-[0.2em] mt-2 mb-6 bg-amber-50 px-3 py-1 rounded-full">
+                    <p className="text-[10px] text-[#1479E8] font-extrabold uppercase tracking-[0.2em] mt-2 mb-6 bg-amber-50 px-3 py-1 rounded-full">
                         {appName} • Excellence
                     </p>
                 </div>
 
                 <form onSubmit={(e) => handleAuth(e, view === 'login' ? 'login' : 'register')} className="space-y-4">
                     <div className="relative mb-2">
-                        <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                        <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1479E8]" />
                         <select className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 appearance-none" value={selectedSchool} onChange={(e) => setSelectedSchool(e.target.value)} required={view === 'register'}>
                             {view !== 'register' && <option value="">Accès SuperAdmin Global</option>}
                             {view !== 'register' && <option disabled>────── Établissements ──────</option>}
@@ -508,26 +513,26 @@ export const Login: React.FC = () => {
                     {view === 'register' ? (
                         <>
                             <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                
                                 <input type="text" placeholder="Nom complet *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={nom} onChange={(e) => setNom(e.target.value)} required />
                             </div>
                             <div className="relative mt-3">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                
                                 <input type="email" placeholder="Adresse Email (Gmail) *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={email} onChange={(e) => setEmail(e.target.value)} required />
                             </div>
                             <div className="relative mt-3">
-                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                
                                 <input type="tel" placeholder="Numéro de Téléphone *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={telephone} onChange={(e) => setTelephone(e.target.value)} required />
                             </div>
                             <div className="relative mt-3">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                
                                 <input type={showPassword ? "text" : "password"} placeholder="Mot de passe *" className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1479E8] p-1">
                                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
                             <div className="relative mt-3">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                
                                 <input type={showPassword ? "text" : "password"} placeholder="Confirmer le mot de passe *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
                             </div>
                             <div className="w-full text-[10px] text-slate-500 space-y-1 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 mt-2 text-left">
@@ -543,13 +548,13 @@ export const Login: React.FC = () => {
                     ) : (
                         <>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                
                                 <input type="email" placeholder="Adresse Email (Gmail) *" className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={username} onChange={(e) => setUsername(e.target.value)} required />
                             </div>
                             <div className="relative mt-3">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                                
                                 <input type={showPassword ? "text" : "password"} placeholder="Mot de passe *" className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 p-1">
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1479E8] p-1">
                                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
@@ -558,11 +563,11 @@ export const Login: React.FC = () => {
 
                     {view === 'login' ? (
                       <div className="flex justify-between items-center px-1 text-[11px] mt-1">
-                        <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-slate-400 hover:text-amber-600">Mot de passe oublié ?</button>
+                        <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-slate-400 hover:text-[#1479E8]">Mot de passe oublié ?</button>
                         <button 
                           type="button" 
                           onClick={() => setIsPrivacyOpen(true)}
-                          className="text-slate-400 hover:text-amber-600 underline cursor-pointer"
+                          className="text-slate-400 hover:text-[#1479E8] underline cursor-pointer"
                         >
                           Confidentialité & Sécurité
                         </button>
@@ -572,28 +577,28 @@ export const Login: React.FC = () => {
                         <p className="text-[10px] font-bold text-slate-700">Confidentialité & Données (loi béninoise / APDP)</p>
                         
                         <label className="flex items-start gap-2 cursor-pointer">
-                          <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" required />
+                          <input type="checkbox" checked={acceptedTerms} onChange={(e) => setAcceptedTerms(e.target.checked)} className="mt-0.5 accent-[#1479E8] rounded scale-90" required />
                           <span className="text-[9px] text-slate-500 leading-tight">
                             J'accepte les <span className="font-bold text-slate-700">CGU</span> de l'application de mon établissement. <span className="text-rose-500">*</span>
                           </span>
                         </label>
 
                         <label className="flex items-start gap-2 cursor-pointer">
-                          <input type="checkbox" checked={acceptedPrivacy} onChange={(e) => setAcceptedPrivacy(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" required />
+                          <input type="checkbox" checked={acceptedPrivacy} onChange={(e) => setAcceptedPrivacy(e.target.checked)} className="mt-0.5 accent-[#1479E8] rounded scale-90" required />
                           <span className="text-[9px] text-slate-500 leading-tight">
                             J'autorise le traitement des <span className="font-bold text-slate-700">données de scolarité/présences</span> de mon enfant. <span className="text-rose-500">*</span>
                           </span>
                         </label>
 
                         <label className="flex items-start gap-2 cursor-pointer">
-                          <input type="checkbox" checked={parentPhotoAuth} onChange={(e) => setParentPhotoAuth(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" />
+                          <input type="checkbox" checked={parentPhotoAuth} onChange={(e) => setParentPhotoAuth(e.target.checked)} className="mt-0.5 accent-[#1479E8] rounded scale-90" />
                           <span className="text-[9px] text-slate-500 leading-tight">
                             <span className="font-bold text-slate-700">Droit à l'image</span> : J'autorise l'affichage de la photo de mon enfant. <span className="text-slate-400">(Optionnel)</span>
                           </span>
                         </label>
 
                         <label className="flex items-start gap-2 cursor-pointer">
-                          <input type="checkbox" checked={marketingConsent} onChange={(e) => setMarketingConsent(e.target.checked)} className="mt-0.5 accent-amber-500 rounded scale-90" />
+                          <input type="checkbox" checked={marketingConsent} onChange={(e) => setMarketingConsent(e.target.checked)} className="mt-0.5 accent-[#1479E8] rounded scale-90" />
                           <span className="text-[9px] text-slate-500 leading-tight">
                             J'accepte de recevoir des actualités et conseils d'YZO. <span className="text-slate-400">(Optionnel)</span>
                           </span>
@@ -609,18 +614,18 @@ export const Login: React.FC = () => {
                     )}
                     {error && <div className="text-rose-500 text-xs italic text-center font-bold px-4">{error}</div>}
 
-                    <button type="submit" disabled={loading} className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-amber-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2 mt-4">
+                    <button type="submit" disabled={loading} className="w-full py-4 bg-[#1479E8] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#1479E8]/30 active:scale-95 transition-transform flex items-center justify-center gap-2 mt-4">
                         {loading ? 'Traitement...' : (view === 'login' ? 'Décollage' : 'Inscrire')}
                     </button>
                     
-                    <button type="button" onClick={() => setView(view === 'login' ? 'register' : 'login')} className="w-full py-2 text-amber-600 text-[10px] font-black uppercase tracking-widest mt-2">
+                    <button type="button" onClick={() => setView(view === 'login' ? 'register' : 'login')} className="w-full py-2 text-[#1479E8] text-[10px] font-black uppercase tracking-widest mt-2">
                         {view === 'login' ? "Nouveau ? Créer un compte" : "Déjà un compte ? Se connecter"}
                     </button>
 
                     <button 
                       type="button" 
                       onClick={() => setIsRegisterSchoolOpen(true)}
-                      className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 active:scale-95 transition-transform flex items-center justify-center gap-2 mt-3"
+                      className="w-full py-3 bg-gradient-to-r from-[#1479E8] to-[#1479E8]/90 hover:from-[#1479E8] hover:to-amber-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg shadow-[#1479E8]/30 active:scale-95 transition-transform flex items-center justify-center gap-2 mt-3"
                     >
                       <Building2 className="w-4 h-4 text-white" />
                       <span>Directeur ? Inscrivez votre école</span>
@@ -635,7 +640,7 @@ export const Login: React.FC = () => {
         <span className="hidden sm:inline">•</span>
         <button 
           onClick={() => setIsPrivacyOpen(true)}
-          className="hover:text-amber-500 transition-colors underline cursor-pointer"
+          className="hover:text-[#1479E8] transition-colors underline cursor-pointer"
         >
           Confidentialité
         </button>
@@ -675,7 +680,7 @@ export const Login: React.FC = () => {
                             required 
                             value={forgotPasswordEmail}
                             onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                            className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-amber-500 focus:border-amber-500 p-2 border"
+                            className="w-full border-gray-300 rounded-lg shadow-sm focus:ring-[#1479E8] focus:border-[#1479E8] p-2 border"
                             placeholder="votre.email@exemple.com"
                         />
                     </div>
@@ -687,7 +692,7 @@ export const Login: React.FC = () => {
                     <button 
                         type="submit" 
                         disabled={forgotPasswordStatus === 'loading'}
-                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50"
+                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#1479E8] hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1479E8] disabled:opacity-50"
                     >
                         {forgotPasswordStatus === 'loading' ? 'Envoi...' : 'Envoyer le lien'}
                     </button>

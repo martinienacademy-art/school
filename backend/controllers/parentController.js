@@ -141,7 +141,7 @@ async function getActiveParentsCount(req, res) {
         if (!schoolSlug) return res.status(403).json({ error: 'Accès non autorisé.' });
 
         const { count, error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .select('*', { count: 'exact', head: true })
             .eq('role', 'parent');
 
@@ -164,7 +164,7 @@ async function getAllParents(req, res) {
         if (!schoolSlug) return res.status(403).json({ error: 'Accès non autorisé.' });
 
         const { data, error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .select('id, nom, telephone, created_at, role')
             .eq('role', 'parent')
             .order('nom', { ascending: true });
@@ -197,7 +197,7 @@ async function getParentById(req, res) {
     try {
         console.log(`🔍 [ParentById] fetching parent ${id}`);
         const { data, error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .select('id, nom, telephone, created_at, role')
             .eq('id', id)
             .eq('role', 'parent')
@@ -234,7 +234,7 @@ async function adminDeleteAccount(req, res) {
     try {
         console.log(`🗑️ [AdminDelete] Deleting parent ${parentId} from profiles`);
         const { error } = await supabase
-            .from(`profiles_${schoolSlug}`)
+            .from('profiles')
             .delete()
             .eq('id', parentId)
             .neq('role', 'directeur') // Sécurité : ne peut pas s'auto-supprimer via cette route

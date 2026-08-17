@@ -42,7 +42,7 @@ export const ParentRecus: React.FC = () => {
     const downloadReceipt = (payment: any) => {
         const doc = new jsPDF();
         doc.setFontSize(22);
-        doc.text('Reçu EduFinance', 20, 20);
+        doc.text('Reçu MasterFlow', 20, 20);
         doc.setFontSize(12);
         doc.text(`Reçu N° : ${payment.recu}`, 20, 40);
         doc.text(`Date : ${format(new Date(payment.date), 'dd/MM/yyyy')}`, 20, 50);

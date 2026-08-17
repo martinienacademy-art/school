@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
-const DATA_PATH = path.join(__dirname, '..', 'data', 'edufinance_db.json');
+const DATA_PATH = path.join(__dirname, '..', 'data', 'masterflow_db.json');
 
 // Structure par défaut de la "Base de données"
 const DEFAULT_DB = {

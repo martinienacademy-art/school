@@ -332,7 +332,7 @@ export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       // ── Identité ─────────────────────────────────────────
-      appName: 'GestioSchool',
+      appName: 'MasterFlow',
       setAppName: (name) => set({ appName: name }),
       schoolLogo: null,
       setSchoolLogo: (logo) => set({ schoolLogo: logo }),
@@ -1446,7 +1446,7 @@ export const useStore = create<AppState>()(
             if (data) {
               set({
                 // Ne remplacer que si le champ ciblé est réellement pertinent et différent, ou si non existant
-                appName: get().appName && get().appName !== 'EduFinance' ? get().appName : (data.appName || get().appName),
+                appName: get().appName && get().appName !== 'MasterFlow' ? get().appName : (data.appName || get().appName),
                 schoolName: get().schoolName && get().schoolName !== 'Établissement Scolaire' ? get().schoolName : (data.schoolName || get().schoolName),
                 schoolYear: data.schoolYear || get().schoolYear,
                 schoolLogo: data.schoolLogo !== null && data.schoolLogo !== undefined ? data.schoolLogo : get().schoolLogo,
@@ -1706,7 +1706,7 @@ export const useStore = create<AppState>()(
       deleteRessource: (id) => set(s => ({ ressources: s.ressources.filter(r => r.id !== id) }))
     }),
     {
-      name: 'edufinance-storage',
+      name: 'masterflow-storage',
       partialize: (state) => ({
         classes: state.classes || [],
         students: state.students,

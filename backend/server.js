@@ -1,5 +1,5 @@
 // ============================================================
-// SERVEUR PRINCIPAL — EduFinance Backend (Version Supabase)
+// SERVEUR PRINCIPAL — MasterFlow Backend (Version Supabase)
 // ============================================================
 'use strict';
 const path = require('path');
@@ -138,7 +138,7 @@ app.use((err, req, res, _next) => {
 const startServer = (port) => {
     const server = app.listen(port, () => {
         console.log(`\n${'='.repeat(60)}`);
-        console.log(`🚀 GestioSchool Backend démarré`);
+        console.log(`🚀 MasterFlow Backend démarré`);
         console.log(`${'='.repeat(60)}`);
         console.log(`📡 Serveur: http://localhost:${port}`);
         console.log(`🛡️  Base de données: Supabase PostgreSQL`);

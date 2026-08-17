@@ -3,7 +3,7 @@ const path = require('path');
 const { supabase } = require('../utils/supabase');
 const bcrypt = require('bcryptjs');
 
-const DATA_PATH = path.join(__dirname, '..', 'data', 'edufinance_db.json');
+const DATA_PATH = path.join(__dirname, '..', 'data', 'masterflow_db.json');
 
 async function migrate() {
     try {

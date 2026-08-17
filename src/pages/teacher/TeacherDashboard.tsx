@@ -85,7 +85,7 @@ export const TeacherDashboard: React.FC = () => {
                             <GraduationCap className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                            <p className="text-xs font-black text-white leading-none">GestioSchool</p>
+                            <p className="text-xs font-black text-white leading-none">MasterFlow</p>
                             <p className="text-[9px] text-blue-400 font-medium uppercase tracking-widest">Portail Enseignant</p>
                         </div>
                     </div>

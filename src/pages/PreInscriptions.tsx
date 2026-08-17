@@ -16,7 +16,7 @@ export const PreInscriptions: React.FC = () => {
   const handleAccept = async (req: any) => {
     if (!window.confirm(`Accepter la pré-inscription de ${req.data?.prenom || 'Inconnu'} ${req.data?.nom || ''} ?`)) return;
     
-    // Ajouter l'élève dans GestioSchool
+    // Ajouter l'élève dans MasterFlow
     addStudent({
       nom: req.data?.nom || 'Inconnu',
       prenom: req.data?.prenom || 'Inconnu',

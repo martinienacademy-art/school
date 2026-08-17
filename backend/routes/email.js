@@ -46,9 +46,9 @@ router.post('/test-smtp', async (req, res) => {
         const mailOptions = {
             from: `"${smtpSenderName}" <${smtpSenderEmail || smtpUser}>`,
             to: testEmail,
-            subject: 'Test de configuration SMTP - GestioSchool',
-            text: 'Ceci est un message de test envoyé depuis GestioSchool pour vérifier votre configuration SMTP.',
-            html: '<p>Ceci est un message de test envoyé depuis <b>GestioSchool</b> pour vérifier votre configuration SMTP.</p>'
+            subject: 'Test de configuration SMTP - MasterFlow',
+            text: 'Ceci est un message de test envoyé depuis MasterFlow pour vérifier votre configuration SMTP.',
+            html: '<p>Ceci est un message de test envoyé depuis <b>MasterFlow</b> pour vérifier votre configuration SMTP.</p>'
         };
 
         const info = await transporter.sendMail(mailOptions);

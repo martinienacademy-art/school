@@ -1,7 +1,7 @@
 {
-    "name": "edufinance-backend",
+    "name": "masterflow-backend",
     "version": "1.0.0",
-    "description": "Backend Node.js pour le Portail Parent EduFinance",
+    "description": "Backend Node.js pour le Portail Parent MasterFlow",
     "main": "server.js",
     "type": "commonjs",
     "scripts": {
