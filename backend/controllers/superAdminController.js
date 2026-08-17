@@ -2,7 +2,7 @@
 // SUPERADMIN CONTROLLER — Tableau de bord SaaS global
 // Accessible UNIQUEMENT au propriétaire de la plateforme
 // ============================================================
-const { supabase } = require('../utils/supabase');
+const { supabaseAdmin } = require('../utils/supabase');
 const Joi = require('joi');
 const crypto = require('crypto');
 const { sendSchoolWelcomeEmail } = require('../utils/emailService');

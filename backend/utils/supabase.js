@@ -7,6 +7,15 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABAS
 console.log('[Supabase] URL:', supabaseUrl ? '✓ Configurée' : '❌ MANQUANTE');
 console.log('[Supabase] Clé Backend:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✓ SERVICE_ROLE (RLS Bypass)' : (supabaseKey ? '⚠️ ANON_KEY (Sujet à RLS)' : '❌ MANQUANTE'));
 
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('\n======================================================');
+    console.error('🔥 ERREUR CRITIQUE: SUPABASE_SERVICE_ROLE_KEY MANQUANTE');
+    console.error('La création d\'écoles et les opérations administrateur');
+    console.error('vont échouer avec une erreur RLS si cette clé n\'est pas configurée.');
+    console.error('Veuillez ajouter SUPABASE_SERVICE_ROLE_KEY dans Render.');
+    console.error('======================================================\n');
+}
+
 const createFallbackClient = () => {
     const error = new Error('Supabase non configuré.');
     const handle = () => ({ data: null, error });

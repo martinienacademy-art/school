@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { supabase } = require('../utils/supabase');
+const { supabase, supabaseAdmin } = require('../utils/supabase');
 const { JWT_SECRET, JWT_EXPIRES } = require('../config');
 const Joi = require('joi');
 const crypto = require('crypto');
@@ -630,7 +630,7 @@ async function registerSchool(req, res) {
             signup_ip_hash: ipHash
         };
 
-        const { data: school, error: schoolErr } = await supabase
+        const { data: school, error: schoolErr } = await supabaseAdmin
             .from('schools')
             .insert(schoolPayload)
             .select()
@@ -641,7 +641,7 @@ async function registerSchool(req, res) {
         // RPC create_school_tables removed - using unified schema
 
         try {
-            await supabase.from('app_settings').upsert({
+            await supabaseAdmin.from('app_settings').upsert({
                 school_slug: cleanSlug,
                 id: 1,
                 nom_ecole: validatedData.name.trim(),
@@ -667,7 +667,7 @@ async function registerSchool(req, res) {
             signup_ip_hash: ipHash
         };
 
-        const { data: adminUser, error: adminErr } = await supabase
+        const { data: adminUser, error: adminErr } = await supabaseAdmin
             .from('profiles')
             .insert({ ...adminPayload, school_slug: cleanSlug })
             .select('id, nom, telephone, email, role')
