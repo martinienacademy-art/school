@@ -12,6 +12,24 @@ export const GestionPersonnel = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  const availableRoles = [
+    { value: 'superviseur', label: 'Surveillant (Scans de cartes uniquement)' },
+    { value: 'censeur', label: 'Censeur (Outils académiques)' },
+    { value: 'comptable', label: 'Comptable (Finances)' },
+    { value: 'proviseur', label: 'Proviseur (Académique)' },
+    { value: 'admin', label: 'Administrateur (Gestion globale)' },
+  ];
+
+  const filteredRoles = availableRoles.filter(r => !personnel.find(p => p.role === r.value));
+
+  useEffect(() => {
+    if (filteredRoles.length > 0 && !filteredRoles.find(r => r.value === role)) {
+      setRole(filteredRoles[0].value);
+    } else if (filteredRoles.length === 0) {
+      setRole('');
+    }
+  }, [personnel]);
+
   const fetchPersonnel = async () => {
     try {
       setLoading(true);
@@ -105,17 +123,19 @@ export const GestionPersonnel = () => {
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Rôle d'accès</label>
-            <select value={role} onChange={e => setRole(e.target.value)} className="w-full text-sm border-gray-200 rounded-lg focus:ring-indigo-500 bg-white">
-              <option value="superviseur">Surveillant (Scans de cartes uniquement)</option>
-              <option value="censeur">Censeur (Outils académiques)</option>
-              <option value="comptable">Comptable (Finances)</option>
-              <option value="proviseur">Proviseur (Académique)</option>
-              <option value="admin">Administrateur (Gestion globale)</option>
+            <select value={role} onChange={e => setRole(e.target.value)} className="w-full text-sm border-gray-200 rounded-lg focus:ring-indigo-500 bg-white" disabled={filteredRoles.length === 0}>
+              {filteredRoles.length > 0 ? (
+                filteredRoles.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))
+              ) : (
+                <option value="">Tous les rôles sont attribués</option>
+              )}
             </select>
           </div>
         </div>
         
-        <button type="submit" disabled={submitting} className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition flex items-center gap-2">
+        <button type="submit" disabled={submitting || filteredRoles.length === 0} className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition flex items-center gap-2 disabled:opacity-50">
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
           Créer le compte
         </button>

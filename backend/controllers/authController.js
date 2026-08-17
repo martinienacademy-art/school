@@ -706,5 +706,42 @@ async function logout(req, res) {
     return res.json({ message: 'Déconnecté avec succès.' });
 }
 
+// ── Stop Impersonate ──────────────────────────────────────────
+async function stopImpersonate(req, res) {
+    try {
+        // req.user contient l'ID original du superadmin (voir superAdminController)
+        const userId = req.user.id;
+        const { data: superadmin, error } = await supabase
+            .from('superadmins')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error || !superadmin) {
+            return res.status(401).json({ error: 'SuperAdmin introuvable.' });
+        }
+
+        const jwt = require('jsonwebtoken');
+        const { JWT_SECRET, JWT_EXPIRES } = require('../config');
+        
+        const token = jwt.sign(
+            { id: superadmin.id, nom: superadmin.nom, role: 'superadmin', schoolSlug: null },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRES }
+        );
+
+        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+        return res.json({
+            message: 'Retour au tableau de bord SuperAdmin.',
+            token,
+            user: { id: superadmin.id, nom: superadmin.nom, telephone: superadmin.telephone, role: 'superadmin' }
+        });
+    } catch (err) {
+        console.error('stopImpersonate Error:', err.message);
+        return res.status(500).json({ error: 'Erreur lors du retour.' });
+    }
+}
+
 // ── Export ────────────────────────────────────────────────────
-module.exports = { register, registerTeacher, registerSchool, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword };
+module.exports = { register, registerTeacher, registerSchool, login, logout, deleteSelfAccount, updatePushToken, changePassword, forgotPassword, resetPassword, stopImpersonate };

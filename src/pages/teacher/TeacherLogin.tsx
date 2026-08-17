@@ -31,6 +31,12 @@ export const TeacherLogin: React.FC = () => {
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Forgot password states
+    const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+    const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+    const [forgotPasswordStatus, setForgotPasswordStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [forgotPasswordMessage, setForgotPasswordMessage] = useState('');
+
     useEffect(() => {
         fetch(`${API_BASE_URL}/schools`)
             .then(r => r.json())
@@ -101,6 +107,31 @@ export const TeacherLogin: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setForgotPasswordStatus('loading');
+        setForgotPasswordMessage('');
+        try {
+            const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: forgotPasswordEmail, schoolSlug: selectedSchool })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setForgotPasswordStatus('success');
+                setForgotPasswordMessage(data.message || 'Lien envoyé.');
+            } else {
+                setForgotPasswordStatus('error');
+                setForgotPasswordMessage(data.error || 'Erreur lors de la demande.');
+            }
+        } catch (err) {
+            setForgotPasswordStatus('error');
+            setForgotPasswordMessage('Erreur de connexion au serveur.');
+        }
+    };
+
 
     const features = [
         { icon: <BookOpen className="w-5 h-5" />, label: 'Saisie des notes et bulletins' },
@@ -241,6 +272,12 @@ export const TeacherLogin: React.FC = () => {
                                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-sm">
+                                <button type="button" onClick={() => setIsForgotPasswordOpen(true)} className="text-slate-400 hover:text-blue-400 transition">
+                                    Mot de passe oublié ?
+                                </button>
                             </div>
 
                             <button
@@ -396,6 +433,62 @@ export const TeacherLogin: React.FC = () => {
                     </p>
                 </div>
             </div>
+
+            {/* Forgot Password Modal */}
+            {isForgotPasswordOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-xl relative">
+                        <button onClick={() => setIsForgotPasswordOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+                            <span className="sr-only">Fermer</span>
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                        <h3 className="text-xl font-bold text-white mb-2">Mot de passe oublié</h3>
+                        <p className="text-sm text-slate-400 mb-6">Saisissez l'adresse e-mail associée à votre compte. Si elle existe, nous vous enverrons un lien de réinitialisation.</p>
+
+                        {forgotPasswordStatus === 'success' ? (
+                            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-xl text-sm flex gap-2 items-start">
+                                <CheckCircle className="w-5 h-5 shrink-0" />
+                                <p>{forgotPasswordMessage}</p>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleForgotPassword} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Établissement (Optionnel)</label>
+                                    <select
+                                        className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition mb-4"
+                                        value={selectedSchool}
+                                        onChange={e => setSelectedSchool(e.target.value)}
+                                    >
+                                        <option value="">-- Sélectionnez si applicable --</option>
+                                        {schools.map(s => <option key={s.slug} value={s.slug}>{s.name}</option>)}
+                                    </select>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Adresse E-mail</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        value={forgotPasswordEmail}
+                                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                                        className="w-full border-slate-600 bg-slate-700/50 text-white rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 p-3 border"
+                                        placeholder="votre.email@exemple.com"
+                                    />
+                                </div>
+
+                                {forgotPasswordStatus === 'error' && (
+                                    <p className="text-sm text-red-400">{forgotPasswordMessage}</p>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={forgotPasswordStatus === 'loading'}
+                                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                                >
+                                    {forgotPasswordStatus === 'loading' ? 'Envoi...' : 'Envoyer le lien'}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

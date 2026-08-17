@@ -95,6 +95,18 @@ export const Dashboard: React.FC = () => {
   const todayPresences = useMemo(() => getPresencesToday(), [getPresencesToday]);
   const tauxPresence = students.length > 0 ? Math.round((todayPresences.length / students.length) * 100) : 0;
 
+  const trialEndsAt = typeof window !== 'undefined' ? localStorage.getItem('trial_ends_at') : null;
+  const schoolStatus = typeof window !== 'undefined' ? localStorage.getItem('school_status') : null;
+
+  const trialDaysLeft = useMemo(() => {
+    if (schoolStatus === 'active') return null; // Plus en essai
+    if (!trialEndsAt) return null;
+    const end = new Date(trialEndsAt).getTime();
+    const now = new Date().getTime();
+    const diff = end - now;
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }, [trialEndsAt, schoolStatus]);
+
   useEffect(() => {
     const roles = ['admin', 'directeur', 'directeur_general', 'comptable'];
     if (user?.role && roles.includes(user.role)) {
@@ -217,6 +229,25 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20 max-w-[1600px] mx-auto">
+      {/* ── BANNIÈRE ESSAI GRATUIT ── */}
+      {trialDaysLeft !== null && (
+        <div className={`p-4 rounded-[20px] flex items-center justify-between gap-4 animate-slideDown shadow-lg border backdrop-blur-xl ${trialDaysLeft <= 3 ? 'bg-red-500/10 border-red-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl ${trialDaysLeft <= 3 ? 'bg-red-500/20 text-red-500 animate-pulse' : 'bg-amber-500/20 text-amber-500'}`}>
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <p className={`text-[11px] font-black uppercase tracking-wider ${trialDaysLeft <= 3 ? 'text-red-500' : 'text-amber-600 dark:text-amber-500'}`}>
+                Essai Gratuit Sans Engagement
+              </p>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                Il vous reste <strong className={trialDaysLeft <= 3 ? 'text-red-500 text-base animate-pulse' : 'text-amber-600 dark:text-amber-500'}>{trialDaysLeft} jour{trialDaysLeft > 1 ? 's' : ''}</strong> d'essai.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── HERO BANNER ── */}
       <div className="relative pro-card p-8 lg:p-10 overflow-hidden group bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.06] group-hover:scale-110 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]">

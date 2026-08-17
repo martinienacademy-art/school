@@ -486,37 +486,51 @@ export const useStore = create<AppState>()(
         return false;
       },
       isImpersonating: typeof window !== 'undefined' ? !!localStorage.getItem('superadmin_impersonator_token') : false,
-      stopImpersonating: () => {
-        const saToken = localStorage.getItem('superadmin_impersonator_token');
-        const saUserStr = localStorage.getItem('superadmin_impersonator_user');
-        if (saToken && saUserStr) {
-          // localStorage.setItem('parent_token', saToken);
-          localStorage.removeItem('superadmin_impersonator_token');
-          localStorage.removeItem('superadmin_impersonator_user');
-          let saUser: User;
-          try {
-            saUser = JSON.parse(saUserStr);
-          } catch {
-            saUser = { id: 'superadmin', role: 'superadmin', nom: 'SuperAdmin Global', username: 'admin' };
+      stopImpersonating: async () => {
+        try {
+          const saToken = localStorage.getItem('superadmin_impersonator_token');
+          const saUserStr = localStorage.getItem('superadmin_impersonator_user');
+          if (saToken && saUserStr) {
+            // Call the backend to set the cookie back to superadmin
+            const res = await fetch(`${API_BASE_URL}/auth/stop-impersonate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include'
+            });
+
+            if (!res.ok) {
+              console.error('Failed to stop impersonating on backend');
+            }
+
+            localStorage.removeItem('superadmin_impersonator_token');
+            localStorage.removeItem('superadmin_impersonator_user');
+            let saUser: User;
+            try {
+              saUser = JSON.parse(saUserStr);
+            } catch {
+              saUser = { id: 'superadmin', role: 'superadmin', nom: 'SuperAdmin Global', username: 'admin' };
+            }
+            set({
+              user: saUser,
+              isAuthenticated: true,
+              isImpersonating: false,
+              currentPage: 'superadmin_dashboard',
+              students: [],
+              parents: [],
+              presences: [],
+              activityLogs: [],
+              links: [],
+              announcements: [],
+              announcementReads: [],
+              matieres: [],
+              classeMatieres: [],
+              notes: [],
+              schoolLogo: null,
+              schoolName: 'SuperAdmin'
+            });
           }
-          set({
-            user: saUser,
-            isAuthenticated: true,
-            isImpersonating: false,
-            currentPage: 'superadmin_dashboard',
-            students: [],
-            parents: [],
-            presences: [],
-            activityLogs: [],
-            links: [],
-            announcements: [],
-            announcementReads: [],
-            matieres: [],
-            classeMatieres: [],
-            notes: [],
-            schoolLogo: null,
-            schoolName: 'SuperAdmin'
-          });
+        } catch (err) {
+          console.error('Error stopping impersonation', err);
         }
       },
       logout: () => {
