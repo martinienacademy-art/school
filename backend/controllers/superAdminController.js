@@ -248,7 +248,7 @@ async function createSchool(req, res) {
         if (schoolErr) throw schoolErr;
 
         // 2. Créer le jeu de tables avec l'appel RPC (Retiré - Schéma Unifié)
-        // const { error: rpcErr } = await supabase.rpc('create_school_tables', { school_slug: cleanSlug });
+        // const { error: rpcErr } = await supabaseAdmin.rpc('create_school_tables', { school_slug: cleanSlug });
         // if (rpcErr) throw rpcErr;
 
         // Attendre que la base recharge son schéma (1s par sécurité)
@@ -256,7 +256,7 @@ async function createSchool(req, res) {
 
         // Initialiser les paramètres de l'école (app_settings_[slug]) avec l'acronyme
         try {
-            await supabase.from('app_settings').upsert({
+            await supabaseAdmin.from('app_settings').upsert({
                 school_slug: cleanSlug,
                 id: 1,
                 nom_ecole: validatedData.name.trim(),
@@ -400,8 +400,8 @@ async function getGlobalStats(req, res) {
         if (schools) {
             for (let s of schools) {
                 try {
-                    const { count: sCount } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('school_slug', s.slug);
-                    const { count: uCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('school_slug', s.slug);
+                    const { count: sCount } = await supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('school_slug', s.slug);
+                    const { count: uCount } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('school_slug', s.slug);
                     totalStudents += (sCount || 0);
                     totalUsers += (uCount || 0);
                 } catch(e) {}
@@ -465,7 +465,7 @@ async function deleteSchool(req, res) {
         // 3. (Retiré - Schéma Unifié) Exécuter la routine Supabase RPC pour dropper toutes les tables
         console.log(`🗑️ Nettoyage des données pour le slug : ${school.slug}`);
         // Les données seront supprimées automatiquement par la contrainte ON DELETE CASCADE sur la table schools
-        // const { error: rpcErr } = await supabase.rpc('drop_school_tables', { school_slug: school.slug });
+        // const { error: rpcErr } = await supabaseAdmin.rpc('drop_school_tables', { school_slug: school.slug });
         // if (rpcErr) {
         //     console.error('Erreur RPC Drop Tables:', rpcErr.message);
         // }
