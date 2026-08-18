@@ -53,7 +53,7 @@ async function register(req, res) {
     telephone = telephone.replace(/\s+/g, '').trim();
 
     try {
-        const { data: school } = await supabase
+        const { data: school } = await supabaseAdmin
             .from('schools')
             .select('status')
             .eq('slug', school_slug)
@@ -67,7 +67,7 @@ async function register(req, res) {
         }
 
         // Vérifier si existant
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
             .from('profiles')
             .select('id')
             .eq('school_slug', school_slug)
@@ -82,7 +82,7 @@ async function register(req, res) {
         const consentedAt = new Date().toISOString();
         const hashed = await bcrypt.hash(password, 10);
 
-        const { data: user, error } = await supabase
+        const { data: user, error } = await supabaseAdmin
             .from('profiles')
             .insert({
                 school_slug: school_slug,
@@ -160,7 +160,7 @@ async function registerTeacher(req, res) {
     const cleanEmail = email.toLowerCase().trim();
 
     try {
-        const { data: school } = await supabase
+        const { data: school } = await supabaseAdmin
             .from('schools')
             .select('status')
             .eq('slug', school_slug)
@@ -173,7 +173,7 @@ async function registerTeacher(req, res) {
             return res.status(403).json({ error: "L'établissement est suspendu." });
         }
 
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
             .from('profiles')
             .select('id')
             .eq('school_slug', school_slug)
@@ -197,7 +197,7 @@ async function registerTeacher(req, res) {
             signup_ip_hash: ipHash
         };
 
-        const { data: teacher, error } = await supabase
+        const { data: teacher, error } = await supabaseAdmin
             .from('profiles')
             .insert(insertPayload)
             .select()
@@ -249,7 +249,7 @@ async function login(req, res) {
         console.log(`🔍 [Auth] Tentative login pour: ${identifier}`);
 
         // ── 1. Vérifier si c'est le SuperAdmin ──
-        const { data: superadmin } = await supabase
+        const { data: superadmin } = await supabaseAdmin
             .from('superadmins')
             .select('*')
             .eq('telephone', identifier)
@@ -281,7 +281,7 @@ async function login(req, res) {
         }
 
         // Vérification accès école
-        const { data: school, error: schoolErr } = await supabase
+        const { data: school, error: schoolErr } = await supabaseAdmin
             .from('schools')
             .select('id, name, slug, status, trial_ends_at, logo_url, features')
             .eq('slug', schoolSlug)
@@ -299,7 +299,7 @@ async function login(req, res) {
         }
 
         // ── 3. Chercher l'utilisateur dans la table de l'établissement ──
-        const { data: user, error } = await supabase
+        const { data: user, error } = await supabaseAdmin
             .from('profiles')
             .select('*')
             .eq('school_slug', schoolSlug)
@@ -324,7 +324,7 @@ async function login(req, res) {
         );
 
         // Update last login de façon asynchrone
-        supabase.from('profiles').update({ last_login: new Date().toISOString() }).eq('school_slug', schoolSlug).eq('id', user.id).then(() => {});
+        supabaseAdmin.from('profiles').update({ last_login: new Date().toISOString() }).eq('school_slug', schoolSlug).eq('id', user.id).then(() => {});
 
         const defaultAllFeatures = ['scan_presence', 'scan_sortie', 'carte_scolaire', 'saisie_notes', 'bulletins', 'recouvrement', 'chat', 'import_export', 'pre_inscriptions', 'documents'];
         const activeFeatures = Array.isArray(school.features) && school.features.length > 0 ? school.features : defaultAllFeatures;
@@ -361,7 +361,7 @@ async function deleteSelfAccount(req, res) {
     }
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('profiles')
             .delete()
             .eq('school_slug', schoolSlug)
@@ -385,7 +385,7 @@ async function updatePushToken(req, res) {
     try {
         console.log(`📲 Tentative de mise à jour du push_token pour l'utilisateur ${id}`);
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from(table)
             .update({ push_token })
             .eq('id', id);
@@ -416,7 +416,7 @@ async function changePassword(req, res) {
             table = 'profiles';
         }
 
-        const { data: user, error } = await supabase
+        const { data: user, error } = await supabaseAdmin
             .from(table)
             .select('password')
             .eq('id', userId)
@@ -432,7 +432,7 @@ async function changePassword(req, res) {
         }
 
         const hashed = await bcrypt.hash(newPassword, 10);
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
             .from(table)
             .update({ password: hashed })
             .eq('id', userId);
@@ -460,19 +460,19 @@ async function forgotPassword(req, res) {
         let tableFound = '';
 
         // Chercher dans superadmins
-        let { data: sa } = await supabase.from('superadmins').select('id, email, nom').eq('email', email).single();
+        let { data: sa } = await supabaseAdmin.from('superadmins').select('id, email, nom').eq('email', email).single();
         if (sa) {
             userFound = sa;
             tableFound = 'superadmins';
         } else {
             // Chercher dans parents
-            let { data: p } = await supabase.from('parents').select('id, email, nom').eq('email', email).single();
+            let { data: p } = await supabaseAdmin.from('parents').select('id, email, nom').eq('email', email).single();
             if (p) {
                 userFound = p;
                 tableFound = 'parents';
             } else if (schoolSlug) {
                 // Chercher dans profiles de l'école (Staff)
-                let { data: staff } = await supabase.from('profiles').select('id, email, nom').eq('school_slug', schoolSlug).eq('email', email).single();
+                let { data: staff } = await supabaseAdmin.from('profiles').select('id, email, nom').eq('school_slug', schoolSlug).eq('email', email).single();
                 if (staff) {
                     userFound = staff;
                     tableFound = 'profiles';
@@ -490,7 +490,7 @@ async function forgotPassword(req, res) {
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 1); // 1 heure valide
 
-        await supabase.from('password_resets').insert({
+        await supabaseAdmin.from('password_resets').insert({
             email: email,
             token: token,
             expires_at: expiresAt.toISOString()
@@ -516,7 +516,7 @@ async function resetPassword(req, res) {
 
     try {
         // Vérifier le token
-        const { data: resetRecord } = await supabase
+        const { data: resetRecord } = await supabaseAdmin
             .from('password_resets')
             .select('*')
             .eq('token', token)
@@ -533,7 +533,7 @@ async function resetPassword(req, res) {
 
         // Hacher le nouveau mot de passe
         const hashed = await bcrypt.hash(newPassword, 10);
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
             .from(table)
             .update({ password: hashed })
             .eq('email', email);
@@ -543,7 +543,7 @@ async function resetPassword(req, res) {
         }
 
         // Supprimer le token
-        await supabase.from('password_resets').delete().eq('id', resetRecord.id);
+        await supabaseAdmin.from('password_resets').delete().eq('id', resetRecord.id);
 
         return res.json({ message: 'Mot de passe réinitialisé avec succès.' });
     } catch (error) {
@@ -711,7 +711,7 @@ async function stopImpersonate(req, res) {
     try {
         // req.user contient l'ID original du superadmin (voir superAdminController)
         const userId = req.user.id;
-        const { data: superadmin, error } = await supabase
+        const { data: superadmin, error } = await supabaseAdmin
             .from('superadmins')
             .select('*')
             .eq('id', userId)

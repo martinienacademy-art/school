@@ -9,7 +9,7 @@ const cors = require('cors');
 const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
-const { supabase } = require('./utils/supabase');
+const { supabase, supabaseAdmin } = require('./utils/supabase');
 
 const { PORT } = require('./config');
 
@@ -75,7 +75,7 @@ app.use('/api/superadmin', authenticateToken, require('./routes/superAdmin')); /
 // Route publique pour lister les écoles dans le login
 app.get('/api/schools', async (req, res) => {
     try {
-        const { data: schools, error } = await supabase
+        const { data: schools, error } = await supabaseAdmin
             .from('schools')
             .select('slug, name, logo_url')
             .in('status', ['active', 'trial'])

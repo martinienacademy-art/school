@@ -50,8 +50,8 @@ async function requireSchool(req, res, next) {
     }
 
     try {
-        const { supabase } = require('../utils/supabase');
-        const { data: school } = await supabase
+        const { supabaseAdmin } = require('../utils/supabase');
+        const { data: school } = await supabaseAdmin
             .from('schools')
             .select('id, status')
             .eq('slug', req.user.schoolSlug)

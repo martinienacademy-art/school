@@ -16,7 +16,7 @@ let LOCAL_SAAS_SETTINGS = {
 
 async function getStoredSaasSettings() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('saas_settings')
             .select('*')
             .eq('id', 1)
@@ -51,7 +51,7 @@ async function updateSaaSConfig(req, res) {
         if (premium_features !== undefined) updates.premium_features = premium_features;
         updates.updated_at = new Date().toISOString();
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from('saas_settings')
             .upsert({ id: 1, ...updates })
             .select()
@@ -90,7 +90,7 @@ async function getAllSchools(req, res) {
         const saasConfig = await getStoredSaasSettings();
         const pricePerStudent = saasConfig.price_per_student;
 
-        const { data: schools, error } = await supabase
+        const { data: schools, error } = await supabaseAdmin
             .from('schools')
             .select('*')
             .order('created_at', { ascending: false });
@@ -104,13 +104,13 @@ async function getAllSchools(req, res) {
                 let userCount = 0;
                 
                 try {
-                    const { count: sCount } = await supabase
+                    const { count: sCount } = await supabaseAdmin
                         .from('students')
                         .select('*', { count: 'exact', head: true })
                         .eq('school_slug', school.slug);
                     studentCount = sCount || 0;
                     
-                    const { count: uCount } = await supabase
+                    const { count: uCount } = await supabaseAdmin
                         .from('profiles')
                         .select('*', { count: 'exact', head: true })
                         .eq('school_slug', school.slug);
@@ -208,7 +208,7 @@ async function createSchool(req, res) {
         const cleanSlug = validatedData.slug;
 
         // Vérifier si le slug est déjà utilisé
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
             .from('schools')
             .select('id')
             .eq('slug', cleanSlug)
@@ -239,7 +239,7 @@ async function createSchool(req, res) {
             signup_ip_hash: ipHash
         };
 
-        const { data: school, error: schoolErr } = await supabase
+        const { data: school, error: schoolErr } = await supabaseAdmin
             .from('schools')
             .insert(schoolPayload)
             .select()
@@ -287,7 +287,7 @@ async function createSchool(req, res) {
             school_slug: cleanSlug
         };
 
-        const { data: adminUser, error: adminErr } = await supabase
+        const { data: adminUser, error: adminErr } = await supabaseAdmin
             .from('profiles')
             .insert(adminPayload)
             .select()
@@ -328,7 +328,7 @@ async function updateSchoolStatus(req, res) {
     }
 
     try {
-        const { data: school, error } = await supabase
+        const { data: school, error } = await supabaseAdmin
             .from('schools')
             .update({ status })
             .eq('id', id)
@@ -365,7 +365,7 @@ async function updateSchool(req, res) {
         if (logo_url !== undefined) updates.logo_url = logo_url;
         if (trial_ends_at !== undefined) updates.trial_ends_at = trial_ends_at;
 
-        const { data: school, error } = await supabase
+        const { data: school, error } = await supabaseAdmin
             .from('schools')
             .update(updates)
             .eq('id', id)
@@ -388,10 +388,10 @@ async function getGlobalStats(req, res) {
         const saasConfig = await getStoredSaasSettings();
         const pricePerStudent = saasConfig.price_per_student || 2000;
 
-        const { count: totalSchools } = await supabase
+        const { count: totalSchools } = await supabaseAdmin
             .from('schools').select('*', { count: 'exact', head: true });
 
-        const { data: schools } = await supabase
+        const { data: schools } = await supabaseAdmin
             .from('schools').select('slug, status, trial_ends_at');
 
         let totalStudents = 0;
@@ -444,7 +444,7 @@ async function deleteSchool(req, res) {
         if (!id) return res.status(400).json({ error: 'ID manquant.' });
 
         // 1. Récupérer le slug de l'école
-        const { data: school, error: fetchErr } = await supabase
+        const { data: school, error: fetchErr } = await supabaseAdmin
             .from('schools')
             .select('slug, name')
             .eq('id', id)
@@ -455,7 +455,7 @@ async function deleteSchool(req, res) {
         }
 
         // 2. Supprimer du catalogue (Table schools) en premier pour interdire immédiatement la connexion/requêtes
-        const { error: deleteErr } = await supabase
+        const { error: deleteErr } = await supabaseAdmin
             .from('schools')
             .delete()
             .eq('id', id);
@@ -484,7 +484,7 @@ async function impersonateSchool(req, res) {
     const { id } = req.params;
 
     try {
-        const { data: school, error } = await supabase
+        const { data: school, error } = await supabaseAdmin
             .from('schools')
             .select('*')
             .eq('id', id)
@@ -536,7 +536,7 @@ async function extendSchoolTrial(req, res) {
     const { extra_days, new_trial_ends_at } = req.body;
 
     try {
-        const { data: currentSchool, error: fetchErr } = await supabase
+        const { data: currentSchool, error: fetchErr } = await supabaseAdmin
             .from('schools')
             .select('trial_ends_at, name')
             .eq('id', id)
@@ -555,7 +555,7 @@ async function extendSchoolTrial(req, res) {
             targetDate = new Date(baseDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
         }
 
-        const { data: updatedSchool, error: updateErr } = await supabase
+        const { data: updatedSchool, error: updateErr } = await supabaseAdmin
             .from('schools')
             .update({
                 trial_ends_at: targetDate.toISOString(),
@@ -592,7 +592,7 @@ async function updateSchoolFeaturesAndBilling(req, res) {
         if (trial_ends_at) updates.trial_ends_at = trial_ends_at;
         if (status) updates.status = status;
 
-        const { data: updatedSchool, error } = await supabase
+        const { data: updatedSchool, error } = await supabaseAdmin
             .from('schools')
             .update(updates)
             .eq('id', id)
