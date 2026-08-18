@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { supabase } = require('../utils/supabase');
+const { supabaseAdmin } = require('../utils/supabase');
 
 // ── GET /api/personnel ──────────────────────────────
 async function getPersonnel(req, res) {
@@ -10,7 +10,7 @@ async function getPersonnel(req, res) {
     }
 
     try {
-        const { data: personnel, error } = await supabase
+        const { data: personnel, error } = await supabaseAdmin
             .from('profiles')
             .select('*')
             .eq('school_slug', schoolSlug)
@@ -43,7 +43,7 @@ async function createPersonnel(req, res) {
 
     try {
         // Vérifier si le téléphone est déjà utilisé
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
             .from('profiles')
             .select('id')
             .eq('school_slug', schoolSlug)
@@ -56,7 +56,7 @@ async function createPersonnel(req, res) {
 
         const hashed = await bcrypt.hash(password, 10);
 
-        const { data: personnel, error } = await supabase
+        const { data: personnel, error } = await supabaseAdmin
             .from('profiles')
             .insert({
                 school_slug: schoolSlug,
@@ -90,7 +90,7 @@ async function deletePersonnel(req, res) {
     }
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('profiles')
             .delete()
             .eq('id', id);
