@@ -78,6 +78,7 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [createdSchool, setCreatedSchool] = useState<{ name: string; slug: string; email: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +109,11 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur création');
+      setCreatedSchool({
+        name: data.school?.name || form.name,
+        slug: form.slug,
+        email: form.email
+      });
       onCreated();
     } catch (err: any) {
       setError(err.message);
@@ -130,6 +136,41 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {createdSchool ? (
+          <div className="p-8 text-center space-y-6">
+            <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/10">
+              <Check className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black text-white tracking-tight">Établissement créé avec succès ! 🎉</h2>
+              <p className="text-sm text-slate-400 max-w-md mx-auto">
+                Votre établissement <span className="font-bold text-white">"{createdSchool.name}"</span> est désormais enregistré.
+              </p>
+            </div>
+
+            <div className="bg-slate-800 border border-slate-700 p-5 rounded-2xl text-left max-w-md mx-auto space-y-2">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Identifiants du Directeur :</p>
+              <div className="text-sm text-slate-300 space-y-1">
+                <p>• <strong>Établissement :</strong> {createdSchool.name}</p>
+                <p>• <strong>Code (Slug) :</strong> <code className="bg-slate-700 text-blue-400 px-1.5 py-0.5 rounded font-mono font-bold">{createdSchool.slug}</code></p>
+                <p>• <strong>Email :</strong> {createdSchool.email}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500">
+              ✉️ Veuillez transmettre ces identifiants au directeur de l'école.
+            </p>
+
+            <button
+              onClick={onCreated}
+              className="w-full max-w-md mx-auto py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2"
+            >
+              <span>Fermer</span>
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <div>
             <h2 className="text-xl font-black text-white">Créer un nouvel établissement</h2>
@@ -310,6 +351,8 @@ const CreateSchoolModal: React.FC<CreateSchoolModalProps> = ({ onClose, onCreate
             </button>
           </div>
         </form>
+          </>
+        )}
       </div>
     </div>
   );
