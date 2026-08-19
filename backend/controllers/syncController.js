@@ -464,11 +464,22 @@ async function syncToFrontend(req, res) {
 
     try {
         const fetchTable = async (name, orderField = null, ascending = false) => {
-            let q = supabase.from(tbl(name)).select('*').eq('school_slug', schoolSlug);
-            if (orderField) q = q.order(orderField, { ascending });
-            const { data, error } = await q;
-            if (error && error.code !== '42P01') throw error;
-            return data || [];
+            try {
+                let q = supabase.from(tbl(name)).select('*').eq('school_slug', schoolSlug);
+                if (orderField) q = q.order(orderField, { ascending });
+                const { data, error } = await q;
+                if (error) {
+                    if (error.code === '42P01' || error.code === 'PGRST204' || error.message?.includes('schema cache')) {
+                        return [];
+                    }
+                    console.warn(`[Sync GET] fetchTable ${name} warning:`, error.message);
+                    return [];
+                }
+                return data || [];
+            } catch (err) {
+                console.warn(`[Sync GET] fetchTable ${name} catch:`, err.message);
+                return [];
+            }
         };
 
         const students = await fetchTable('students', 'nom');
@@ -484,18 +495,17 @@ async function syncToFrontend(req, res) {
         const dbSalles = await fetchTable('salles');
         const announcementReads = await fetchTable('announcement_reads');
         
-        const { data: dbClasses } = await supabase.from('school_classes').select('*').eq('school_slug', schoolSlug).order('cycle').order('nom');
+        let dbClasses = [];
+        try {
+            const { data } = await supabase.from('school_classes').select('*').eq('school_slug', schoolSlug).order('cycle').order('nom');
+            dbClasses = data || [];
+        } catch (e) {}
 
-        const { data: appSettings, error: settingsError } = await supabase.from(tbl('app_settings')).select('*').eq('school_slug', schoolSlug).single();
-        console.log('🎨 [Sync GET] appSettings from DB:', {
-            found: !!appSettings,
-            error: settingsError?.message || null,
-            hasLogo: !!appSettings?.school_logo,
-            logoLength: appSettings?.school_logo?.length || 0,
-            hasStamp: !!appSettings?.school_stamp,
-            appName: appSettings?.app_name,
-            schoolName: appSettings?.school_name,
-        });
+        let appSettings = null;
+        try {
+            const { data } = await supabase.from(tbl('app_settings')).select('*').eq('school_slug', schoolSlug).maybeSingle();
+            appSettings = data;
+        } catch (e) {}
 
         const studentMap = new Map();
         students.forEach(s => {
