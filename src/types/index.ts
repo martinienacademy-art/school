@@ -32,6 +32,8 @@ export interface Student {
   statutAdmin?: 'Actif' | 'Suspendu' | 'Abandon' | 'Admis' | 'Ajourné';
   statutElv?: 'NOUVEAU' | 'ANCIEN' | 'REDOUBLANT';
   dateNaissance?: string;
+  lieuNaissance?: string;
+  numeroActeNaissance?: string;
   acteNaissanceUrl?: string;
   photoUrl?: string;  // Photo passeport de l'élève (base64 data URL)
   cycle: Cycle;

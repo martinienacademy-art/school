@@ -73,6 +73,9 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
     classe: student?.classe ?? (classConfigList[0]?.name || ''),
     telephone: student?.telephone ?? '+229',
     sexe: (student?.sexe ?? 'M') as 'M' | 'F',
+    dateNaissance: student?.dateNaissance ?? '',
+    lieuNaissance: student?.lieuNaissance ?? '',
+    numeroActeNaissance: student?.numeroActeNaissance ?? '',
     redoublant: student?.redoublant ?? false,
     ecoleProvenance: student?.ecoleProvenance ?? '',
     dejaPaye: student?.dejaPaye ?? 0,
@@ -142,7 +145,7 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Photo</span>
               </div>
               
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">Nom de l'élève *</label>
                   <input 
@@ -186,7 +189,46 @@ const StudentModal: React.FC<ModalProps> = ({ student, onClose }) => {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Champs Naissance et Acte */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                  Date de Naissance
+                </label>
+                <input 
+                  type="date"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
+                  value={form.dateNaissance} 
+                  onChange={(e) => setForm({ ...form, dateNaissance: e.target.value })} 
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                  Lieu de Naissance
+                </label>
+                <input 
+                  type="text"
+                  placeholder="Ex: Cotonou"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
+                  value={form.lieuNaissance} 
+                  onChange={(e) => setForm({ ...form, lieuNaissance: e.target.value })} 
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                  N° Acte de Naissance
+                </label>
+                <input 
+                  type="text"
+                  placeholder="Ex: N° 1245 / 2012"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-amber-500 outline-none transition-all dark:text-white" 
+                  value={form.numeroActeNaissance} 
+                  onChange={(e) => setForm({ ...form, numeroActeNaissance: e.target.value })} 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
                   <FileBadge className="w-3 h-3" /> Matricule National

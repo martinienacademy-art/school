@@ -554,6 +554,35 @@ export default function Students() {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date de naissance</label>
+                  <input
+                    type="date"
+                    value={formData.dateNaissance || ''}
+                    onChange={(e) => setFormData({ ...formData, dateNaissance: e.target.value })}
+                    className="input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Lieu de naissance</label>
+                  <input
+                    type="text"
+                    value={formData.lieuNaissance || ''}
+                    onChange={(e) => setFormData({ ...formData, lieuNaissance: e.target.value })}
+                    className="input"
+                    placeholder="Ex: Cotonou"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">N° Acte de naissance</label>
+                  <input
+                    type="text"
+                    value={formData.numeroActeNaissance || ''}
+                    onChange={(e) => setFormData({ ...formData, numeroActeNaissance: e.target.value })}
+                    className="input"
+                    placeholder="Ex: N° 1245 / 2012"
+                  />
+                </div>
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Sexe</label>
                   <select
                     value={formData.sexe || 'M'}

@@ -646,19 +646,19 @@ export const Parametres: React.FC = () => {
                 </div>
 
                 {(user?.role === 'directeur' || user?.role === 'comptable') && (
-                    <div className="flex justify-end pt-4 gap-3">
+                    <div className="flex flex-col sm:flex-row justify-end pt-4 gap-3 w-full">
                         <button
                           type="button"
                           onClick={handleTestSMTP}
                           disabled={isTestingSmtp}
-                          className="flex items-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all bg-[#fbc02d] hover:bg-[#f9a825] text-slate-900 shadow-lg shadow-[#fbc02d]/20 disabled:opacity-50"
+                          className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all bg-[#fbc02d] hover:bg-[#f9a825] text-slate-900 shadow-lg shadow-[#fbc02d]/20 disabled:opacity-50 w-full sm:w-auto text-center cursor-pointer"
                         >
                           <Mail className="w-4 h-4" />
                           {isTestingSmtp ? 'Test en cours...' : 'Tester la configuration'}
                         </button>
                         <button
                           type="submit"
-                          className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all ${
+                          className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all w-full sm:w-auto cursor-pointer ${
                               saved
                               ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
                               : 'bg-[#115e59] hover:bg-[#0f766e] text-white shadow-lg shadow-[#115e59]/20'
