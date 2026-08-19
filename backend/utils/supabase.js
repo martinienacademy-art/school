@@ -43,18 +43,20 @@ let supabase;
 let supabaseAdmin;
 
 if (supabaseUrl && supabaseKey) {
-    supabase = createClient(supabaseUrl, supabaseKey);
-    supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
-        ? createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-            auth: { autoRefreshToken: false, persistSession: false }
-          })
-        : supabase;
+    const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseKey;
+    
+    supabaseAdmin = createClient(supabaseUrl, adminKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+    });
+    
+    // Dans le backend Express, toutes les requêtes base de données utilisent les droits administrateur (Bypass RLS)
+    supabase = supabaseAdmin;
 
     (async () => {
         try {
-            const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
+            const { data, error } = await supabaseAdmin.from('profiles').select('count', { count: 'exact', head: true });
             if (error) throw error;
-            console.log('✅ Supabase connecté avec succès');
+            console.log('✅ Supabase Admin connecté avec succès (Bypass RLS actif)');
         } catch (err) {
             console.error('❌ Impossible de se connecter à Supabase:', err.message);
             console.error('Vérifiez vos clés et l\'URL dans le fichier .env');
